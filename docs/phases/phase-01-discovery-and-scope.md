@@ -1,7 +1,7 @@
 # Phase 01: Discovery And Scope Freeze
 
 ## Phase Metadata
-- Status: Planned
+- Status: Completed
 - Last Updated: 2026-03-13
 - Duration Target (Optional): 1 week
 - Related Master Plan: [../master_plan.md](../master_plan.md)
@@ -42,6 +42,15 @@
 - Localization scope note (TR/EN coverage, fallback policy, key naming baseline).
 - Dynamic pricing simulation action contract (mode switch, simulate, preview apply, rollback).
 - Mock data specification draft for later implementation.
+
+## Completion Evidence
+- Scope brief and priorities: [../artifacts/phase-01/scope-brief-and-prioritized-features.md](../artifacts/phase-01/scope-brief-and-prioritized-features.md)
+- Page inventory and navigation matrix: [../artifacts/phase-01/page-inventory-and-navigation-matrix.md](../artifacts/phase-01/page-inventory-and-navigation-matrix.md)
+- Visual baseline note: [../artifacts/phase-01/visual-baseline-note.md](../artifacts/phase-01/visual-baseline-note.md)
+- Localization scope note: [../artifacts/phase-01/localization-scope-note.md](../artifacts/phase-01/localization-scope-note.md)
+- Dynamic simulation contract: [../artifacts/phase-01/dynamic-pricing-simulation-action-contract.md](../artifacts/phase-01/dynamic-pricing-simulation-action-contract.md)
+- Mock data spec draft: [../artifacts/phase-01/mock-data-spec-draft.md](../artifacts/phase-01/mock-data-spec-draft.md)
+- Interaction contract: [../action_matrix.md](../action_matrix.md)
 
 ## Acceptance Criteria
 - Scope document is reviewed and approved by product and engineering leads.

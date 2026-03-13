@@ -3,7 +3,7 @@
 ## Planning Metadata
 - Last Updated: 2026-03-13
 - Planning Horizon: 4-6 weeks
-- Overall Status: Planned
+- Overall Status: In Progress (Phase 05 Started)
 
 ## Project Goal
 Build a fully clickable and demo-ready competitive pricing dashboard mockup that runs only with static `HTML/CSS/JavaScript`, has no backend/server dependency, uses in-browser mock data, and demonstrates the end-to-end pricing workflow.
@@ -46,7 +46,7 @@ Build a fully clickable and demo-ready competitive pricing dashboard mockup that
 - Assumption: Mock dataset size is sufficient to represent dashboard states and edge cases.
 - Assumption: Browser-local state (in-memory or `localStorage`) is acceptable for the demo.
 - Open question: Should charts use vanilla SVG/Canvas or a lightweight client-side chart library?
-- Open question: Is single-language UI enough for the first demo, or is EN/TR toggle needed?
+- Resolved: UI is bilingual (`TR` and `EN`) with top-right language switch.
 - Open question: What is the minimum page set required (single-page dashboard vs multi-page flow)?
 
 ## Delivery Strategy
@@ -64,16 +64,16 @@ The plan keeps six phases but aligns all work to a static mockup architecture. E
 
 | Phase | Status | Goal | Depends On | Document |
 | --- | --- | --- | --- | --- |
-| Phase 01 | Planned | Freeze static mockup scope, user flows, and interaction rules | None | [phase-01-discovery-and-scope.md](phases/phase-01-discovery-and-scope.md) |
-| Phase 02 | Planned | Finalize visual dashboard language and navigation map | Phase 01 | [phase-02-visual-mvp-and-prototype.md](phases/phase-02-visual-mvp-and-prototype.md) |
-| Phase 03 | Planned | Implement static HTML/CSS page foundation and layout system | Phase 01, Phase 02 | [phase-03-mock-backed-mvp-foundation.md](phases/phase-03-mock-backed-mvp-foundation.md) |
-| Phase 04 | Planned | Implement client-side mock data layer and dashboard bindings | Phase 03 | [phase-04-real-data-pipeline.md](phases/phase-04-real-data-pipeline.md) |
-| Phase 05 | Planned | Wire all interactions including dynamic pricing simulation flows | Phase 04 | [phase-05-pricing-intelligence-engine.md](phases/phase-05-pricing-intelligence-engine.md) |
+| Phase 01 | Completed | Freeze static mockup scope, user flows, and interaction rules | None | [phase-01-discovery-and-scope.md](phases/phase-01-discovery-and-scope.md) |
+| Phase 02 | Completed | Finalize visual dashboard language and navigation map | Phase 01 | [phase-02-visual-mvp-and-prototype.md](phases/phase-02-visual-mvp-and-prototype.md) |
+| Phase 03 | Completed | Implement static HTML/CSS page foundation and layout system | Phase 01, Phase 02 | [phase-03-mock-backed-mvp-foundation.md](phases/phase-03-mock-backed-mvp-foundation.md) |
+| Phase 04 | Completed | Implement client-side mock data layer and dashboard bindings | Phase 03 | [phase-04-real-data-pipeline.md](phases/phase-04-real-data-pipeline.md) |
+| Phase 05 | In Progress | Wire all interactions including dynamic pricing simulation flows | Phase 04 | [phase-05-pricing-intelligence-engine.md](phases/phase-05-pricing-intelligence-engine.md) |
 | Phase 06 | Planned | QA, polish, and demo handoff for static mockup release | Phase 05 | [phase-06-pilot-hardening-and-launch.md](phases/phase-06-pilot-hardening-and-launch.md) |
 
 ## Phase Gates
-- Gate 1 (Scope Freeze): Static-only constraints and required workflows approved.
-- Gate 2 (UX Freeze): Dashboard screens and navigation paths finalized.
+- Gate 1 (Scope Freeze): Completed.
+- Gate 2 (UX Freeze): Completed.
 - Gate 3 (Structure Ready): Static page architecture and layout system complete.
 - Gate 4 (Behavior Ready): Mock data binding and UI actions stable.
 - Gate 5 (Demo Ready): End-to-end demo walkthrough passes without blockers.
@@ -119,6 +119,8 @@ The plan keeps six phases but aligns all work to a static mockup architecture. E
 
 ## Supporting Specs
 - Action contract matrix: [action_matrix.md](action_matrix.md)
+- Phase 01 artifact set: [artifacts/phase-01](artifacts/phase-01)
+- Phase 02 artifact set: [artifacts/phase-02](artifacts/phase-02)
 
 ## Global Risks And Decisions
 - Risk: Scope creep may push the mockup toward unintended backend requirements.
@@ -135,6 +137,11 @@ The plan keeps six phases but aligns all work to a static mockup architecture. E
 - Decision: Language default is Turkish, with English available via top-right header switch (`TR`/`EN`).
 
 ## Change Log
+- 2026-03-13: Phase 03 implementation started with `index.html`, shared CSS theme, hash-route app shell, TR/EN localization dictionaries, and mock dataset modules.
+- 2026-03-13: Rebuilt `assets/js/app.js` end-to-end after accidental deletion; all core routes, action handlers, confirm modal flows, and mock state transitions were restored.
+- 2026-03-13: Completed client-side mock data/state implementation (`assets/js/data.js` + in-memory state adapters) and moved Phase 04 to completed.
+- 2026-03-13: Started interaction wiring completion pass for Phase 05 including dynamic pricing simulation controls, A/B snapshot export, settings persistence, and scenario loading actions.
+- 2026-03-13: Phase 01 and Phase 02 marked as completed with artifact evidence under `docs/artifacts/phase-01` and `docs/artifacts/phase-02`.
 - 2026-03-13: Phase plan updated for bilingual support (TR/EN), top-right language switcher requirement, and UTF-8 Turkish character quality checks.
 - 2026-03-13: Theme baseline updated to match `gemini-pricing.html` (indigo/gray/semantic palette + Tailwind `font-sans` typography).
 - 2026-03-13: Plan re-scoped to static HTML mockup product (no backend/server), with mock data and fully working navigation/actions.

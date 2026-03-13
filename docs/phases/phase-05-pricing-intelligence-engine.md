@@ -1,7 +1,7 @@
 # Phase 05: Interaction Wiring And Workflow Logic
 
 ## Phase Metadata
-- Status: Planned
+- Status: In Progress
 - Last Updated: 2026-03-13
 - Duration Target (Optional): 2 weeks
 - Related Master Plan: [../master_plan.md](../master_plan.md)
@@ -45,6 +45,10 @@
 - Language switch interaction handlers and locale-aware render pipeline notes.
 - Page-level action contract matrix (`docs/action_matrix.md`).
 - Interaction test checklist with pass/fail evidence.
+
+## Implementation Evidence (In Progress)
+- Interaction router and page actions: [../../assets/js/app.js](../../assets/js/app.js)
+- Action contract source: [../action_matrix.md](../action_matrix.md)
 
 ## Acceptance Criteria
 - All primary CTA buttons perform their intended action.

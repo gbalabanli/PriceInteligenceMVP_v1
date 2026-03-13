@@ -1,7 +1,7 @@
 # Phase 04: Client-Side Mock Data Layer
 
 ## Phase Metadata
-- Status: Planned
+- Status: Completed
 - Last Updated: 2026-03-13
 - Duration Target (Optional): 1 week
 - Related Master Plan: [../master_plan.md](../master_plan.md)
@@ -40,6 +40,11 @@
 - Localization resource pack (`tr.json` / `en.json` or equivalent JS modules).
 - Simulation scenario pack for dynamic pricing (`steady market`, `price war`, `stock pressure`).
 - Data scenario documentation for QA/demo use.
+
+## Completion Evidence
+- Mock dataset source: [../../assets/js/data.js](../../assets/js/data.js)
+- Client-side state/adapters: [../../assets/js/app.js](../../assets/js/app.js)
+- Localization resources (`tr`/`en`): [../../assets/js/i18n.js](../../assets/js/i18n.js)
 
 ## Acceptance Criteria
 - Dashboard components consume mock data without hardcoded per-page values.
