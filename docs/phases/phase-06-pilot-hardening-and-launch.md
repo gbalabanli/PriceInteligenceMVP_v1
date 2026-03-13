@@ -1,7 +1,7 @@
 # Phase 06: QA, Polish, And Demo Handoff
 
 ## Phase Metadata
-- Status: In Progress
+- Status: Completed
 - Last Updated: 2026-03-13
 - Duration Target (Optional): 1 week
 - Related Master Plan: [../master_plan.md](../master_plan.md)
@@ -42,12 +42,15 @@
 - Demo walkthrough script for stakeholders.
 - Post-demo improvement backlog.
 
-## Implementation Evidence (In Progress)
+## Completion Evidence
 - QA checklist and issue log: [../artifacts/phase-06/qa-checklist-and-issue-log.md](../artifacts/phase-06/qa-checklist-and-issue-log.md)
 - Theme compliance checklist: [../artifacts/phase-06/theme-compliance-checklist.md](../artifacts/phase-06/theme-compliance-checklist.md)
 - Localization QA checklist: [../artifacts/phase-06/localization-qa-checklist.md](../artifacts/phase-06/localization-qa-checklist.md)
 - Demo walkthrough script: [../artifacts/phase-06/demo-walkthrough-script.md](../artifacts/phase-06/demo-walkthrough-script.md)
 - Post-demo backlog: [../artifacts/phase-06/post-demo-improvement-backlog.md](../artifacts/phase-06/post-demo-improvement-backlog.md)
+- Final package note: [../artifacts/phase-06/final-static-demo-package.md](../artifacts/phase-06/final-static-demo-package.md)
+- Known limitations: [../artifacts/phase-06/known-limitations.md](../artifacts/phase-06/known-limitations.md)
+- Playwright smoke results: [../artifacts/phase-06/playwright-smoke-results-2026-03-13.json](../artifacts/phase-06/playwright-smoke-results-2026-03-13.json)
 
 ## Acceptance Criteria
 - No dead link remains in defined navigation paths.

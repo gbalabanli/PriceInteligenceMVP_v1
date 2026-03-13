@@ -1,0 +1,81 @@
+{
+  "date": "2026-03-13",
+  "environment": "http://127.0.0.1:4173/index.html",
+  "summary": {
+    "pass": 14,
+    "fail": 0
+  },
+  "finalUrl": "http://127.0.0.1:4173/index.html#/settings",
+  "results": [
+    {
+      "name": "route:/dashboard",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/dashboard"
+    },
+    {
+      "name": "menu:recommendations",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/yz-fiyat-onerileri"
+    },
+    {
+      "name": "menu:dynamic",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/dynamic-pricing"
+    },
+    {
+      "name": "menu:ab",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/ab-testing"
+    },
+    {
+      "name": "menu:dashboard-return",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/dashboard"
+    },
+    {
+      "name": "header:settings",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/settings"
+    },
+    {
+      "name": "settings:back-dashboard",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/dashboard"
+    },
+    {
+      "name": "header:scenario-lab",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/scenario-lab"
+    },
+    {
+      "name": "scenario:return-to-last-route",
+      "ok": true,
+      "detail": "http://127.0.0.1:4173/index.html#/dashboard"
+    },
+    {
+      "name": "reco:bulk-approve",
+      "ok": true,
+      "detail": "pending=0"
+    },
+    {
+      "name": "dynamic:apply-simulation-visible-tag",
+      "ok": true,
+      "detail": "tagCount=3"
+    },
+    {
+      "name": "settings:compact-mode",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "locale:tr-en-switch",
+      "ok": true,
+      "detail": "overviewBtn=1"
+    },
+    {
+      "name": "console:error-check",
+      "ok": true,
+      "detail": "0 error"
+    }
+  ]
+}

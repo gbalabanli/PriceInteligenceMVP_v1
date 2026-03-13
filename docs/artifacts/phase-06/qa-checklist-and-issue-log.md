@@ -2,8 +2,10 @@
 
 ## QA Summary (2026-03-13)
 - Scope: Core demo flow and critical interactions
-- Status: In Progress
+- Status: Completed
 - Blocking Issues: 0
+- Automated Smoke: 14 passed / 0 failed
+- Smoke Log: [playwright-smoke-results-2026-03-13.json](playwright-smoke-results-2026-03-13.json)
 
 ## Checklist
 

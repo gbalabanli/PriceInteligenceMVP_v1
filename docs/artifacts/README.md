@@ -28,3 +28,6 @@
 - `phase-06/localization-qa-checklist.md`
 - `phase-06/demo-walkthrough-script.md`
 - `phase-06/post-demo-improvement-backlog.md`
+- `phase-06/final-static-demo-package.md`
+- `phase-06/known-limitations.md`
+- `phase-06/playwright-smoke-results-2026-03-13.json`
