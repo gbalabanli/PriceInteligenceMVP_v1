@@ -491,6 +491,28 @@ tr:hover td {
   text-decoration: underline;
 }
 
+body.compact-mode .content {
+  padding: 12px;
+}
+
+body.compact-mode .card {
+  padding: 10px;
+}
+
+body.compact-mode th,
+body.compact-mode td {
+  padding: 8px;
+}
+
+body.compact-mode .btn {
+  padding: 5px 8px;
+  font-size: 0.75rem;
+}
+
+body.compact-mode .page-title {
+  font-size: 1.2rem;
+}
+
 @media (max-width: 1080px) {
   .app-shell {
     grid-template-columns: 1fr;

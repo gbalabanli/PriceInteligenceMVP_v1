@@ -1,7 +1,7 @@
 # Phase 06: QA, Polish, And Demo Handoff
 
 ## Phase Metadata
-- Status: Planned
+- Status: In Progress
 - Last Updated: 2026-03-13
 - Duration Target (Optional): 1 week
 - Related Master Plan: [../master_plan.md](../master_plan.md)
@@ -41,6 +41,13 @@
 - Dynamic pricing simulation demo script and disclaimer text (mock behavior only).
 - Demo walkthrough script for stakeholders.
 - Post-demo improvement backlog.
+
+## Implementation Evidence (In Progress)
+- QA checklist and issue log: [../artifacts/phase-06/qa-checklist-and-issue-log.md](../artifacts/phase-06/qa-checklist-and-issue-log.md)
+- Theme compliance checklist: [../artifacts/phase-06/theme-compliance-checklist.md](../artifacts/phase-06/theme-compliance-checklist.md)
+- Localization QA checklist: [../artifacts/phase-06/localization-qa-checklist.md](../artifacts/phase-06/localization-qa-checklist.md)
+- Demo walkthrough script: [../artifacts/phase-06/demo-walkthrough-script.md](../artifacts/phase-06/demo-walkthrough-script.md)
+- Post-demo backlog: [../artifacts/phase-06/post-demo-improvement-backlog.md](../artifacts/phase-06/post-demo-improvement-backlog.md)
 
 ## Acceptance Criteria
 - No dead link remains in defined navigation paths.

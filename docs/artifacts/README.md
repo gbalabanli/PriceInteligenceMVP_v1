@@ -16,3 +16,15 @@
 - `phase-02/dynamic-pricing-prototype-flow.md`
 - `phase-02/ux-validation-notes.md`
 - `phase-02/static-handoff-package.md`
+
+## Phase 05
+- `phase-05/interaction-state-transition-map.md`
+- `phase-05/dynamic-pricing-simulation-state-diagram.md`
+- `phase-05/interaction-test-checklist.md`
+
+## Phase 06
+- `phase-06/qa-checklist-and-issue-log.md`
+- `phase-06/theme-compliance-checklist.md`
+- `phase-06/localization-qa-checklist.md`
+- `phase-06/demo-walkthrough-script.md`
+- `phase-06/post-demo-improvement-backlog.md`

@@ -3,7 +3,7 @@
 ## Planning Metadata
 - Last Updated: 2026-03-13
 - Planning Horizon: 4-6 weeks
-- Overall Status: In Progress (Phase 05 Started)
+- Overall Status: In Progress (Phase 06 Started)
 
 ## Project Goal
 Build a fully clickable and demo-ready competitive pricing dashboard mockup that runs only with static `HTML/CSS/JavaScript`, has no backend/server dependency, uses in-browser mock data, and demonstrates the end-to-end pricing workflow.
@@ -68,15 +68,15 @@ The plan keeps six phases but aligns all work to a static mockup architecture. E
 | Phase 02 | Completed | Finalize visual dashboard language and navigation map | Phase 01 | [phase-02-visual-mvp-and-prototype.md](phases/phase-02-visual-mvp-and-prototype.md) |
 | Phase 03 | Completed | Implement static HTML/CSS page foundation and layout system | Phase 01, Phase 02 | [phase-03-mock-backed-mvp-foundation.md](phases/phase-03-mock-backed-mvp-foundation.md) |
 | Phase 04 | Completed | Implement client-side mock data layer and dashboard bindings | Phase 03 | [phase-04-real-data-pipeline.md](phases/phase-04-real-data-pipeline.md) |
-| Phase 05 | In Progress | Wire all interactions including dynamic pricing simulation flows | Phase 04 | [phase-05-pricing-intelligence-engine.md](phases/phase-05-pricing-intelligence-engine.md) |
-| Phase 06 | Planned | QA, polish, and demo handoff for static mockup release | Phase 05 | [phase-06-pilot-hardening-and-launch.md](phases/phase-06-pilot-hardening-and-launch.md) |
+| Phase 05 | Completed | Wire all interactions including dynamic pricing simulation flows | Phase 04 | [phase-05-pricing-intelligence-engine.md](phases/phase-05-pricing-intelligence-engine.md) |
+| Phase 06 | In Progress | QA, polish, and demo handoff for static mockup release | Phase 05 | [phase-06-pilot-hardening-and-launch.md](phases/phase-06-pilot-hardening-and-launch.md) |
 
 ## Phase Gates
 - Gate 1 (Scope Freeze): Completed.
 - Gate 2 (UX Freeze): Completed.
 - Gate 3 (Structure Ready): Static page architecture and layout system complete.
-- Gate 4 (Behavior Ready): Mock data binding and UI actions stable.
-- Gate 5 (Demo Ready): End-to-end demo walkthrough passes without blockers.
+- Gate 4 (Behavior Ready): Completed.
+- Gate 5 (Demo Ready): In Progress.
 
 ## Quality Targets
 - Initial render time under 2 seconds on a standard laptop browser.
@@ -121,6 +121,8 @@ The plan keeps six phases but aligns all work to a static mockup architecture. E
 - Action contract matrix: [action_matrix.md](action_matrix.md)
 - Phase 01 artifact set: [artifacts/phase-01](artifacts/phase-01)
 - Phase 02 artifact set: [artifacts/phase-02](artifacts/phase-02)
+- Phase 05 artifact set: [artifacts/phase-05](artifacts/phase-05)
+- Phase 06 artifact set: [artifacts/phase-06](artifacts/phase-06)
 
 ## Global Risks And Decisions
 - Risk: Scope creep may push the mockup toward unintended backend requirements.
@@ -138,6 +140,8 @@ The plan keeps six phases but aligns all work to a static mockup architecture. E
 
 ## Change Log
 - 2026-03-13: Phase 03 implementation started with `index.html`, shared CSS theme, hash-route app shell, TR/EN localization dictionaries, and mock dataset modules.
+- 2026-03-13: Completed Phase 05 interaction wiring with bulk selection, recommendation filtering, simulation status tagging, compact mode preference application, and confirm-modal UX refinements.
+- 2026-03-13: Started Phase 06 QA/handoff artifacts including interaction checklist, localization/theme QA checklists, demo walkthrough script, and post-demo backlog.
 - 2026-03-13: Rebuilt `assets/js/app.js` end-to-end after accidental deletion; all core routes, action handlers, confirm modal flows, and mock state transitions were restored.
 - 2026-03-13: Completed client-side mock data/state implementation (`assets/js/data.js` + in-memory state adapters) and moved Phase 04 to completed.
 - 2026-03-13: Started interaction wiring completion pass for Phase 05 including dynamic pricing simulation controls, A/B snapshot export, settings persistence, and scenario loading actions.

@@ -19,15 +19,16 @@ const ROUTES = {
 };
 
 const baseline = createBaselineState();
+const storedPreferences = readStoredPreferences();
 const state = {
-  locale: readStoredLocale(),
+  locale: storedPreferences.locale,
   route: DEFAULT_ROUTE,
   searchText: "",
   selectedProductId: baseline.products[0]?.id ?? null,
   lastRegularRoute: DEFAULT_ROUTE,
   scenario: { active: "normal" },
   monitoring: { risk: "all", sort: "risk-desc", selectedIds: [] },
-  recommendations: { tab: "pending", selectedIds: [] },
+  recommendations: { tab: "pending", selectedIds: [], risk: "all", showFilters: false },
   dynamic: {
     mode: "manual",
     running: false,
@@ -38,9 +39,9 @@ const state = {
   },
   ab: { range: "30d" },
   settings: {
-    locale: readStoredLocale(),
-    currency: "TRY",
-    compactMode: false
+    locale: storedPreferences.locale,
+    currency: storedPreferences.currency,
+    compactMode: storedPreferences.compactMode
   },
   data: {
     products: clone(baseline.products),
@@ -80,9 +81,11 @@ function bootstrap() {
   window.addEventListener("hashchange", syncRouteFromHash);
   document.addEventListener("click", onClick);
   document.addEventListener("change", onChange);
+  document.addEventListener("keydown", onKeyDown);
 
   syncRouteFromHash();
   applyLocalizationToStaticNodes();
+  applyUiPreferences();
   render();
 }
 
@@ -112,6 +115,10 @@ function isRegularRoute(route) {
 }
 
 function onClick(event) {
+  if (event.target?.id === "confirm-modal") {
+    closeConfirm();
+    return;
+  }
   const target = event.target.closest("button, [data-action], [data-route]");
   if (!target) return;
 
@@ -160,6 +167,11 @@ function onChange(event) {
     state.settings.compactMode = target.checked;
     return;
   }
+  if (target.id === "reco-risk") {
+    state.recommendations.risk = target.value;
+    render();
+    return;
+  }
 
   if (target.dataset.selectRecoId) {
     toggleInList(state.recommendations.selectedIds, Number(target.dataset.selectRecoId), target.checked);
@@ -167,6 +179,26 @@ function onChange(event) {
   }
   if (target.dataset.selectProductId) {
     toggleInList(state.monitoring.selectedIds, Number(target.dataset.selectProductId), target.checked);
+    return;
+  }
+  if (target.dataset.selectAllMonitoring) {
+    const ids = getMonitoringProducts().map((item) => item.id);
+    state.monitoring.selectedIds = target.checked ? ids : [];
+    render();
+    return;
+  }
+  if (target.dataset.selectAllReco) {
+    const ids = getRecommendationsByTab()
+      .filter((item) => item.status === "pending")
+      .map((item) => item.id);
+    state.recommendations.selectedIds = target.checked ? ids : [];
+    render();
+  }
+}
+
+function onKeyDown(event) {
+  if (event.key === "Escape" && state.confirm.isOpen) {
+    closeConfirm();
   }
 }
 
@@ -323,6 +355,7 @@ function renderDashboardPage() {
 
 function renderMonitoringPage() {
   const products = getMonitoringProducts();
+  const allSelected = products.length > 0 && products.every((item) => state.monitoring.selectedIds.includes(item.id));
   return `
     ${renderPageHeader("page.monitoring.title", "page.monitoring.subtitle", true)}
     <section class="card">
@@ -354,7 +387,7 @@ function renderMonitoringPage() {
         <table>
           <thead>
             <tr>
-              <th></th>
+              <th><input class="table-check" type="checkbox" data-select-all-monitoring="1" ${allSelected ? "checked" : ""}></th>
               <th>${t("page.monitoring.table.product")}</th>
               <th>${t("page.monitoring.table.currentPrice")}</th>
               <th>${t("page.monitoring.table.competitorMin")}</th>
@@ -374,6 +407,8 @@ function renderMonitoringPage() {
 
 function renderRecommendationsPage() {
   const list = getRecommendationsByTab();
+  const pendingRows = list.filter((item) => item.status === "pending");
+  const allSelected = pendingRows.length > 0 && pendingRows.every((item) => state.recommendations.selectedIds.includes(item.id));
   return `
     ${renderPageHeader("page.reco.title", "page.reco.subtitle", true)}
     <section class="card">
@@ -391,11 +426,24 @@ function renderRecommendationsPage() {
           <button class="btn secondary" data-action="reject-selected-reco">${t("page.reco.rejectSelected")}</button>
         </div>
       </div>
+      ${state.recommendations.showFilters ? `
+        <div class="toolbar" style="margin-top:8px;">
+          <div class="toolbar-left">
+            <label class="muted" for="reco-risk">${t("page.monitoring.filterRisk")}</label>
+            <select id="reco-risk" class="select">
+              <option value="all" ${selectedIf(state.recommendations.risk, "all")}>${t("common.all")}</option>
+              <option value="high" ${selectedIf(state.recommendations.risk, "high")}>${t("status.highRisk")}</option>
+              <option value="low" ${selectedIf(state.recommendations.risk, "low")}>${t("status.lowMargin")}</option>
+              <option value="ok" ${selectedIf(state.recommendations.risk, "ok")}>${t("status.competitive")}</option>
+            </select>
+          </div>
+        </div>
+      ` : ""}
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th></th>
+              <th>${state.recommendations.tab === "pending" ? `<input class="table-check" type="checkbox" data-select-all-reco="1" ${allSelected ? "checked" : ""}>` : ""}</th>
               <th>${t("page.monitoring.table.product")}</th>
               <th>${t("page.monitoring.table.currentPrice")}</th>
               <th>${t("page.monitoring.table.aiPrice")}</th>
@@ -447,6 +495,7 @@ function renderDynamicPage() {
                 <tr>
                   <th>${t("page.monitoring.table.product")}</th>
                   <th>${t("page.monitoring.table.aiPrice")}</th>
+                  <th>${t("page.product.reason")}</th>
                   <th>${t("page.dynamic.guardrails")}</th>
                   <th>${t("page.monitoring.table.action")}</th>
                 </tr>
@@ -542,7 +591,7 @@ function renderProductDetailPage() {
         <p class="muted">${t("page.monitoring.table.currentPrice")}: <strong>${formatMoney(current.currentPrice)}</strong></p>
         <p class="muted">${t("page.monitoring.table.competitorMin")}: <strong>${formatMoney(current.competitorMin)}</strong></p>
         <p class="muted">${t("page.monitoring.table.aiPrice")}: <strong>${formatMoney(current.aiPrice)}</strong></p>
-        <span class="status-badge ${statusClass(current.status)}">${t(statusKey(current.status))}</span>
+        ${renderProductStatus(current)}
       </div>
       <div class="card">
         <h3 class="card-title">${t("page.reco.title")}</h3>
@@ -656,7 +705,7 @@ function renderProductTableRow(product) {
       <td>${escapeHtml(product.name)}</td>
       <td>${formatMoney(product.currentPrice)}</td>
       <td>${formatMoney(product.competitorMin)}</td>
-      <td><span class="status-badge ${statusClass(product.status)}">${t(statusKey(product.status))}</span></td>
+      <td>${renderProductStatus(product)}</td>
       <td><button class="link-btn" data-action="open-product" data-product-id="${product.id}">${t("common.openDetails")}</button></td>
     </tr>
   `;
@@ -671,7 +720,7 @@ function renderMonitoringRow(product) {
       <td>${formatMoney(product.currentPrice)}</td>
       <td>${formatMoney(product.competitorMin)}</td>
       <td>${formatMoney(product.aiPrice)}</td>
-      <td><span class="status-badge ${statusClass(product.status)}">${t(statusKey(product.status))}</span></td>
+      <td>${renderProductStatus(product)}</td>
       <td><button class="link-btn" data-action="open-product" data-product-id="${product.id}">${t("common.openDetails")}</button></td>
     </tr>
   `;
@@ -718,6 +767,7 @@ function renderSimulationRow(item) {
     <tr>
       <td>${escapeHtml(item.productName)} <span class="chip mono">${escapeHtml(item.sku)}</span></td>
       <td>${formatMoney(item.suggestedPrice)}</td>
+      <td>${t(item.reasonKey)}</td>
       <td><span class="chip">${item.guardrailHits}</span></td>
       <td><button class="btn secondary" data-action="preview-simulation" data-candidate-id="${item.id}">${t("common.preview")}</button></td>
     </tr>
@@ -727,9 +777,10 @@ function renderSimulationRow(item) {
 function renderSimulationPreview(candidate) {
   return `
     <p class="muted">${escapeHtml(candidate.productName)} <span class="chip mono">${escapeHtml(candidate.sku)}</span></p>
-    <p class="muted">Current: <strong>${formatMoney(candidate.currentPrice)}</strong></p>
-    <p class="muted">Suggested: <strong>${formatMoney(candidate.suggestedPrice)}</strong></p>
-    <p class="muted">Guardrail hits: <strong>${candidate.guardrailHits}</strong></p>
+    <p class="muted">${t("page.product.current")}: <strong>${formatMoney(candidate.currentPrice)}</strong></p>
+    <p class="muted">${t("page.product.suggested")}: <strong>${formatMoney(candidate.suggestedPrice)}</strong></p>
+    <p class="muted">${t("page.product.reason")}: <strong>${t(candidate.reasonKey)}</strong></p>
+    <p class="muted">${t("page.dynamic.guardrails")}: <strong>${candidate.guardrailHits}</strong></p>
     <div class="btn-row">
       <button class="btn primary" data-action="apply-simulation" data-candidate-id="${candidate.id}">${t("common.apply")}</button>
       <button class="btn secondary" data-action="rollback-simulation">${t("common.rollback")}</button>
@@ -781,7 +832,11 @@ function handlePageAction(action, node) {
       render();
       break;
     case "toggle-reco-filter":
-      showToast(t("common.filter"));
+      state.recommendations.showFilters = !state.recommendations.showFilters;
+      if (!state.recommendations.showFilters) {
+        state.recommendations.risk = "all";
+      }
+      render();
       break;
     case "approve-all-visible":
       approveRecommendations(getRecommendationsByTab().map((item) => item.id));
@@ -871,7 +926,11 @@ function handlePageAction(action, node) {
     case "restore-defaults":
       openConfirm("confirm.restoreDefaults", () => {
         state.settings = { locale: "tr", currency: "TRY", compactMode: false };
+        localStorage.removeItem(STORAGE_KEYS.preferences);
+        localStorage.setItem(STORAGE_KEYS.locale, "tr");
+        applyUiPreferences();
         setLocale("tr");
+        render();
         showToast(t("toast.saved"));
       });
       break;
@@ -920,7 +979,14 @@ function getRecommendationsByTab() {
       state.recommendations.tab === "pending"
         ? item.status === "pending"
         : item.status !== "pending";
-    return tabMatch && visibleProductIds.has(item.productId);
+    if (!tabMatch || !visibleProductIds.has(item.productId)) {
+      return false;
+    }
+    if (state.recommendations.risk === "all") {
+      return true;
+    }
+    const product = getProductById(item.productId);
+    return product?.status === state.recommendations.risk;
   });
 }
 
@@ -964,6 +1030,7 @@ function applyRecommendation(recoId) {
 
   product.currentPrice = rec.suggestedPrice;
   product.status = product.currentPrice > product.competitorMin ? "high" : "ok";
+  product.simulationApplied = false;
   rec.status = "approved";
   rec.currentPrice = product.currentPrice;
   showToast(t("toast.saved"));
@@ -1001,9 +1068,14 @@ function applySimulationCandidate(candidateId) {
   if (!candidate) return;
   const product = getProductById(candidate.productId);
   if (!product) return;
-  state.dynamic.appliedStack.push({ productId: product.id, prevPrice: product.currentPrice });
+  state.dynamic.appliedStack.push({
+    productId: product.id,
+    prevPrice: product.currentPrice,
+    prevSimulationApplied: Boolean(product.simulationApplied)
+  });
   product.currentPrice = candidate.suggestedPrice;
   product.status = "ok";
+  product.simulationApplied = true;
   showToast(t("toast.simulationApplied"));
   render();
 }
@@ -1014,6 +1086,7 @@ function rollbackSimulation() {
   const product = getProductById(item.productId);
   if (!product) return;
   product.currentPrice = item.prevPrice;
+  product.simulationApplied = item.prevSimulationApplied;
   showToast(t("toast.simulationRolledBack"));
   render();
 }
@@ -1074,6 +1147,7 @@ function addProductNote(productId) {
 function saveSettings() {
   const { locale, currency, compactMode } = state.settings;
   localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify({ locale, currency, compactMode }));
+  applyUiPreferences();
   setLocale(locale);
   showToast(t("toast.saved"));
   render();
@@ -1108,6 +1182,8 @@ function loadScenario(id) {
   state.selectedProductId = state.data.products[0]?.id ?? null;
   state.monitoring.selectedIds = [];
   state.recommendations.selectedIds = [];
+  state.recommendations.risk = "all";
+  state.recommendations.showFilters = false;
   showToast(t("toast.stateReset"));
   const target = state.lastRegularRoute || ROUTES.dashboard;
   window.location.hash = `#${target}`;
@@ -1155,7 +1231,7 @@ function resetAppState() {
   if (elements.search) elements.search.value = "";
   state.selectedProductId = baseline.products[0]?.id ?? null;
   state.monitoring = { risk: "all", sort: "risk-desc", selectedIds: [] };
-  state.recommendations = { tab: "pending", selectedIds: [] };
+  state.recommendations = { tab: "pending", selectedIds: [], risk: "all", showFilters: false };
   state.dynamic = {
     mode: "manual",
     running: false,
@@ -1261,6 +1337,14 @@ function statusKey(status) {
   return "status.competitive";
 }
 
+function renderProductStatus(product) {
+  const main = `<span class="status-badge ${statusClass(product.status)}">${t(statusKey(product.status))}</span>`;
+  const simulation = product.simulationApplied
+    ? ` <span class="chip">${t("common.simulationTag")}</span>`
+    : "";
+  return `${main}${simulation}`;
+}
+
 function recommendationStatusKey(status) {
   if (status === "approved") return "status.approved";
   if (status === "rejected") return "status.rejected";
@@ -1283,9 +1367,34 @@ function toggleInList(list, value, isChecked) {
   if (!isChecked && index >= 0) list.splice(index, 1);
 }
 
-function readStoredLocale() {
+function readStoredPreferences() {
+  const locale = readLegacyLocale();
+  const defaults = {
+    locale,
+    currency: "TRY",
+    compactMode: false
+  };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.preferences);
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw);
+    return {
+      locale: parsed?.locale === "en" ? "en" : "tr",
+      currency: ["TRY", "USD", "EUR"].includes(parsed?.currency) ? parsed.currency : "TRY",
+      compactMode: Boolean(parsed?.compactMode)
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+function readLegacyLocale() {
   const value = localStorage.getItem(STORAGE_KEYS.locale);
   return value === "en" ? "en" : "tr";
+}
+
+function applyUiPreferences() {
+  document.body.classList.toggle("compact-mode", state.settings.compactMode);
 }
 
 function createBaselineState() {
@@ -1352,6 +1461,12 @@ function buildSimulationCandidates(products) {
     const floorPrice = Math.max(1, Math.round(product.competitorMin * 0.94));
     const manualPrice = Math.max(1, product.aiPrice);
     const autoPrice = Math.max(1, product.aiPrice - ((index % 2) * 10 + 5));
+    const reasonKey =
+      product.status === "high"
+        ? "reason.competitorUndercut"
+        : product.status === "low"
+          ? "reason.marginOpportunity"
+          : "reason.keepLeader";
     list.push({
       id: index * 2 + 1,
       productId: product.id,
@@ -1360,6 +1475,7 @@ function buildSimulationCandidates(products) {
       mode: "manual",
       currentPrice: product.currentPrice,
       suggestedPrice: manualPrice,
+      reasonKey,
       floorPrice,
       guardrailHits: manualPrice < floorPrice ? 1 : 0
     });
@@ -1371,6 +1487,7 @@ function buildSimulationCandidates(products) {
       mode: "auto",
       currentPrice: product.currentPrice,
       suggestedPrice: autoPrice,
+      reasonKey,
       floorPrice,
       guardrailHits: autoPrice < floorPrice ? 1 : 0
     });
