@@ -1,1509 +1,1154 @@
-import { messages } from "./i18n.js";
-import { mockData } from "./data.js";
+﻿(function () {
+  const appData = globalThis.PriceSmartMvpData;
+  const dynamicPricingData = appData && appData.dynamicPricing
+    ? appData.dynamicPricing
+    : { strategies: [], assignments: [] };
 
-const DEFAULT_ROUTE = "/dashboard";
-const STORAGE_KEYS = {
-  locale: "price-intelligence.locale",
-  preferences: "price-intelligence.preferences"
-};
-
-const ROUTES = {
-  dashboard: "/dashboard",
-  monitoring: "/price-monitoring",
-  recommendations: "/yz-fiyat-onerileri",
-  dynamic: "/dynamic-pricing",
-  ab: "/ab-testing",
-  productDetail: "/product-detail",
-  settings: "/settings",
-  scenario: "/scenario-lab"
-};
-
-const baseline = createBaselineState();
-const storedPreferences = readStoredPreferences();
-const state = {
-  locale: storedPreferences.locale,
-  route: DEFAULT_ROUTE,
-  searchText: "",
-  selectedProductId: baseline.products[0]?.id ?? null,
-  lastRegularRoute: DEFAULT_ROUTE,
-  scenario: { active: "normal" },
-  monitoring: { risk: "all", sort: "risk-desc", selectedIds: [] },
-  recommendations: { tab: "pending", selectedIds: [], risk: "all", showFilters: false },
-  dynamic: {
-    mode: "manual",
-    running: false,
-    guardrailsOnly: false,
-    previewId: null,
-    appliedStack: [],
-    candidates: []
-  },
-  ab: { range: "30d" },
-  settings: {
-    locale: storedPreferences.locale,
-    currency: storedPreferences.currency,
-    compactMode: storedPreferences.compactMode
-  },
-  data: {
-    products: clone(baseline.products),
-    recommendations: clone(baseline.recommendations),
-    notesByProductId: {},
-    experiments: clone(baseline.experiments)
-  },
-  confirm: {
-    isOpen: false,
-    messageKey: "",
-    onConfirm: null
+  if (!appData || !Array.isArray(appData.trackedProducts) || !Array.isArray(appData.competitorDetails)) {
+    throw new Error("PriceSmartMvpData bulunamadı. Önce data.js yüklenmeli.");
   }
-};
 
-state.dynamic.candidates = buildSimulationCandidates(state.data.products);
-state.dynamic.previewId = state.dynamic.candidates[0]?.id ?? null;
+  const ROUTES = {
+    dashboard: "/dashboard",
+    recommendations: "/yz-fiyat-onerileri",
+    dynamicPricing: "/dinamik-fiyatlandirma"
+  };
+  const state = {
+    route: ROUTES.dashboard,
+    products: clone(appData.trackedProducts),
+    competitorDetails: clone(appData.competitorDetails),
+    marketPulse: clone(appData.marketPulse),
+    dynamicPricing: {
+      strategies: clone(dynamicPricingData.strategies),
+      assignments: clone(dynamicPricingData.assignments),
+      selectedStrategyId: dynamicPricingData.strategies[0] ? dynamicPricingData.strategies[0].id : null,
+      targetType: "segment",
+      selectedTargetId: "all-products"
+    },
+    introModalOpen: true,
+    drawer: {
+      open: false,
+      mode: null,
+      productId: null
+    }
+  };
 
-const elements = {
-  content: document.getElementById("content"),
-  toast: document.getElementById("toast"),
-  search: document.getElementById("search-input"),
-  confirmModal: document.getElementById("confirm-modal"),
-  confirmTitle: document.getElementById("confirm-title"),
-  confirmMessage: document.getElementById("confirm-message")
-};
+  const elements = {
+    app: document.getElementById("app"),
+    drawer: document.getElementById("drawer"),
+    drawerBackdrop: document.getElementById("drawer-backdrop"),
+    introModalRoot: document.getElementById("intro-modal-root"),
+    toast: document.getElementById("toast")
+  };
 
-bootstrap();
+  let toastTimer = null;
 
-function bootstrap() {
-  if (elements.search) {
-    elements.search.addEventListener("input", (event) => {
-      state.searchText = event.target.value.trim().toLowerCase();
+  bootstrap();
+
+  function bootstrap() {
+    ensureDynamicPricingSelection();
+    syncRoute();
+    window.addEventListener("hashchange", syncRoute);
+    document.addEventListener("click", handleClick);
+    document.addEventListener("change", handleChange);
+    document.addEventListener("submit", handleSubmit);
+    document.addEventListener("keydown", handleKeydown);
+  }
+
+  function syncRoute() {
+    const rawHash = window.location.hash.replace(/^#/, "");
+    const normalizedRoute = rawHash.startsWith("/") ? rawHash : `/${rawHash}`;
+
+    if (!Object.values(ROUTES).includes(normalizedRoute)) {
+      window.location.hash = `#${ROUTES.dashboard}`;
+      state.route = ROUTES.dashboard;
       render();
+      return;
+    }
+
+    state.route = normalizedRoute;
+    render();
+  }
+
+  function render() {
+    renderSidebarState();
+    renderWorkspace();
+    renderDrawer();
+    renderIntroModal();
+  }
+
+  function renderSidebarState() {
+    document.querySelectorAll("[data-route]").forEach((item) => {
+      item.classList.toggle("is-active", item.dataset.route === state.route);
     });
   }
 
-  window.addEventListener("hashchange", syncRouteFromHash);
-  document.addEventListener("click", onClick);
-  document.addEventListener("change", onChange);
-  document.addEventListener("keydown", onKeyDown);
+  function renderWorkspace() {
+    if (!elements.app) return;
 
-  syncRouteFromHash();
-  applyLocalizationToStaticNodes();
-  applyUiPreferences();
-  render();
-}
+    if (state.route === ROUTES.recommendations) {
+      elements.app.innerHTML = renderRecommendationsPage();
+      return;
+    }
 
-function syncRouteFromHash() {
-  const hash = window.location.hash.replace(/^#/, "") || DEFAULT_ROUTE;
-  const normalized = hash.startsWith("/") ? hash : `/${hash}`;
-  state.route = isKnownRoute(normalized) ? normalized : DEFAULT_ROUTE;
-  if (!window.location.hash) {
-    window.location.hash = `#${state.route}`;
-  }
-  if (isRegularRoute(state.route)) {
-    state.lastRegularRoute = state.route;
-  }
-  render();
-}
+    if (state.route === ROUTES.dynamicPricing) {
+      elements.app.innerHTML = renderDynamicPricingPage();
+      return;
+    }
 
-function isKnownRoute(route) {
-  return Object.values(ROUTES).includes(route);
-}
+    const metrics = getMetrics();
 
-function isRegularRoute(route) {
-  return (
-    route !== ROUTES.settings &&
-    route !== ROUTES.scenario &&
-    route !== ROUTES.productDetail
-  );
-}
+    elements.app.innerHTML = `
+      <section class="kpi-grid" aria-label="KPI özetleri">
+        ${renderKpiCard("Takip Edilen Ürün", String(metrics.trackedCount), `${metrics.actionableProducts} ürün aksiyon bekliyor.`, "is-primary")}
+        ${renderKpiCard("Fiyat Nedeniyle Kaçan Gelir", formatMoney(metrics.lostRevenue), "Rakip altına inen ürünlerde görünür kayıp oluşuyor.", "is-danger")}
+        ${renderKpiCard("Marj Kaybı Riski", `${metrics.marginRiskCount} ürün`, "Fiyatı gereğinden düşük kalan ürünler marj yakıyor.", "is-warning")}
+        ${renderKpiCard("Tahmini Ek Kâr Potansiyeli", formatMoney(metrics.gainPotential), "Doğru fiyat adımları ile toplanabilecek ek potansiyel.", "is-success")}
+      </section>
 
-function onClick(event) {
-  if (event.target?.id === "confirm-modal") {
-    closeConfirm();
-    return;
-  }
-  const target = event.target.closest("button, [data-action], [data-route]");
-  if (!target) return;
-
-  const route = target.dataset.route;
-  if (route) {
-    window.location.hash = `#${route}`;
-    return;
-  }
-
-  const locale = target.dataset.locale;
-  if (locale) {
-    setLocale(locale);
-    return;
-  }
-
-  const action = target.dataset.action;
-  if (!action) return;
-  handleAction(action, target);
-}
-
-function onChange(event) {
-  const target = event.target;
-  if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
-
-  if (target.id === "monitor-risk") {
-    state.monitoring.risk = target.value;
-    return;
-  }
-  if (target.id === "monitor-sort") {
-    state.monitoring.sort = target.value;
-    return;
-  }
-  if (target.id === "ab-range") {
-    state.ab.range = target.value;
-    return;
-  }
-  if (target.id === "settings-locale") {
-    state.settings.locale = target.value;
-    return;
-  }
-  if (target.id === "settings-currency") {
-    state.settings.currency = target.value;
-    return;
-  }
-  if (target.id === "settings-compact") {
-    state.settings.compactMode = target.checked;
-    return;
-  }
-  if (target.id === "reco-risk") {
-    state.recommendations.risk = target.value;
-    render();
-    return;
-  }
-
-  if (target.dataset.selectRecoId) {
-    toggleInList(state.recommendations.selectedIds, Number(target.dataset.selectRecoId), target.checked);
-    return;
-  }
-  if (target.dataset.selectProductId) {
-    toggleInList(state.monitoring.selectedIds, Number(target.dataset.selectProductId), target.checked);
-    return;
-  }
-  if (target.dataset.selectAllMonitoring) {
-    const ids = getMonitoringProducts().map((item) => item.id);
-    state.monitoring.selectedIds = target.checked ? ids : [];
-    render();
-    return;
-  }
-  if (target.dataset.selectAllReco) {
-    const ids = getRecommendationsByTab()
-      .filter((item) => item.status === "pending")
-      .map((item) => item.id);
-    state.recommendations.selectedIds = target.checked ? ids : [];
-    render();
-  }
-}
-
-function onKeyDown(event) {
-  if (event.key === "Escape" && state.confirm.isOpen) {
-    closeConfirm();
-  }
-}
-
-function handleAction(action, node) {
-  switch (action) {
-    case "go-monitoring":
-      window.location.hash = `#${ROUTES.monitoring}`;
-      break;
-    case "go-recommendations":
-      state.recommendations.tab = "pending";
-      window.location.hash = `#${ROUTES.recommendations}`;
-      break;
-    case "open-product":
-      state.selectedProductId = Number(node.dataset.productId);
-      window.location.hash = `#${ROUTES.productDetail}`;
-      break;
-    case "back-dashboard":
-      window.location.hash = `#${ROUTES.dashboard}`;
-      break;
-    case "confirm-cancel":
-      closeConfirm();
-      break;
-    case "confirm-accept":
-      if (typeof state.confirm.onConfirm === "function") {
-        state.confirm.onConfirm();
-      }
-      closeConfirm();
-      break;
-    default:
-      handlePageAction(action, node);
-      break;
-  }
-}
-
-function setLocale(locale) {
-  if (!messages[locale] || state.locale === locale) return;
-  state.locale = locale;
-  state.settings.locale = locale;
-  localStorage.setItem(STORAGE_KEYS.locale, locale);
-  applyLocalizationToStaticNodes();
-  showToast(t("toast.languageChanged"));
-  render();
-}
-
-function applyLocalizationToStaticNodes() {
-  document.querySelectorAll("[data-i18n]").forEach((node) => {
-    const key = node.getAttribute("data-i18n");
-    node.textContent = t(key);
-  });
-
-  if (elements.search) {
-    elements.search.placeholder = t("header.searchPlaceholder");
-  }
-}
-
-function render() {
-  applyLocalizationToStaticNodes();
-  setActiveMenu();
-  setActiveLanguageButtons();
-  renderConfirmModal();
-
-  if (!elements.content) return;
-  elements.content.innerHTML = renderCurrentPage();
-}
-
-function renderCurrentPage() {
-  switch (state.route) {
-    case ROUTES.dashboard:
-      return renderDashboardPage();
-    case ROUTES.monitoring:
-      return renderMonitoringPage();
-    case ROUTES.recommendations:
-      return renderRecommendationsPage();
-    case ROUTES.dynamic:
-      return renderDynamicPage();
-    case ROUTES.ab:
-      return renderABPage();
-    case ROUTES.productDetail:
-      return renderProductDetailPage();
-    case ROUTES.settings:
-      return renderSettingsPage();
-    case ROUTES.scenario:
-      return renderScenarioPage();
-    default:
-      return renderDashboardPage();
-  }
-}
-
-function renderDashboardPage() {
-  const products = getVisibleProducts();
-  const critical = products.filter((p) => p.status !== "ok");
-  const pendingCount = state.data.recommendations.filter((item) => item.status === "pending").length;
-
-  const highLoss = products.filter((p) => p.currentPrice > p.competitorMin).length;
-  const lowMargin = products.filter((p) => p.currentPrice < p.competitorMin).length;
-  const estimatedGain = state.data.recommendations
-    .filter((r) => r.status === "approved")
-    .reduce((sum, r) => sum + Math.max(0, r.suggestedPrice - r.currentPrice), 0);
-
-  return `
-    ${renderPageHeader("page.dashboard.title", "page.dashboard.subtitle")}
-    <section class="kpi-grid">
-      ${renderKpiCard("page.dashboard.kpi.tracked", String(products.length))}
-      ${renderKpiCard("page.dashboard.kpi.highPriceLoss", String(highLoss), "red")}
-      ${renderKpiCard("page.dashboard.kpi.lowMarginLoss", String(lowMargin), "yellow")}
-      ${renderKpiCard("page.dashboard.kpi.estimatedGain", formatMoney(estimatedGain), "green")}
-    </section>
-
-    <section class="card">
-      <h3 class="card-title">${t("page.dashboard.criticalList")}</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${t("page.monitoring.table.product")}</th>
-              <th>${t("page.monitoring.table.currentPrice")}</th>
-              <th>${t("page.monitoring.table.competitorMin")}</th>
-              <th>${t("page.monitoring.table.status")}</th>
-              <th>${t("page.monitoring.table.action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${critical.length ? critical.map((product) => renderProductTableRow(product)).join("") : renderEmptyRow(5)}
-          </tbody>
-        </table>
-      </div>
-      <div class="btn-row">
-        <button class="btn secondary" data-action="go-monitoring">${t("page.dashboard.viewCritical")}</button>
-        <button class="btn primary" data-action="go-recommendations">${t("page.dashboard.openSuggestions")} (${pendingCount})</button>
-        <button class="btn secondary" data-action="reset-demo">${t("page.dashboard.resetDemo")}</button>
-      </div>
-    </section>
-
-    <section class="card" style="margin-top:12px;">
-      <h3 class="card-title">${t("page.dashboard.lastActions")}</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${t("page.monitoring.table.product")}</th>
-              <th>${t("page.monitoring.table.aiPrice")}</th>
-              <th>${t("page.monitoring.table.status")}</th>
-              <th>${t("page.monitoring.table.action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.data.recommendations.slice(0, 5).map((item) => renderRecommendationCompactRow(item)).join("")}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
-
-function renderMonitoringPage() {
-  const products = getMonitoringProducts();
-  const allSelected = products.length > 0 && products.every((item) => state.monitoring.selectedIds.includes(item.id));
-  return `
-    ${renderPageHeader("page.monitoring.title", "page.monitoring.subtitle", true)}
-    <section class="card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <label class="muted" for="monitor-risk">${t("page.monitoring.filterRisk")}</label>
-          <select id="monitor-risk" class="select">
-            <option value="all" ${selectedIf(state.monitoring.risk, "all")}>${t("common.all")}</option>
-            <option value="high" ${selectedIf(state.monitoring.risk, "high")}>${t("status.highRisk")}</option>
-            <option value="low" ${selectedIf(state.monitoring.risk, "low")}>${t("status.lowMargin")}</option>
-            <option value="ok" ${selectedIf(state.monitoring.risk, "ok")}>${t("status.competitive")}</option>
-          </select>
-
-          <label class="muted" for="monitor-sort">${t("page.monitoring.sortBy")}</label>
-          <select id="monitor-sort" class="select">
-            <option value="risk-desc" ${selectedIf(state.monitoring.sort, "risk-desc")}>${t("sort.riskDesc")}</option>
-            <option value="price-asc" ${selectedIf(state.monitoring.sort, "price-asc")}>${t("sort.priceAsc")}</option>
-            <option value="price-desc" ${selectedIf(state.monitoring.sort, "price-desc")}>${t("sort.priceDesc")}</option>
-          </select>
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Piyasa Nabzı</h2>
+            <p class="panel-text">Rakip baskısı, trend yönü ve yapay zeka okuması aynı blokta toplanır. Karar verici ilk bakışta hangi segmentte hareket olduğunu görür.</p>
+          </div>
+          <span class="panel-chip">Canlı sinyal özeti</span>
         </div>
-        <div class="toolbar-right">
-          <button class="btn secondary" data-action="apply-monitor-filters">${t("page.monitoring.applyFilters")}</button>
-          <button class="btn secondary" data-action="clear-monitor-filters">${t("page.monitoring.clearFilters")}</button>
-          <button class="btn primary" data-action="send-monitoring-to-reco">${t("page.monitoring.sendToAi")}</button>
+
+        <div class="pulse-grid">
+          <article class="pulse-cell">
+            <p class="pulse-label">Odak konu</p>
+            <p class="pulse-value">${escapeHtml(state.marketPulse.trendTopic)}</p>
+          </article>
+          <article class="pulse-cell">
+            <p class="pulse-label">Google Trends yönü</p>
+            <p class="pulse-value">${escapeHtml(state.marketPulse.trendDirection)}</p>
+          </article>
+          <article class="pulse-cell">
+            <p class="pulse-label">Rakip baskısı</p>
+            <p class="pulse-value">${escapeHtml(state.marketPulse.competitorPressure)}</p>
+          </article>
         </div>
-      </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th><input class="table-check" type="checkbox" data-select-all-monitoring="1" ${allSelected ? "checked" : ""}></th>
-              <th>${t("page.monitoring.table.product")}</th>
-              <th>${t("page.monitoring.table.currentPrice")}</th>
-              <th>${t("page.monitoring.table.competitorMin")}</th>
-              <th>${t("page.monitoring.table.aiPrice")}</th>
-              <th>${t("page.monitoring.table.status")}</th>
-              <th>${t("page.monitoring.table.action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${products.length ? products.map((product) => renderMonitoringRow(product)).join("") : renderEmptyRow(7)}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
+        <div class="pulse-summary">
+          <span class="pulse-summary__label">YZ içgörüsü</span>
+          <p class="pulse-summary__text">${escapeHtml(state.marketPulse.aiSummary)}</p>
+        </div>
+      </section>
 
-function renderRecommendationsPage() {
-  const list = getRecommendationsByTab();
-  const pendingRows = list.filter((item) => item.status === "pending");
-  const allSelected = pendingRows.length > 0 && pendingRows.every((item) => state.recommendations.selectedIds.includes(item.id));
-  return `
-    ${renderPageHeader("page.reco.title", "page.reco.subtitle", true)}
-    <section class="card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="tabs">
-            <button class="tab-btn ${state.recommendations.tab === "pending" ? "active" : ""}" data-action="set-reco-tab" data-tab="pending">${t("page.reco.tabPending")}</button>
-            <button class="tab-btn ${state.recommendations.tab === "processed" ? "active" : ""}" data-action="set-reco-tab" data-tab="processed">${t("page.reco.tabProcessed")}</button>
+      <section class="table-card">
+        <div class="table-card__head">
+          <div>
+            <h2 class="panel-title">Takip Edilen Ürünler</h2>
+            <p class="table-card__hint">Bir ürün satırına tıklayarak rakip URL, fiyat ve trend detayını açın.</p>
+          </div>
+          <div class="table-card__actions">
+            <button class="outline-button" type="button" data-route="${ROUTES.recommendations}">YZ Öneri Sayfası</button>
+            <button class="primary-button" type="button" data-open-add-product="1">Ürün Ekle</button>
           </div>
         </div>
-        <div class="toolbar-right">
-          <button class="btn secondary" data-action="toggle-reco-filter">${t("common.filter")}</button>
-          <button class="btn secondary" data-action="approve-all-visible">${t("page.reco.applyAll")}</button>
-          <button class="btn secondary" data-action="approve-selected-reco">${t("page.reco.approveSelected")}</button>
-          <button class="btn secondary" data-action="reject-selected-reco">${t("page.reco.rejectSelected")}</button>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Ürün</th>
+                <th>Mevcut Fiyat</th>
+                <th>Rakip Durumu</th>
+                <th>Trend</th>
+                <th>YZ Öneri</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.products.length ? state.products.map(renderProductRow).join("") : `<tr><td colspan="6" class="empty-state">Henüz takip edilen ürün bulunmuyor.</td></tr>`}
+            </tbody>
+          </table>
         </div>
-      </div>
-      ${state.recommendations.showFilters ? `
-        <div class="toolbar" style="margin-top:8px;">
-          <div class="toolbar-left">
-            <label class="muted" for="reco-risk">${t("page.monitoring.filterRisk")}</label>
-            <select id="reco-risk" class="select">
-              <option value="all" ${selectedIf(state.recommendations.risk, "all")}>${t("common.all")}</option>
-              <option value="high" ${selectedIf(state.recommendations.risk, "high")}>${t("status.highRisk")}</option>
-              <option value="low" ${selectedIf(state.recommendations.risk, "low")}>${t("status.lowMargin")}</option>
-              <option value="ok" ${selectedIf(state.recommendations.risk, "ok")}>${t("status.competitive")}</option>
+      </section>
+    `;
+  }
+
+  function renderRecommendationsPage() {
+    const recommendations = getRecommendationRows();
+    const highPriorityCount = recommendations.filter((item) => item.priority === "Yüksek").length;
+
+    return `
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h1 class="panel-title">YZ Fiyat Önerileri</h1>
+            <p class="panel-text">Rakip fiyatı, trend yönü ve mevcut fiyat farkı birlikte okunarak üretilen öneriler burada toplanır.</p>
+          </div>
+          <span class="panel-chip">${highPriorityCount} yüksek öncelikli öneri</span>
+        </div>
+
+        <div class="recommendation-summary">
+          <article class="recommendation-summary__card">
+            <p class="recommendation-summary__label">Aktif öneri</p>
+            <p class="recommendation-summary__value">${recommendations.length}</p>
+          </article>
+          <article class="recommendation-summary__card">
+            <p class="recommendation-summary__label">Bekleyen indirim</p>
+            <p class="recommendation-summary__value">${recommendations.filter((item) => item.type === "İndirim").length}</p>
+          </article>
+          <article class="recommendation-summary__card">
+            <p class="recommendation-summary__label">Marj artış fırsatı</p>
+            <p class="recommendation-summary__value">${recommendations.filter((item) => item.type === "Artış").length}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="table-card__head">
+          <div>
+            <h2 class="panel-title">Öneri Listesi</h2>
+            <p class="table-card__hint">Bu ekran, YZ öneri tabinin ilk iskeletidir. Sonraki adımda onay akışı ve detay paneli eklenebilir.</p>
+          </div>
+          <button class="secondary-button" type="button" data-route="${ROUTES.dashboard}">Genel Bakışa Dön</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Ürün</th>
+                <th>Mevcut Fiyat</th>
+                <th>Önerilen Fiyat</th>
+                <th>Öneri Tipi</th>
+                <th>Öncelik</th>
+                <th>Gerekçe</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recommendations.map(renderRecommendationRow).join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderDynamicPricingPage() {
+    const preview = getDynamicPricingPreview();
+    const activeAssignments = state.dynamicPricing.assignments;
+    const scopeOptions = getDynamicPricingScopes();
+
+    return `
+      <section class="panel intent-hero">
+        <h1 class="intent-hero__title">Dinamik Fiyatlandırma Paneli</h1>
+        <p class="intent-hero__text">Kural yazmayı bırakın. Stratejinizi belirleyin, YZ pazar ritmine göre hareket etsin.</p>
+      </section>
+
+      <section class="intent-layout" aria-label="Niyet temelli fiyatlandırma">
+        <div class="intent-main">
+          <section>
+            <div class="intent-step">
+              <span class="intent-step__index">1</span>
+              <h2 class="intent-step__title">Strateji Seç</h2>
+            </div>
+            <div class="intent-strategy-grid">
+              ${state.dynamicPricing.strategies.map((item) => renderStrategyCard(item, item.id === state.dynamicPricing.selectedStrategyId)).join("")}
+            </div>
+          </section>
+
+          <section class="panel intent-target-card">
+            <div class="intent-step">
+              <span class="intent-step__index">2</span>
+              <h2 class="intent-step__title">Hedef Kitleyi Belirle</h2>
+            </div>
+            <select class="intent-select" data-target-scope aria-label="Hedef kitle seçimi">
+              ${scopeOptions.map((item) => renderScopeOption(item)).join("")}
             </select>
+          </section>
+        </div>
+
+        <aside class="intent-side">
+          <section class="intent-ai-card">
+            <div class="intent-ai-card__head">
+              <span class="intent-ai-dot" aria-hidden="true"></span>
+              <p class="intent-ai-card__title">YZ Öngörü Özeti</p>
+            </div>
+            <p class="intent-ai-card__quote">"${escapeHtml(preview.aiQuote)}"</p>
+            <div class="intent-ai-metrics">
+              <div class="intent-ai-metric">
+                <span>İşlenecek Sinyaller</span>
+                <strong>${escapeHtml(preview.signals)}</strong>
+              </div>
+              <div class="intent-ai-metric">
+                <span>Beklenen Etki</span>
+                <strong>${escapeHtml(preview.expectedImpact)}</strong>
+              </div>
+              <div class="intent-ai-metric">
+                <span>Hedef Kitle</span>
+                <strong>${escapeHtml(preview.targetLabel)}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel intent-guard-card">
+            <h3 class="intent-guard-card__title">Güvenlik Duvarı</h3>
+            <div class="intent-guard-list">
+              <div class="intent-guard-item">
+                <span>Min. Kâr Marjı</span>
+                <strong>%15</strong>
+              </div>
+              <div class="intent-guard-item">
+                <span>Tavan Fiyat Kilidi</span>
+                <strong>Açık</strong>
+              </div>
+              <button class="primary-button" type="button" data-apply-strategy="1" ${preview.canApply ? "" : "disabled"}>Stratejiyi Başlat</button>
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="table-card intent-table">
+        <div class="table-card__head">
+          <div>
+            <h2 class="panel-title">Aktif Stratejiler</h2>
+            <p class="table-card__hint">Canlı çalışan stratejileri tek listede izleyebilir, duraklatıp yeniden başlatabilirsiniz.</p>
           </div>
         </div>
-      ` : ""}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${state.recommendations.tab === "pending" ? `<input class="table-check" type="checkbox" data-select-all-reco="1" ${allSelected ? "checked" : ""}>` : ""}</th>
-              <th>${t("page.monitoring.table.product")}</th>
-              <th>${t("page.monitoring.table.currentPrice")}</th>
-              <th>${t("page.monitoring.table.aiPrice")}</th>
-              <th>${t("page.product.reason")}</th>
-              <th>${t("page.monitoring.table.status")}</th>
-              <th>${t("page.monitoring.table.action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${list.length ? list.map((item) => renderRecommendationRow(item)).join("") : renderEmptyRow(7)}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Hedef Kitle</th>
+                <th>Strateji</th>
+                <th>Durum</th>
+                <th>Performans</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${activeAssignments.length ? activeAssignments.map(renderDynamicAssignmentRow).join("") : `<tr><td colspan="5" class="empty-state">Henüz aktif strateji ataması bulunmuyor.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
 
-function renderDynamicPage() {
-  const allCandidates = state.dynamic.candidates.filter((item) => item.mode === state.dynamic.mode);
-  const visibleCandidates = state.dynamic.guardrailsOnly
-    ? allCandidates.filter((item) => item.guardrailHits > 0)
-    : allCandidates;
-  const preview = visibleCandidates.find((item) => item.id === state.dynamic.previewId) ?? visibleCandidates[0] ?? null;
+  function renderKpiCard(label, value, note, modifier) {
+    return `
+      <article class="kpi-card ${modifier}">
+        <p class="kpi-label">${escapeHtml(label)}</p>
+        <p class="kpi-value">${escapeHtml(value)}</p>
+        <p class="kpi-note">${escapeHtml(note)}</p>
+      </article>
+    `;
+  }
 
-  return `
-    ${renderPageHeader("page.dynamic.title", "page.dynamic.subtitle", true)}
-    <section class="card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="tabs">
-            <button class="tab-btn ${state.dynamic.mode === "manual" ? "active" : ""}" data-action="set-dynamic-mode" data-mode="manual">${t("page.dynamic.modeManual")}</button>
-            <button class="tab-btn ${state.dynamic.mode === "auto" ? "active" : ""}" data-action="set-dynamic-mode" data-mode="auto">${t("page.dynamic.modeAuto")}</button>
+  function renderProductRow(product) {
+    return `
+      <tr class="product-row" tabindex="0" data-product-row="${escapeHtml(product.id)}" aria-label="${escapeHtml(product.name)} detaylarını aç">
+        <td>
+          <p class="product-name">${escapeHtml(product.name)}</p>
+          <div class="product-meta">
+            <span class="muted-chip">${escapeHtml(product.sku)}</span>
+            <span class="muted-chip">${escapeHtml(product.category)}</span>
+            <span class="muted-chip">${product.competitorCount} rakip</span>
           </div>
-          <span class="chip">${state.dynamic.running ? t("page.dynamic.running") : t("page.dynamic.idle")}</span>
+        </td>
+        <td>${formatMoney(product.currentPrice)}</td>
+        <td>${escapeHtml(product.competitorStatus)}</td>
+        <td><span class="trend-chip ${getTrendClass(product.trendDirection)}">${escapeHtml(product.trendDirection)}</span></td>
+        <td><p class="ai-note"><strong>YZ:</strong> ${escapeHtml(product.aiSuggestionText)}</p></td>
+        <td><span class="status-chip ${getStatusClass(product.status)}">${escapeHtml(product.status)}</span></td>
+      </tr>
+    `;
+  }
+
+  function renderRecommendationRow(item) {
+    return `
+      <tr>
+        <td>
+          <p class="product-name">${escapeHtml(item.name)}</p>
+          <div class="product-meta">
+            <span class="muted-chip">${escapeHtml(item.sku)}</span>
+            <span class="muted-chip">${escapeHtml(item.category)}</span>
+          </div>
+        </td>
+        <td>${formatMoney(item.currentPrice)}</td>
+        <td>${formatMoney(item.suggestedPrice)}</td>
+        <td><span class="recommendation-type ${item.type === "İndirim" ? "is-discount" : item.type === "Artış" ? "is-increase" : "is-keep"}">${escapeHtml(item.type)}</span></td>
+        <td><span class="recommendation-priority ${item.priority === "Yüksek" ? "is-high" : "is-medium"}">${escapeHtml(item.priority)}</span></td>
+        <td><p class="ai-note">${escapeHtml(item.reason)}</p></td>
+      </tr>
+    `;
+  }
+
+  function renderStrategyCard(strategy, isSelected) {
+    const strategyIcon = getStrategyIcon(strategy.id);
+    const strategyTone = getStrategyTone(strategy.id);
+
+    return `
+      <button class="intent-strategy-card ${isSelected ? "is-selected" : ""}" type="button" data-select-strategy="${escapeAttribute(strategy.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+        <div class="strategy-card__top">
+          <span class="intent-strategy-card__icon intent-strategy-card__icon--${strategyTone}" aria-hidden="true">${strategyIcon}</span>
+          <div>
+            <p class="intent-strategy-card__title">${escapeHtml(strategy.name)}</p>
+            <p class="intent-strategy-card__summary">${escapeHtml(strategy.summary)}</p>
+          </div>
+          ${strategy.id === "balanced-auto" ? `<span class="intent-tag intent-tag--recommended">Önerilen</span>` : ""}
         </div>
-        <div class="toolbar-right">
-          <button class="btn primary" data-action="run-simulation">${t("page.dynamic.runSimulation")}</button>
-          <button class="btn secondary" data-action="pause-simulation">${t("page.dynamic.pauseSimulation")}</button>
-          <button class="btn secondary" data-action="reset-simulation">${t("page.dynamic.resetSimulation")}</button>
-          <button class="btn secondary" data-action="toggle-guardrails">${t("page.dynamic.showGuardrails")}</button>
+        <div class="intent-strategy-card__meta">
+          <span>Risk: <strong class="strategy-risk strategy-risk--${getRiskClass(strategy.riskLevel)}">${escapeHtml(strategy.riskLevel)}</strong></span>
+          <span class="intent-strategy-card__goal">${escapeHtml(strategy.businessGoal)}</span>
         </div>
+      </button>
+    `;
+  }
+
+  function renderScopeOption(option) {
+    const optionValue = getDynamicScopeValue(option.type, option.id);
+    const selectedValue = getDynamicScopeValue(state.dynamicPricing.targetType, state.dynamicPricing.selectedTargetId);
+    const selectedAttr = optionValue === selectedValue ? "selected" : "";
+    return `<option value="${escapeAttribute(optionValue)}" ${selectedAttr}>${escapeHtml(option.label)}</option>`;
+  }
+
+  function renderDynamicAssignmentRow(item) {
+    const strategy = getStrategyById(item.strategyId);
+    const isActive = item.status === "Aktif";
+    const toggleLabel = isActive ? "Durdur" : "Başlat";
+
+    return `
+      <tr>
+        <td class="intent-cell-target">${escapeHtml(item.targetLabel)}</td>
+        <td><span class="intent-pill intent-pill--${getStrategyTone(item.strategyId)}">${escapeHtml(strategy ? strategy.name : "-")}</span></td>
+        <td><span class="assignment-state ${isActive ? "is-active" : "is-paused"}">${escapeHtml(item.status)}</span></td>
+        <td class="intent-cell-performance">${escapeHtml(item.performance)}</td>
+        <td>
+          <div class="intent-action-row">
+            <button class="ghost-button" type="button" data-toggle-assignment="${escapeAttribute(item.id)}">${toggleLabel}</button>
+            <button class="ghost-button is-danger" type="button" data-remove-assignment="${escapeAttribute(item.id)}">Kaldır</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderDrawer() {
+    if (!elements.drawer || !elements.drawerBackdrop) return;
+
+    if (!state.drawer.open) {
+      elements.drawer.classList.add("hidden");
+      elements.drawerBackdrop.classList.add("hidden");
+      elements.drawer.setAttribute("aria-hidden", "true");
+      elements.drawer.innerHTML = "";
+      syncOverlayState();
+      return;
+    }
+
+    elements.drawer.classList.remove("hidden");
+    elements.drawerBackdrop.classList.remove("hidden");
+    elements.drawer.setAttribute("aria-hidden", "false");
+    elements.drawer.innerHTML = state.drawer.mode === "add"
+      ? renderAddProductDrawer()
+      : renderProductDetailDrawer();
+    syncOverlayState();
+  }
+
+  function renderIntroModal() {
+    if (!elements.introModalRoot) return;
+
+    if (!state.introModalOpen) {
+      elements.introModalRoot.innerHTML = "";
+      syncOverlayState();
+      return;
+    }
+
+    const metrics = getMetrics();
+    elements.introModalRoot.innerHTML = `
+      <div class="modal-backdrop" data-close-intro="1">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="intro-modal-title">
+          <div class="modal-hero">
+            <div class="modal-copy">
+              <p class="modal-eyebrow">Değer Katıyoruz</p>
+              <h2 id="intro-modal-title" class="modal-title">Doğru ürün, doğru fiyat ile doğru zamanda görünmediğinde potansiyel gelir sessizce kaybolur.</h2>
+              <p class="modal-text">
+                E-ticaret ekipleri ne zaman hangi fiyatta hangi ürünü satacağını net olarak bilemediğinde ya satış kaçırıyor ya da gereksiz marj kaybı yaşıyor.
+                PriceSmart AI, rakip ürün bilgilerini ve Google Trends sinyallerini tek akışta toplayıp hangi ürünün aksiyon istediğini ilk bakışta görünür hale getirir.
+              </p>
+            </div>
+
+            <aside class="modal-highlight" aria-label="Hızlı özet">
+              <p class="modal-highlight__eyebrow">Hızlı Özet</p>
+              <p class="modal-highlight__value">${formatMoney(metrics.gainPotential)}</p>
+              <p class="modal-highlight__text">Bugün görünür hale gelen tahmini ek kâr potansiyeli.</p>
+              <div class="modal-highlight__stack">
+                <div class="modal-highlight__row">
+                  <span>Aksiyon isteyen ürün</span>
+                  <strong>${metrics.actionableProducts}</strong>
+                </div>
+                <div class="modal-highlight__row">
+                  <span>Takip edilen rakip</span>
+                  <strong>${metrics.totalCompetitors}</strong>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="modal-grid" aria-label="Öne çıkan sinyaller">
+            <article class="modal-metric">
+              <p class="modal-metric__label">Takip edilen ürün</p>
+              <p class="modal-metric__value">${metrics.trackedCount} ürün aktif olarak izleniyor.</p>
+            </article>
+            <article class="modal-metric">
+              <p class="modal-metric__label">Fiyat baskısı</p>
+              <p class="modal-metric__value">${formatMoney(metrics.lostRevenue)} görünür gelir kaybı işareti var.</p>
+            </article>
+            <article class="modal-metric">
+              <p class="modal-metric__label">Trend + YZ</p>
+              <p class="modal-metric__value">${escapeHtml(state.marketPulse.trendDirection)} sinyali ve YZ içgörüsü aynı ekranda.</p>
+            </article>
+          </div>
+
+          <div class="modal-actions">
+            <button class="secondary-button" type="button" data-close-intro="1">Devam Et</button>
+            <button class="primary-button" type="button" data-intro-add-product="1">Ürün Ekle ile Başla</button>
+          </div>
+        </section>
       </div>
-      <div class="split-grid">
-        <div class="card">
-          <h3 class="card-title">${t("common.simulation")}</h3>
-          <div class="table-wrap">
-            <table>
+    `;
+    syncOverlayState();
+  }
+
+  function renderAddProductDrawer() {
+    return `
+      <div class="drawer-panel">
+        <div class="drawer-head">
+          <div>
+            <h2 class="drawer-title">Ürün Ekle</h2>
+            <p class="drawer-text">Takip akışına yeni ürün ekleyin. İlk iterasyonda yalnızca ürün adı, SKU ve kategori bilgisi alınır.</p>
+          </div>
+          <button class="icon-button" type="button" aria-label="Kapat" data-drawer-close="1">×</button>
+        </div>
+
+        <form id="add-product-form" class="form-grid">
+          <div class="field">
+            <label for="product-name">Ürün Adı</label>
+            <input id="product-name" name="name" type="text" placeholder="Örn. Bluetooth Hoparlör Mini" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="product-sku">SKU</label>
+            <input id="product-sku" name="sku" type="text" placeholder="Örn. SKU-7788" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="product-category">Kategori</label>
+            <input id="product-category" name="category" type="text" placeholder="Örn. Ses Sistemleri" autocomplete="off">
+          </div>
+
+          <p class="helper-text">Kayıt sonrası ürün tabloya eklenir ve varsayılan olarak <strong>Kurulum Bekliyor</strong> durumunda izlemeye alınır.</p>
+
+          <div class="drawer-actions">
+            <button class="secondary-button" type="button" data-drawer-close="1">Vazgeç</button>
+            <button class="primary-button" type="submit">Kaydet ve Ekle</button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  function renderProductDetailDrawer() {
+    const product = getProductById(state.drawer.productId);
+    if (!product) {
+      closeDrawer();
+      return "";
+    }
+
+    const competitors = getCompetitorsByProductId(product.id);
+
+    return `
+      <div class="drawer-panel">
+        <div class="drawer-head">
+          <div>
+            <h2 class="drawer-title">${escapeHtml(product.name)}</h2>
+            <p class="drawer-text">Rakip fiyatları, trend özeti ve son güncelleme zamanı bu panelde bir araya gelir.</p>
+          </div>
+          <button class="icon-button" type="button" aria-label="Kapat" data-drawer-close="1">×</button>
+        </div>
+
+        <section class="meta-grid">
+          <article class="meta-card">
+            <p class="meta-card__label">SKU</p>
+            <p class="meta-card__value">${escapeHtml(product.sku)}</p>
+          </article>
+          <article class="meta-card">
+            <p class="meta-card__label">Kategori</p>
+            <p class="meta-card__value">${escapeHtml(product.category)}</p>
+          </article>
+          <article class="meta-card">
+            <p class="meta-card__label">Mevcut fiyat</p>
+            <p class="meta-card__value">${formatMoney(product.currentPrice)}</p>
+          </article>
+          <article class="meta-card">
+            <p class="meta-card__label">Durum</p>
+            <p class="meta-card__value"><span class="status-chip ${getStatusClass(product.status)}">${escapeHtml(product.status)}</span></p>
+          </article>
+        </section>
+
+        <div class="section-stack">
+          <section class="section-card">
+            <h3>Trend özeti</h3>
+            <p>${escapeHtml(product.trendSummary)}</p>
+            <p class="helper-text">Son güncelleme: ${escapeHtml(product.updatedAt)}</p>
+          </section>
+
+          <section class="section-card">
+            <h3>YZ öneri notu</h3>
+            <p>${escapeHtml(product.aiSuggestionText)}</p>
+          </section>
+
+          <section class="section-card">
+            <h3>Rakip detayları</h3>
+            <table class="competitor-table">
               <thead>
                 <tr>
-                  <th>${t("page.monitoring.table.product")}</th>
-                  <th>${t("page.monitoring.table.aiPrice")}</th>
-                  <th>${t("page.product.reason")}</th>
-                  <th>${t("page.dynamic.guardrails")}</th>
-                  <th>${t("page.monitoring.table.action")}</th>
+                  <th>Ad / Domain</th>
+                  <th>URL</th>
+                  <th>Fiyat</th>
                 </tr>
               </thead>
               <tbody>
-                ${visibleCandidates.length ? visibleCandidates.map((item) => renderSimulationRow(item)).join("") : renderEmptyRow(4)}
+                ${competitors.map(renderCompetitorRow).join("")}
               </tbody>
             </table>
-          </div>
-        </div>
-        <div class="card">
-          <h3 class="card-title">${t("page.dynamic.previewPanel")}</h3>
-          ${preview ? renderSimulationPreview(preview) : `<p class="muted">${t("common.noRecords")}</p>`}
+          </section>
         </div>
       </div>
-    </section>
-  `;
-}
-
-function renderABPage() {
-  const experiments = getVisibleExperiments();
-  const runningCount = experiments.filter((item) => item.status === "running").length;
-  const avgLift = experiments.length
-    ? experiments.reduce((sum, item) => sum + item.liftPercent, 0) / experiments.length
-    : 0;
-
-  return `
-    ${renderPageHeader("page.ab.title", "page.ab.subtitle", true)}
-    <section class="kpi-grid">
-      ${renderKpiCard("page.dashboard.kpi.tracked", String(experiments.length))}
-      ${renderKpiCard("common.run", String(runningCount), "yellow")}
-      ${renderKpiCard("page.ab.kpi.lift", `${avgLift.toFixed(2)}%`, "green")}
-      ${renderKpiCard("page.ab.kpi.bestVariant", getBestVariantLabel(experiments))}
-    </section>
-    <section class="card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <label class="muted" for="ab-range">${t("page.ab.range")}</label>
-          <select id="ab-range" class="select">
-            <option value="7d" ${selectedIf(state.ab.range, "7d")}>${t("page.ab.last7")}</option>
-            <option value="30d" ${selectedIf(state.ab.range, "30d")}>${t("page.ab.last30")}</option>
-            <option value="90d" ${selectedIf(state.ab.range, "90d")}>${t("page.ab.last90")}</option>
-          </select>
-        </div>
-        <div class="toolbar-right">
-          <button class="btn secondary" data-action="apply-ab-range">${t("page.ab.applyRange")}</button>
-          <button class="btn secondary" data-action="reset-ab-range">${t("page.ab.resetRange")}</button>
-          <button class="btn secondary" data-action="export-ab-snapshot">${t("page.ab.exportSnapshot")}</button>
-          <button class="btn primary" data-action="run-ab-test">${t("page.ab.runNewTest")}</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${t("page.ab.table.test")}</th>
-              <th>${t("page.ab.table.date")}</th>
-              <th>${t("page.ab.table.control")}</th>
-              <th>${t("page.ab.table.variant")}</th>
-              <th>${t("page.ab.table.lift")}</th>
-              <th>${t("page.ab.table.status")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${experiments.length ? experiments.map((item) => renderExperimentRow(item)).join("") : renderEmptyRow(6)}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
-
-function renderProductDetailPage() {
-  const products = getVisibleProducts();
-  const current = state.data.products.find((item) => item.id === state.selectedProductId) ?? state.data.products[0];
-  if (!current) {
-    return `
-      ${renderPageHeader("page.product.title", "page.product.subtitle", true)}
-      <section class="card"><p class="muted">${t("common.noRecords")}</p></section>
     `;
   }
-  const recommendation = getRecommendationByProductId(current.id);
-  const index = products.findIndex((item) => item.id === current.id);
-  const prevProduct = index > 0 ? products[index - 1] : null;
-  const nextProduct = index >= 0 && index < products.length - 1 ? products[index + 1] : null;
-  const notes = state.data.notesByProductId[current.id] ?? [];
 
-  return `
-    ${renderPageHeader("page.product.title", "page.product.subtitle", true)}
-    <section class="split-grid">
-      <div class="card">
-        <h3 class="card-title">${escapeHtml(current.name)} <span class="chip mono">${escapeHtml(current.sku)}</span></h3>
-        <p class="muted">${t("page.monitoring.table.currentPrice")}: <strong>${formatMoney(current.currentPrice)}</strong></p>
-        <p class="muted">${t("page.monitoring.table.competitorMin")}: <strong>${formatMoney(current.competitorMin)}</strong></p>
-        <p class="muted">${t("page.monitoring.table.aiPrice")}: <strong>${formatMoney(current.aiPrice)}</strong></p>
-        ${renderProductStatus(current)}
-      </div>
-      <div class="card">
-        <h3 class="card-title">${t("page.reco.title")}</h3>
-        ${recommendation ? `
-          <p class="muted">${t("page.product.reason")}: ${t(recommendation.reasonKey)}</p>
-          <p class="muted">${t("page.product.suggested")}: <strong>${formatMoney(recommendation.suggestedPrice)}</strong></p>
-          <p class="muted">${t("page.monitoring.table.status")}: <span class="chip">${t(recommendationStatusKey(recommendation.status))}</span></p>
-          <div class="btn-row">
-            <button class="btn primary" data-action="approve-single-reco" data-reco-id="${recommendation.id}">${t("common.approve")}</button>
-            <button class="btn secondary" data-action="reject-single-reco" data-reco-id="${recommendation.id}">${t("common.reject")}</button>
-            <button class="btn secondary" data-action="add-product-note" data-product-id="${current.id}">${t("common.addNote")}</button>
-          </div>
-        ` : `<p class="muted">${t("common.noRecords")}</p>`}
-      </div>
-    </section>
+  function renderCompetitorRow(item) {
+    const isUrl = /^https?:\/\//.test(item.url);
+    const urlCell = isUrl
+      ? `<a href="${escapeAttribute(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.url)}</a>`
+      : `<span>${escapeHtml(item.url)}</span>`;
 
-    <section class="card" style="margin-top:12px;">
-      <h3 class="card-title">${t("page.product.notes")}</h3>
-      ${notes.length ? `<ul>${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>` : `<p class="muted">${t("common.noRecords")}</p>`}
-      <div class="btn-row">
-        <button class="btn secondary" data-action="product-prev" ${prevProduct ? `data-product-id="${prevProduct.id}"` : "disabled"}>${t("common.previous")}</button>
-        <button class="btn secondary" data-action="product-next" ${nextProduct ? `data-product-id="${nextProduct.id}"` : "disabled"}>${t("common.next")}</button>
-      </div>
-    </section>
-  `;
-}
-
-function renderSettingsPage() {
-  return `
-    ${renderPageHeader("page.settings.title", "page.settings.subtitle", true)}
-    <section class="card">
-      <div class="toolbar">
-        <div class="toolbar-left" style="display:grid;gap:10px;min-width:280px;">
-          <label class="muted" for="settings-locale">${t("page.settings.locale")}</label>
-          <select id="settings-locale" class="select">
-            <option value="tr" ${selectedIf(state.settings.locale, "tr")}>TR</option>
-            <option value="en" ${selectedIf(state.settings.locale, "en")}>EN</option>
-          </select>
-          <label class="muted" for="settings-currency">${t("page.settings.currency")}</label>
-          <select id="settings-currency" class="select">
-            <option value="TRY" ${selectedIf(state.settings.currency, "TRY")}>TRY</option>
-            <option value="USD" ${selectedIf(state.settings.currency, "USD")}>USD</option>
-            <option value="EUR" ${selectedIf(state.settings.currency, "EUR")}>EUR</option>
-          </select>
-          <label><input id="settings-compact" type="checkbox" ${state.settings.compactMode ? "checked" : ""}> ${t("page.settings.compactMode")}</label>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn primary" data-action="save-settings">${t("page.settings.savePreferences")}</button>
-        <button class="btn secondary" data-action="restore-defaults">${t("common.restoreDefaults")}</button>
-      </div>
-    </section>
-  `;
-}
-
-function renderScenarioPage() {
-  return `
-    ${renderPageHeader("page.scenario.title", "page.scenario.subtitle", true)}
-    <section class="card">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${t("page.scenario.id")}</th>
-              <th>${t("page.scenario.label")}</th>
-              <th>${t("page.monitoring.table.action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${mockData.scenarios.map((item) => `
-              <tr>
-                <td><span class="chip mono">${escapeHtml(item.id)}</span></td>
-                <td>${t(`page.scenario.${item.id}`) || escapeHtml(item.label)}</td>
-                <td><button class="btn primary" data-action="load-scenario" data-scenario-id="${item.id}">${t("page.scenario.loadScenario")}</button></td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-      <div class="btn-row">
-        <button class="btn secondary" data-action="reseed-scenario">${t("page.scenario.reseed")}</button>
-      </div>
-    </section>
-  `;
-}
-
-function renderPageHeader(titleKey, subtitleKey, showBack = false) {
-  return `
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">${t(titleKey)}</h1>
-        <p class="page-subtitle">${t(subtitleKey)}</p>
-      </div>
-      ${showBack ? `<button class="back-btn" data-action="back-dashboard">${t("common.backToDashboard")}</button>` : ""}
-    </header>
-  `;
-}
-
-function renderKpiCard(labelKey, value, tone = "") {
-  return `
-    <article class="card">
-      <p class="kpi-label">${labelKey.includes(".") ? t(labelKey) : escapeHtml(labelKey)}</p>
-      <p class="kpi-value ${tone}">${escapeHtml(value)}</p>
-    </article>
-  `;
-}
-
-function renderProductTableRow(product) {
-  return `
-    <tr>
-      <td>${escapeHtml(product.name)}</td>
-      <td>${formatMoney(product.currentPrice)}</td>
-      <td>${formatMoney(product.competitorMin)}</td>
-      <td>${renderProductStatus(product)}</td>
-      <td><button class="link-btn" data-action="open-product" data-product-id="${product.id}">${t("common.openDetails")}</button></td>
-    </tr>
-  `;
-}
-
-function renderMonitoringRow(product) {
-  const checked = state.monitoring.selectedIds.includes(product.id) ? "checked" : "";
-  return `
-    <tr>
-      <td><input class="table-check" type="checkbox" data-select-product-id="${product.id}" ${checked}></td>
-      <td>${escapeHtml(product.name)} <span class="chip mono">${escapeHtml(product.sku)}</span></td>
-      <td>${formatMoney(product.currentPrice)}</td>
-      <td>${formatMoney(product.competitorMin)}</td>
-      <td>${formatMoney(product.aiPrice)}</td>
-      <td>${renderProductStatus(product)}</td>
-      <td><button class="link-btn" data-action="open-product" data-product-id="${product.id}">${t("common.openDetails")}</button></td>
-    </tr>
-  `;
-}
-
-function renderRecommendationCompactRow(item) {
-  const product = getProductById(item.productId);
-  return `
-    <tr>
-      <td>${escapeHtml(product?.name ?? "-")}</td>
-      <td>${formatMoney(item.suggestedPrice)}</td>
-      <td><span class="chip">${t(recommendationStatusKey(item.status))}</span></td>
-      <td><button class="link-btn" data-action="open-product" data-product-id="${item.productId}">${t("common.openDetails")}</button></td>
-    </tr>
-  `;
-}
-
-function renderRecommendationRow(item) {
-  const product = getProductById(item.productId);
-  const checked = state.recommendations.selectedIds.includes(item.id) ? "checked" : "";
-  const isPending = item.status === "pending";
-  return `
-    <tr>
-      <td>${isPending ? `<input class="table-check" type="checkbox" data-select-reco-id="${item.id}" ${checked}>` : ""}</td>
-      <td>${escapeHtml(product?.name ?? "-")} <span class="chip mono">${escapeHtml(product?.sku ?? "")}</span></td>
-      <td>${formatMoney(item.currentPrice)}</td>
-      <td>${formatMoney(item.suggestedPrice)}</td>
-      <td>${t(item.reasonKey)}</td>
-      <td><span class="chip">${t(recommendationStatusKey(item.status))}</span></td>
-      <td>
-        <div class="row-actions">
-          ${isPending ? `<button class="btn secondary" data-action="apply-reco" data-reco-id="${item.id}">${t("common.apply")}</button>` : ""}
-          ${isPending ? `<button class="btn secondary" data-action="approve-single-reco" data-reco-id="${item.id}">${t("common.approve")}</button>` : ""}
-          ${isPending ? `<button class="btn secondary" data-action="reject-single-reco" data-reco-id="${item.id}">${t("common.reject")}</button>` : ""}
-          <button class="btn secondary" data-action="open-product" data-product-id="${item.productId}">${t("common.openDetails")}</button>
-        </div>
-      </td>
-    </tr>
-  `;
-}
-
-function renderSimulationRow(item) {
-  return `
-    <tr>
-      <td>${escapeHtml(item.productName)} <span class="chip mono">${escapeHtml(item.sku)}</span></td>
-      <td>${formatMoney(item.suggestedPrice)}</td>
-      <td>${t(item.reasonKey)}</td>
-      <td><span class="chip">${item.guardrailHits}</span></td>
-      <td><button class="btn secondary" data-action="preview-simulation" data-candidate-id="${item.id}">${t("common.preview")}</button></td>
-    </tr>
-  `;
-}
-
-function renderSimulationPreview(candidate) {
-  return `
-    <p class="muted">${escapeHtml(candidate.productName)} <span class="chip mono">${escapeHtml(candidate.sku)}</span></p>
-    <p class="muted">${t("page.product.current")}: <strong>${formatMoney(candidate.currentPrice)}</strong></p>
-    <p class="muted">${t("page.product.suggested")}: <strong>${formatMoney(candidate.suggestedPrice)}</strong></p>
-    <p class="muted">${t("page.product.reason")}: <strong>${t(candidate.reasonKey)}</strong></p>
-    <p class="muted">${t("page.dynamic.guardrails")}: <strong>${candidate.guardrailHits}</strong></p>
-    <div class="btn-row">
-      <button class="btn primary" data-action="apply-simulation" data-candidate-id="${candidate.id}">${t("common.apply")}</button>
-      <button class="btn secondary" data-action="rollback-simulation">${t("common.rollback")}</button>
-    </div>
-  `;
-}
-
-function renderExperimentRow(item) {
-  return `
-    <tr>
-      <td>${escapeHtml(item.name)}</td>
-      <td>${escapeHtml(item.date)}</td>
-      <td>${formatMoney(item.controlPrice)}</td>
-      <td>${formatMoney(item.variantPrice)}</td>
-      <td>${item.liftPercent.toFixed(2)}%</td>
-      <td><span class="chip">${t(abStatusKey(item.status))}</span></td>
-    </tr>
-  `;
-}
-
-function renderEmptyRow(colspan) {
-  return `<tr><td colspan="${colspan}" class="muted">${t("common.noRecords")}</td></tr>`;
-}
-
-function handlePageAction(action, node) {
-  switch (action) {
-    case "reset-demo":
-      openConfirm("confirm.resetDemo", () => {
-        resetAppState();
-        showToast(t("toast.stateReset"));
-        render();
-      });
-      break;
-    case "apply-monitor-filters":
-      render();
-      break;
-    case "clear-monitor-filters":
-      state.monitoring.risk = "all";
-      state.monitoring.sort = "risk-desc";
-      state.monitoring.selectedIds = [];
-      render();
-      break;
-    case "send-monitoring-to-reco":
-      sendSelectedProductsToRecommendations();
-      break;
-    case "set-reco-tab":
-      state.recommendations.tab = node.dataset.tab === "processed" ? "processed" : "pending";
-      state.recommendations.selectedIds = [];
-      render();
-      break;
-    case "toggle-reco-filter":
-      state.recommendations.showFilters = !state.recommendations.showFilters;
-      if (!state.recommendations.showFilters) {
-        state.recommendations.risk = "all";
-      }
-      render();
-      break;
-    case "approve-all-visible":
-      approveRecommendations(getRecommendationsByTab().map((item) => item.id));
-      break;
-    case "approve-selected-reco":
-      approveRecommendations(state.recommendations.selectedIds);
-      break;
-    case "reject-selected-reco":
-      if (!state.recommendations.selectedIds.length) return;
-      openConfirm("confirm.rejectBulk", () => {
-        rejectRecommendations(state.recommendations.selectedIds);
-      });
-      break;
-    case "apply-reco":
-      applyRecommendation(Number(node.dataset.recoId));
-      break;
-    case "approve-single-reco":
-      approveRecommendations([Number(node.dataset.recoId)]);
-      break;
-    case "reject-single-reco":
-      openConfirm("confirm.reject", () => {
-        rejectRecommendations([Number(node.dataset.recoId)]);
-      });
-      break;
-    case "set-dynamic-mode":
-      state.dynamic.mode = node.dataset.mode === "auto" ? "auto" : "manual";
-      state.dynamic.previewId = state.dynamic.candidates.find((item) => item.mode === state.dynamic.mode)?.id ?? null;
-      render();
-      break;
-    case "run-simulation":
-      runSimulation();
-      break;
-    case "pause-simulation":
-      state.dynamic.running = false;
-      showToast(t("toast.simulationPaused"));
-      render();
-      break;
-    case "reset-simulation":
-      openConfirm("confirm.resetSimulation", () => {
-        resetSimulationState();
-        render();
-      });
-      break;
-    case "toggle-guardrails":
-      state.dynamic.guardrailsOnly = !state.dynamic.guardrailsOnly;
-      render();
-      break;
-    case "preview-simulation":
-      state.dynamic.previewId = Number(node.dataset.candidateId);
-      render();
-      break;
-    case "apply-simulation":
-      applySimulationCandidate(Number(node.dataset.candidateId));
-      break;
-    case "rollback-simulation":
-      if (!state.dynamic.appliedStack.length) return;
-      openConfirm("confirm.rollback", () => {
-        rollbackSimulation();
-      });
-      break;
-    case "apply-ab-range":
-      render();
-      break;
-    case "reset-ab-range":
-      state.ab.range = "30d";
-      render();
-      break;
-    case "export-ab-snapshot":
-      exportAbSnapshot();
-      break;
-    case "run-ab-test":
-      runNewAbTest();
-      break;
-    case "add-product-note":
-      addProductNote(Number(node.dataset.productId));
-      break;
-    case "product-prev":
-    case "product-next":
-      if (node.dataset.productId) {
-        state.selectedProductId = Number(node.dataset.productId);
-        render();
-      }
-      break;
-    case "save-settings":
-      saveSettings();
-      break;
-    case "restore-defaults":
-      openConfirm("confirm.restoreDefaults", () => {
-        state.settings = { locale: "tr", currency: "TRY", compactMode: false };
-        localStorage.removeItem(STORAGE_KEYS.preferences);
-        localStorage.setItem(STORAGE_KEYS.locale, "tr");
-        applyUiPreferences();
-        setLocale("tr");
-        render();
-        showToast(t("toast.saved"));
-      });
-      break;
-    case "load-scenario":
-      if (node.dataset.scenarioId) {
-        loadScenario(node.dataset.scenarioId);
-      }
-      break;
-    case "reseed-scenario":
-      reseedScenarioValues();
-      break;
-    default:
-      break;
+    return `
+      <tr>
+        <td>${escapeHtml(item.sourceName)}</td>
+        <td>${urlCell}</td>
+        <td>${Number.isFinite(item.price) ? formatMoney(item.price) : "-"}</td>
+      </tr>
+    `;
   }
-}
 
-function getVisibleProducts() {
-  const text = state.searchText;
-  return state.data.products.filter((product) => {
-    if (!text) return true;
-    return `${product.name} ${product.sku}`.toLowerCase().includes(text);
-  });
-}
-
-function getMonitoringProducts() {
-  const products = getVisibleProducts().filter((product) => {
-    if (state.monitoring.risk === "all") return true;
-    return product.status === state.monitoring.risk;
-  });
-  const rank = { high: 3, low: 2, ok: 1 };
-
-  if (state.monitoring.sort === "price-asc") {
-    products.sort((a, b) => a.currentPrice - b.currentPrice);
-  } else if (state.monitoring.sort === "price-desc") {
-    products.sort((a, b) => b.currentPrice - a.currentPrice);
-  } else {
-    products.sort((a, b) => rank[b.status] - rank[a.status]);
-  }
-  return products;
-}
-
-function getRecommendationsByTab() {
-  const visibleProductIds = new Set(getVisibleProducts().map((item) => item.id));
-  return state.data.recommendations.filter((item) => {
-    const tabMatch =
-      state.recommendations.tab === "pending"
-        ? item.status === "pending"
-        : item.status !== "pending";
-    if (!tabMatch || !visibleProductIds.has(item.productId)) {
-      return false;
-    }
-    if (state.recommendations.risk === "all") {
-      return true;
-    }
-    const product = getProductById(item.productId);
-    return product?.status === state.recommendations.risk;
-  });
-}
-
-function getRecommendationByProductId(productId) {
-  return state.data.recommendations.find((item) => item.productId === productId) ?? null;
-}
-
-function getProductById(productId) {
-  return state.data.products.find((item) => item.id === productId) ?? null;
-}
-
-function approveRecommendations(ids) {
-  if (!ids?.length) return;
-  ids.forEach((id) => {
-    const rec = state.data.recommendations.find((item) => item.id === id);
-    if (!rec || rec.status !== "pending") return;
-    rec.status = "approved";
-  });
-  state.recommendations.selectedIds = [];
-  showToast(t("toast.saved"));
-  render();
-}
-
-function rejectRecommendations(ids) {
-  if (!ids?.length) return;
-  ids.forEach((id) => {
-    const rec = state.data.recommendations.find((item) => item.id === id);
-    if (!rec || rec.status !== "pending") return;
-    rec.status = "rejected";
-  });
-  state.recommendations.selectedIds = [];
-  showToast(t("toast.saved"));
-  render();
-}
-
-function applyRecommendation(recoId) {
-  const rec = state.data.recommendations.find((item) => item.id === recoId);
-  if (!rec) return;
-  const product = getProductById(rec.productId);
-  if (!product) return;
-
-  product.currentPrice = rec.suggestedPrice;
-  product.status = product.currentPrice > product.competitorMin ? "high" : "ok";
-  product.simulationApplied = false;
-  rec.status = "approved";
-  rec.currentPrice = product.currentPrice;
-  showToast(t("toast.saved"));
-  render();
-}
-
-function runSimulation() {
-  if (state.dynamic.mode !== "auto") {
-    state.dynamic.mode = "auto";
-  }
-  state.dynamic.running = true;
-  state.dynamic.candidates = state.dynamic.candidates.map((item, index) => {
-    if (item.mode !== "auto") return item;
-    const delta = ((index % 3) - 1) * 5;
-    return {
-      ...item,
-      suggestedPrice: Math.max(1, item.suggestedPrice + delta),
-      guardrailHits: item.suggestedPrice + delta < item.floorPrice ? 1 : item.guardrailHits
-    };
-  });
-  showToast(t("toast.simulationStarted"));
-  render();
-}
-
-function resetSimulationState() {
-  state.dynamic.running = false;
-  state.dynamic.guardrailsOnly = false;
-  state.dynamic.appliedStack = [];
-  state.dynamic.candidates = buildSimulationCandidates(state.data.products);
-  state.dynamic.previewId = state.dynamic.candidates.find((item) => item.mode === state.dynamic.mode)?.id ?? null;
-}
-
-function applySimulationCandidate(candidateId) {
-  const candidate = state.dynamic.candidates.find((item) => item.id === candidateId);
-  if (!candidate) return;
-  const product = getProductById(candidate.productId);
-  if (!product) return;
-  state.dynamic.appliedStack.push({
-    productId: product.id,
-    prevPrice: product.currentPrice,
-    prevSimulationApplied: Boolean(product.simulationApplied)
-  });
-  product.currentPrice = candidate.suggestedPrice;
-  product.status = "ok";
-  product.simulationApplied = true;
-  showToast(t("toast.simulationApplied"));
-  render();
-}
-
-function rollbackSimulation() {
-  const item = state.dynamic.appliedStack.pop();
-  if (!item) return;
-  const product = getProductById(item.productId);
-  if (!product) return;
-  product.currentPrice = item.prevPrice;
-  product.simulationApplied = item.prevSimulationApplied;
-  showToast(t("toast.simulationRolledBack"));
-  render();
-}
-
-function runNewAbTest() {
-  const id = state.data.experiments.length + 1;
-  const now = new Date();
-  state.data.experiments.unshift({
-    id: `exp-${id}`,
-    name: `Variant Test ${id}`,
-    date: now.toISOString().slice(0, 10),
-    controlPrice: 999 + id * 10,
-    variantPrice: 989 + id * 10,
-    liftPercent: Number((Math.random() * 5 + 0.5).toFixed(2)),
-    status: "running"
-  });
-  showToast(t("toast.saved"));
-  render();
-}
-
-function getVisibleExperiments() {
-  const days = state.ab.range === "7d" ? 7 : state.ab.range === "90d" ? 90 : 30;
-  const now = new Date();
-  return state.data.experiments.filter((item) => {
-    const date = new Date(item.date);
-    const diffDays = (now - date) / (1000 * 60 * 60 * 24);
-    return diffDays <= days;
-  });
-}
-
-function exportAbSnapshot() {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    range: state.ab.range,
-    experiments: getVisibleExperiments()
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "ab-snapshot.json";
-  anchor.click();
-  URL.revokeObjectURL(url);
-  showToast(t("toast.saved"));
-}
-
-function addProductNote(productId) {
-  const note = window.prompt(t("page.product.notes"));
-  if (!note) return;
-  if (!state.data.notesByProductId[productId]) {
-    state.data.notesByProductId[productId] = [];
-  }
-  state.data.notesByProductId[productId].push(note);
-  showToast(t("toast.saved"));
-  render();
-}
-
-function saveSettings() {
-  const { locale, currency, compactMode } = state.settings;
-  localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify({ locale, currency, compactMode }));
-  applyUiPreferences();
-  setLocale(locale);
-  showToast(t("toast.saved"));
-  render();
-}
-
-function loadScenario(id) {
-  state.scenario.active = id;
-  if (id === "empty") {
-    state.data.products = [];
-    state.data.recommendations = [];
-  } else if (id === "warning") {
-    state.data.products = clone(baseline.products).map((item) => ({
-      ...item,
-      status: item.status === "ok" ? "high" : item.status,
-      aiPrice: Math.max(1, item.aiPrice - 15)
-    }));
-    state.data.recommendations = seedRecommendations(state.data.products);
-  } else if (id === "conflict") {
-    state.data.products = clone(baseline.products).map((item) => ({
-      ...item,
-      competitorMin: Math.max(1, item.competitorMin - 50),
-      aiPrice: item.currentPrice + 30,
-      status: "low"
-    }));
-    state.data.recommendations = seedRecommendations(state.data.products);
-  } else {
-    state.data.products = clone(baseline.products);
-    state.data.recommendations = clone(baseline.recommendations);
-  }
-  state.dynamic.candidates = buildSimulationCandidates(state.data.products);
-  state.dynamic.previewId = state.dynamic.candidates[0]?.id ?? null;
-  state.selectedProductId = state.data.products[0]?.id ?? null;
-  state.monitoring.selectedIds = [];
-  state.recommendations.selectedIds = [];
-  state.recommendations.risk = "all";
-  state.recommendations.showFilters = false;
-  showToast(t("toast.stateReset"));
-  const target = state.lastRegularRoute || ROUTES.dashboard;
-  window.location.hash = `#${target}`;
-}
-
-function reseedScenarioValues() {
-  state.data.products = state.data.products.map((item, index) => {
-    const offset = ((index % 3) - 1) * 7;
-    const currentPrice = Math.max(1, item.currentPrice + offset);
-    return {
-      ...item,
-      currentPrice,
-      aiPrice: Math.max(1, currentPrice - 5)
-    };
-  });
-  state.data.recommendations = seedRecommendations(state.data.products);
-  state.dynamic.candidates = buildSimulationCandidates(state.data.products);
-  state.dynamic.previewId = state.dynamic.candidates[0]?.id ?? null;
-  showToast(t("toast.saved"));
-  render();
-}
-
-function sendSelectedProductsToRecommendations() {
-  if (!state.monitoring.selectedIds.length) return;
-  state.monitoring.selectedIds.forEach((productId) => {
-    const product = getProductById(productId);
-    if (!product) return;
-    const existing = getRecommendationByProductId(product.id);
-    if (existing) {
-      existing.status = "pending";
-      existing.currentPrice = product.currentPrice;
-      existing.suggestedPrice = product.aiPrice;
+  function handleClick(event) {
+    if (event.target === elements.drawerBackdrop) {
+      closeDrawer();
       return;
     }
-    state.data.recommendations.push(createRecommendation(product, state.data.recommendations.length + 1));
-  });
-  state.monitoring.selectedIds = [];
-  state.recommendations.tab = "pending";
-  showToast(t("toast.saved"));
-  window.location.hash = `#${ROUTES.recommendations}`;
-}
 
-function resetAppState() {
-  state.searchText = "";
-  if (elements.search) elements.search.value = "";
-  state.selectedProductId = baseline.products[0]?.id ?? null;
-  state.monitoring = { risk: "all", sort: "risk-desc", selectedIds: [] };
-  state.recommendations = { tab: "pending", selectedIds: [], risk: "all", showFilters: false };
-  state.dynamic = {
-    mode: "manual",
-    running: false,
-    guardrailsOnly: false,
-    previewId: null,
-    appliedStack: [],
-    candidates: buildSimulationCandidates(clone(baseline.products))
-  };
-  state.dynamic.previewId = state.dynamic.candidates[0]?.id ?? null;
-  state.ab = { range: "30d" };
-  state.data = {
-    products: clone(baseline.products),
-    recommendations: clone(baseline.recommendations),
-    notesByProductId: {},
-    experiments: clone(baseline.experiments)
-  };
-}
+    if (event.target.matches("[data-close-intro]")) {
+      closeIntroModal();
+      return;
+    }
 
-function openConfirm(messageKey, onConfirm) {
-  state.confirm.isOpen = true;
-  state.confirm.messageKey = messageKey;
-  state.confirm.onConfirm = onConfirm;
-  renderConfirmModal();
-}
+    if (event.target.closest("[data-intro-add-product]")) {
+      closeIntroModal();
+      openAddDrawer();
+      return;
+    }
 
-function closeConfirm() {
-  state.confirm.isOpen = false;
-  state.confirm.messageKey = "";
-  state.confirm.onConfirm = null;
-  renderConfirmModal();
-}
+    const addTrigger = event.target.closest("[data-open-add-product]");
+    if (addTrigger) {
+      openAddDrawer();
+      return;
+    }
 
-function renderConfirmModal() {
-  if (!elements.confirmModal || !elements.confirmMessage || !elements.confirmTitle) return;
-  if (!state.confirm.isOpen) {
-    elements.confirmModal.classList.add("hidden");
-    return;
+    const closeTrigger = event.target.closest("[data-drawer-close]");
+    if (closeTrigger) {
+      closeDrawer();
+      return;
+    }
+
+    const strategyTrigger = event.target.closest("[data-select-strategy]");
+    if (strategyTrigger) {
+      state.dynamicPricing.selectedStrategyId = strategyTrigger.dataset.selectStrategy;
+      renderWorkspace();
+      return;
+    }
+
+    if (event.target.closest("[data-apply-strategy]")) {
+      applyDynamicPricingStrategy();
+      return;
+    }
+
+    const toggleAssignmentTrigger = event.target.closest("[data-toggle-assignment]");
+    if (toggleAssignmentTrigger) {
+      toggleDynamicPricingAssignment(toggleAssignmentTrigger.dataset.toggleAssignment);
+      return;
+    }
+
+    const removeAssignmentTrigger = event.target.closest("[data-remove-assignment]");
+    if (removeAssignmentTrigger) {
+      removeDynamicPricingAssignment(removeAssignmentTrigger.dataset.removeAssignment);
+      return;
+    }
+
+    const routeTrigger = event.target.closest("[data-route]");
+    if (routeTrigger) {
+      window.location.hash = `#${routeTrigger.dataset.route}`;
+      return;
+    }
+
+    const row = event.target.closest("[data-product-row]");
+    if (row && !event.target.closest("a, button, input, label")) {
+      openDetailDrawer(row.dataset.productRow);
+    }
   }
-  elements.confirmTitle.textContent = t("confirm.title");
-  elements.confirmMessage.textContent = t(state.confirm.messageKey);
-  elements.confirmModal.classList.remove("hidden");
-}
 
-function showToast(text) {
-  if (!elements.toast) return;
-  elements.toast.textContent = text;
-  elements.toast.classList.add("show");
-  window.clearTimeout(showToast.timerId);
-  showToast.timerId = window.setTimeout(() => {
-    elements.toast.classList.remove("show");
-  }, 1400);
-}
+  function handleSubmit(event) {
+    if (event.target.id !== "add-product-form") return;
 
-function setActiveMenu() {
-  const map = {
-    [ROUTES.dashboard]: "dashboard",
-    [ROUTES.monitoring]: "dashboard",
-    [ROUTES.recommendations]: "recommendations",
-    [ROUTES.productDetail]: "recommendations",
-    [ROUTES.dynamic]: "dynamicPricing",
-    [ROUTES.ab]: "abTesting"
-  };
-  const activeKey = map[state.route] ?? "";
-  document.querySelectorAll(".menu-item").forEach((item) => {
-    item.classList.toggle("active", item.dataset.menuItem === activeKey);
-  });
-}
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const name = String(formData.get("name") || "").trim();
+    const sku = String(formData.get("sku") || "").trim();
+    const category = String(formData.get("category") || "").trim();
 
-function setActiveLanguageButtons() {
-  document.querySelectorAll(".lang-btn").forEach((button) => {
-    button.classList.toggle("active", button.dataset.locale === state.locale);
-  });
-}
+    if (!name || !sku || !category) {
+      showToast("Ürün eklemek için üç alanın da doldurulması gerekiyor.");
+      return;
+    }
 
-function t(key) {
-  return messages[state.locale]?.[key] ?? messages.en[key] ?? key;
-}
-
-function formatMoney(value) {
-  if (!Number.isFinite(value)) return "-";
-  const locale = state.locale === "tr" ? "tr-TR" : "en-US";
-  const currency = state.settings.currency || "TRY";
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0
-  }).format(value);
-}
-
-function selectedIf(actual, expected) {
-  return actual === expected ? "selected" : "";
-}
-
-function statusClass(status) {
-  if (status === "high") return "high";
-  if (status === "low") return "low";
-  return "ok";
-}
-
-function statusKey(status) {
-  if (status === "high") return "status.highRisk";
-  if (status === "low") return "status.lowMargin";
-  return "status.competitive";
-}
-
-function renderProductStatus(product) {
-  const main = `<span class="status-badge ${statusClass(product.status)}">${t(statusKey(product.status))}</span>`;
-  const simulation = product.simulationApplied
-    ? ` <span class="chip">${t("common.simulationTag")}</span>`
-    : "";
-  return `${main}${simulation}`;
-}
-
-function recommendationStatusKey(status) {
-  if (status === "approved") return "status.approved";
-  if (status === "rejected") return "status.rejected";
-  return "status.pending";
-}
-
-function getBestVariantLabel(experiments) {
-  if (!experiments.length) return "-";
-  const best = experiments.reduce((prev, cur) => (cur.liftPercent > prev.liftPercent ? cur : prev));
-  return best.name;
-}
-
-function abStatusKey(status) {
-  return status === "running" ? "page.ab.status.running" : "page.ab.status.completed";
-}
-
-function toggleInList(list, value, isChecked) {
-  const index = list.indexOf(value);
-  if (isChecked && index === -1) list.push(value);
-  if (!isChecked && index >= 0) list.splice(index, 1);
-}
-
-function readStoredPreferences() {
-  const locale = readLegacyLocale();
-  const defaults = {
-    locale,
-    currency: "TRY",
-    compactMode: false
-  };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.preferences);
-    if (!raw) return defaults;
-    const parsed = JSON.parse(raw);
-    return {
-      locale: parsed?.locale === "en" ? "en" : "tr",
-      currency: ["TRY", "USD", "EUR"].includes(parsed?.currency) ? parsed.currency : "TRY",
-      compactMode: Boolean(parsed?.compactMode)
-    };
-  } catch {
-    return defaults;
-  }
-}
-
-function readLegacyLocale() {
-  const value = localStorage.getItem(STORAGE_KEYS.locale);
-  return value === "en" ? "en" : "tr";
-}
-
-function applyUiPreferences() {
-  document.body.classList.toggle("compact-mode", state.settings.compactMode);
-}
-
-function createBaselineState() {
-  const products = clone(mockData.products);
-  return {
-    products,
-    recommendations: seedRecommendations(products),
-    experiments: [
+    const newProductId = `p-${Date.now()}`;
+    const seedPrice = getSeedPrice(category);
+    const placeholderCompetitors = [
       {
-        id: "exp-101",
-        name: "Earbud Price Step",
-        date: "2026-03-01",
-        controlPrice: 1249,
-        variantPrice: 1199,
-        liftPercent: 3.9,
-        status: "completed"
+        id: `c-${newProductId}-1`,
+        productId: newProductId,
+        sourceName: "Rakip feed 1 / bekleniyor",
+        url: "Bağlantı kurulacak",
+        price: null
       },
       {
-        id: "exp-102",
-        name: "Watch Margin Guardrail",
-        date: "2026-02-26",
-        controlPrice: 3399,
-        variantPrice: 3499,
-        liftPercent: 1.4,
-        status: "running"
-      },
-      {
-        id: "exp-103",
-        name: "Mouse Weekend Promo",
-        date: "2026-01-15",
-        controlPrice: 849,
-        variantPrice: 829,
-        liftPercent: 2.1,
-        status: "completed"
+        id: `c-${newProductId}-2`,
+        productId: newProductId,
+        sourceName: "Rakip feed 2 / bekleniyor",
+        url: "Bağlantı kurulacak",
+        price: null
       }
-    ]
-  };
-}
+    ];
 
-function seedRecommendations(products) {
-  return products.map((product, index) => createRecommendation(product, index + 1));
-}
-
-function createRecommendation(product, id) {
-  const reasonKey =
-    product.status === "high"
-      ? "reason.competitorUndercut"
-      : product.status === "low"
-        ? "reason.marginOpportunity"
-        : "reason.keepLeader";
-  return {
-    id,
-    productId: product.id,
-    currentPrice: product.currentPrice,
-    suggestedPrice: product.aiPrice,
-    reasonKey,
-    status: "pending"
-  };
-}
-
-function buildSimulationCandidates(products) {
-  const list = [];
-  products.forEach((product, index) => {
-    const floorPrice = Math.max(1, Math.round(product.competitorMin * 0.94));
-    const manualPrice = Math.max(1, product.aiPrice);
-    const autoPrice = Math.max(1, product.aiPrice - ((index % 2) * 10 + 5));
-    const reasonKey =
-      product.status === "high"
-        ? "reason.competitorUndercut"
-        : product.status === "low"
-          ? "reason.marginOpportunity"
-          : "reason.keepLeader";
-    list.push({
-      id: index * 2 + 1,
-      productId: product.id,
-      productName: product.name,
-      sku: product.sku,
-      mode: "manual",
-      currentPrice: product.currentPrice,
-      suggestedPrice: manualPrice,
-      reasonKey,
-      floorPrice,
-      guardrailHits: manualPrice < floorPrice ? 1 : 0
+    state.products.unshift({
+      id: newProductId,
+      name,
+      sku,
+      category,
+      currentPrice: seedPrice,
+      competitorStatus: "Rakip verisi bağlanacak",
+      trendDirection: "İlk veri bekleniyor",
+      aiSuggestionText: "Kurulum tamamlandığında ilk öneri üretilecek.",
+      status: "Kurulum Bekliyor",
+      competitorCount: placeholderCompetitors.length,
+      estimatedLostRevenue: 0,
+      estimatedProfitUplift: 0,
+      trendSummary: "Google Trends eşleşmesi ve rakip bağlantıları kurulum sonrasında akacaktır.",
+      updatedAt: "Az önce"
     });
-    list.push({
-      id: index * 2 + 2,
-      productId: product.id,
-      productName: product.name,
-      sku: product.sku,
-      mode: "auto",
-      currentPrice: product.currentPrice,
-      suggestedPrice: autoPrice,
-      reasonKey,
-      floorPrice,
-      guardrailHits: autoPrice < floorPrice ? 1 : 0
+
+    state.competitorDetails = [...placeholderCompetitors, ...state.competitorDetails];
+    closeDrawer();
+    render();
+    showToast("Ürün eklendi. İzleme kurulumu bekleniyor.");
+  }
+
+  function handleKeydown(event) {
+    if (event.key === "Escape") {
+      if (state.drawer.open) {
+        closeDrawer();
+        return;
+      }
+      if (state.introModalOpen) {
+        closeIntroModal();
+        return;
+      }
+    }
+
+    const row = event.target.closest ? event.target.closest("[data-product-row]") : null;
+    if (row && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      openDetailDrawer(row.dataset.productRow);
+    }
+  }
+
+  function handleChange(event) {
+    if (!event.target.matches("[data-target-scope]")) return;
+
+    const scopeValue = String(event.target.value || "");
+    const parsedScope = parseDynamicScopeValue(scopeValue);
+
+    if (!parsedScope) return;
+
+    state.dynamicPricing.targetType = parsedScope.type;
+    state.dynamicPricing.selectedTargetId = parsedScope.id;
+    renderWorkspace();
+  }
+
+  function openAddDrawer() {
+    state.drawer.open = true;
+    state.drawer.mode = "add";
+    state.drawer.productId = null;
+    renderDrawer();
+  }
+
+  function openDetailDrawer(productId) {
+    state.drawer.open = true;
+    state.drawer.mode = "detail";
+    state.drawer.productId = productId;
+    renderDrawer();
+  }
+
+  function closeDrawer() {
+    state.drawer.open = false;
+    state.drawer.mode = null;
+    state.drawer.productId = null;
+    renderDrawer();
+  }
+
+  function closeIntroModal() {
+    state.introModalOpen = false;
+    renderIntroModal();
+  }
+
+  function syncOverlayState() {
+    document.body.classList.toggle("drawer-open", state.drawer.open);
+    document.body.classList.toggle("overlay-open", state.drawer.open || state.introModalOpen);
+  }
+
+  function getMetrics() {
+    const lostRevenue = state.products.reduce((sum, item) => sum + item.estimatedLostRevenue, 0);
+    const gainPotential = state.products.reduce((sum, item) => sum + item.estimatedProfitUplift, 0);
+    const marginRiskCount = state.products.filter((item) => item.status === "Marj Riski").length;
+    const actionableProducts = state.products.filter((item) => item.status !== "Dengede").length;
+    const totalCompetitors = state.products.reduce((sum, item) => sum + item.competitorCount, 0);
+
+    return {
+      trackedCount: state.products.length,
+      lostRevenue,
+      marginRiskCount,
+      gainPotential,
+      actionableProducts,
+      totalCompetitors
+    };
+  }
+
+  function getProductById(productId) {
+    return state.products.find((item) => item.id === productId) || null;
+  }
+
+  function getCompetitorsByProductId(productId) {
+    return state.competitorDetails.filter((item) => item.productId === productId);
+  }
+
+  function getSeedPrice(category) {
+    const normalized = category.toLocaleLowerCase("tr-TR");
+
+    if (normalized.includes("saat")) return 3499;
+    if (normalized.includes("kulak") || normalized.includes("ses")) return 1299;
+    if (normalized.includes("bilgisayar") || normalized.includes("hub")) return 649;
+    if (normalized.includes("oyun") || normalized.includes("aksesuar")) return 899;
+    return 999;
+  }
+
+  function getRecommendationRows() {
+    return state.products
+      .filter((product) => product.status !== "Kurulum Bekliyor")
+      .map((product) => {
+        const isPriceRisk = product.status === "Fiyat Riski";
+        const isMarginRisk = product.status === "Marj Riski";
+        const suggestedPrice = isPriceRisk
+          ? Math.max(1, product.currentPrice - getRecommendedDiscount(product.currentPrice))
+          : isMarginRisk
+            ? product.currentPrice + 99
+            : product.currentPrice;
+
+        return {
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          category: product.category,
+          currentPrice: product.currentPrice,
+          suggestedPrice,
+          type: isPriceRisk ? "İndirim" : isMarginRisk ? "Artış" : "Koruma",
+          priority: product.status === "Dengede" ? "Orta" : "Yüksek",
+          reason: product.aiSuggestionText
+        };
+      });
+  }
+
+  function ensureDynamicPricingSelection() {
+    if (!state.dynamicPricing.strategies.length) {
+      state.dynamicPricing.selectedStrategyId = null;
+      state.dynamicPricing.targetType = "segment";
+      state.dynamicPricing.selectedTargetId = null;
+      return;
+    }
+
+    if (!getStrategyById(state.dynamicPricing.selectedStrategyId)) {
+      state.dynamicPricing.selectedStrategyId = state.dynamicPricing.strategies[0].id;
+    }
+
+    const scopes = getDynamicPricingScopes();
+    const hasValidScope = scopes.some((item) => {
+      return item.type === state.dynamicPricing.targetType && item.id === state.dynamicPricing.selectedTargetId;
     });
-  });
-  return list;
-}
 
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
+    if (!hasValidScope) {
+      state.dynamicPricing.targetType = scopes[0] ? scopes[0].type : "segment";
+      state.dynamicPricing.selectedTargetId = scopes[0] ? scopes[0].id : null;
+    }
+  }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+  function getDynamicPricingScopes() {
+    return [
+      { type: "segment", id: "all-products", label: "Tüm Ürünler" },
+      { type: "segment", id: "electronics", label: "Elektronik Kategorisi" },
+      { type: "segment", id: "apple", label: "Apple Markalı Ürünler" },
+      { type: "segment", id: "slow-sellers", label: "Filtrelenmiş Koleksiyon: \"Yavaş Satanlar\"" }
+    ];
+  }
+
+  function getDynamicScopeValue(type, id) {
+    return `${type}:${id}`;
+  }
+
+  function parseDynamicScopeValue(rawValue) {
+    const separatorIndex = rawValue.indexOf(":");
+    if (separatorIndex <= 0) return null;
+
+    const type = rawValue.slice(0, separatorIndex);
+    const id = rawValue.slice(separatorIndex + 1);
+    if (!type || !id) return null;
+
+    return { type, id };
+  }
+
+  function getProductsForTarget(targetType, targetId) {
+    if (!targetId) return [];
+
+    if (targetType === "product") {
+      return state.products.filter((item) => item.id === targetId);
+    }
+
+    if (targetType === "category") {
+      return state.products.filter((item) => item.category === targetId);
+    }
+
+    if (targetType === "segment") {
+      if (targetId === "all-products") {
+        return state.products;
+      }
+      if (targetId === "electronics") {
+        const allowedCategories = new Set(["Ses Sistemleri", "Giyilebilir Teknoloji", "Oyuncu Aksesuarı", "Bilgisayar Aksesuarı"]);
+        return state.products.filter((item) => allowedCategories.has(item.category));
+      }
+      if (targetId === "apple") {
+        const appleProducts = state.products.filter((item) => /apple|iphone|ipad|mac|watch/i.test(item.name));
+        if (appleProducts.length) return appleProducts;
+        const premiumFallback = state.products.find((item) => item.id === "p-102");
+        return premiumFallback ? [premiumFallback] : [];
+      }
+      if (targetId === "slow-sellers") {
+        return state.products.filter((item) => item.trendDirection === "Düşüşte" || item.status === "Fiyat Riski");
+      }
+      if (targetId === "price-risk") {
+        return state.products.filter((item) => item.status === "Fiyat Riski");
+      }
+      if (targetId === "margin-risk") {
+        return state.products.filter((item) => item.status === "Marj Riski");
+      }
+      if (targetId === "trend-up") {
+        return state.products.filter((item) => item.trendDirection === "Yükselişte");
+      }
+    }
+
+    return [];
+  }
+
+  function getDynamicPricingPreview() {
+    const strategy = getStrategyById(state.dynamicPricing.selectedStrategyId);
+    const target = getDynamicPricingScopes().find((item) => {
+      return item.type === state.dynamicPricing.targetType && item.id === state.dynamicPricing.selectedTargetId;
+    });
+    const products = getProductsForTarget(state.dynamicPricing.targetType, state.dynamicPricing.selectedTargetId);
+
+    if (!strategy || !target) {
+      return {
+        targetLabel: "Hedef seçilmedi",
+        affectedProducts: 0,
+        movement: "-",
+        businessGoal: "-",
+        aiQuote: "Önce bir strateji ve hedef seçin, sonra YZ öneriyi netleştirsin.",
+        signals: "Rakip Fiyatı, Talep Trendi, Satış Hızı",
+        expectedImpact: "--",
+        canApply: false
+      };
+    }
+
+    const expectedImpact = getExpectedImpactLabel(strategy.id);
+
+    return {
+      targetLabel: target.label,
+      affectedProducts: products.length,
+      movement: strategy.movement,
+      businessGoal: strategy.businessGoal,
+      aiQuote: strategy.aiSummary,
+      signals: "Rakip Fiyatı, Talep Trendi, Satış Hızı",
+      expectedImpact,
+      canApply: products.length > 0
+    };
+  }
+
+  function applyDynamicPricingStrategy() {
+    const strategy = getStrategyById(state.dynamicPricing.selectedStrategyId);
+    const target = getDynamicPricingScopes().find((item) => {
+      return item.type === state.dynamicPricing.targetType && item.id === state.dynamicPricing.selectedTargetId;
+    });
+    const products = getProductsForTarget(state.dynamicPricing.targetType, state.dynamicPricing.selectedTargetId);
+    const preview = getDynamicPricingPreview();
+
+    if (!strategy || !target || !products.length) {
+      showToast("Uygulamak için geçerli bir strateji ve hedef seçilmelidir.");
+      return;
+    }
+
+    const existingAssignment = state.dynamicPricing.assignments.find((item) => {
+      return item.targetType === state.dynamicPricing.targetType && item.targetId === target.id;
+    });
+
+    const assignmentPayload = {
+      id: existingAssignment ? existingAssignment.id : `dp-${Date.now()}`,
+      strategyId: strategy.id,
+      targetType: state.dynamicPricing.targetType,
+      targetId: target.id,
+      targetLabel: target.label,
+      affectedProducts: products.length,
+      status: "Aktif",
+      lastUpdate: "Az önce",
+      performance: preview.expectedImpact
+    };
+
+    if (existingAssignment) {
+      Object.assign(existingAssignment, assignmentPayload);
+      showToast("Strateji ataması güncellendi.");
+    } else {
+      state.dynamicPricing.assignments.unshift(assignmentPayload);
+      showToast("Strateji başlatıldı.");
+    }
+
+    renderWorkspace();
+  }
+
+  function toggleDynamicPricingAssignment(assignmentId) {
+    const assignment = state.dynamicPricing.assignments.find((item) => item.id === assignmentId);
+    if (!assignment) return;
+
+    assignment.status = assignment.status === "Aktif" ? "Duraklatıldı" : "Aktif";
+    assignment.lastUpdate = "Az önce";
+    assignment.performance = assignment.status === "Aktif" ? "Yeniden devrede" : "--";
+    renderWorkspace();
+    showToast(assignment.status === "Aktif" ? "Strateji yeniden başlatıldı." : "Strateji durduruldu.");
+  }
+
+  function removeDynamicPricingAssignment(assignmentId) {
+    const previousLength = state.dynamicPricing.assignments.length;
+    state.dynamicPricing.assignments = state.dynamicPricing.assignments.filter((item) => item.id !== assignmentId);
+
+    if (state.dynamicPricing.assignments.length !== previousLength) {
+      renderWorkspace();
+      showToast("Strateji ataması kaldırıldı.");
+    }
+  }
+
+  function getStrategyById(strategyId) {
+    return state.dynamicPricing.strategies.find((item) => item.id === strategyId) || null;
+  }
+
+  function getExpectedImpactLabel(strategyId) {
+    if (strategyId === "stay-competitive") return "Dönüşüm Oranı +%12";
+    if (strategyId === "maximize-margin") return "Kâr Marjı +%2,4";
+    if (strategyId === "clear-stock") return "Stok Bekleme Süresi -%24";
+    return "Ciro +%4,2";
+  }
+
+  function getStrategyTone(strategyId) {
+    if (strategyId === "stay-competitive") return "amber";
+    if (strategyId === "maximize-margin") return "green";
+    if (strategyId === "clear-stock") return "red";
+    return "indigo";
+  }
+
+  function getStrategyIcon(strategyId) {
+    if (strategyId === "stay-competitive") return "R";
+    if (strategyId === "maximize-margin") return "M";
+    if (strategyId === "clear-stock") return "S";
+    return "D";
+  }
+
+  function getRiskClass(riskLevel) {
+    if (riskLevel === "Yüksek") return "high";
+    if (riskLevel === "Orta") return "medium";
+    return "low";
+  }
+
+  function getRecommendedDiscount(currentPrice) {
+    if (currentPrice >= 2000) return 79;
+    if (currentPrice >= 1000) return 49;
+    return 29;
+  }
+
+  function getTrendClass(direction) {
+    if (direction === "Yükselişte") return "is-up";
+    if (direction === "Düşüşte") return "is-down";
+    if (direction === "Dengede") return "is-flat";
+    return "is-pending";
+  }
+
+  function getStatusClass(status) {
+    if (status === "Fiyat Riski") return "is-risk";
+    if (status === "Marj Riski") return "is-margin";
+    if (status === "Dengede") return "is-balanced";
+    return "is-pending";
+  }
+
+  function formatMoney(value) {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: "TRY",
+      maximumFractionDigits: 0
+    }).format(value);
+  }
+
+  function showToast(message) {
+    if (!elements.toast) return;
+
+    elements.toast.textContent = message;
+    elements.toast.classList.add("is-visible");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      elements.toast.classList.remove("is-visible");
+    }, 1800);
+  }
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replaceAll("`", "&#96;");
+  }
+})();

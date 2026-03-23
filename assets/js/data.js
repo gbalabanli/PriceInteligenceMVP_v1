@@ -1,55 +1,238 @@
-export const mockData = {
-  products: [
+﻿(function () {
+  const trackedProducts = [
     {
-      id: 1,
-      sku: "SKU-9821",
+      id: "p-101",
       name: "Kablosuz Kulaklık X-200",
-      currentPrice: 1250,
-      competitorMin: 1190,
-      aiPrice: 1185,
-      status: "high"
+      sku: "SKU-9821",
+      category: "Ses Sistemleri",
+      currentPrice: 1249,
+      competitorStatus: "Rakip ortalamasının %6 üzerinde",
+      trendDirection: "Yükselişte",
+      aiSuggestionText: "39 TL indirim ile dönüşüm kaybı frenlenebilir.",
+      status: "Fiyat Riski",
+      competitorCount: 3,
+      estimatedLostRevenue: 48000,
+      estimatedProfitUplift: 16000,
+      trendSummary: "Google Trends araması son 7 günde %18 artış gösterdi.",
+      updatedAt: "Bugün 10:24"
     },
     {
-      id: 2,
-      sku: "SKU-4412",
+      id: "p-102",
       name: "Akıllı Saat Ultra Pro",
-      currentPrice: 3400,
-      competitorMin: 3600,
-      aiPrice: 3550,
-      status: "low"
+      sku: "SKU-4412",
+      category: "Giyilebilir Teknoloji",
+      currentPrice: 3399,
+      competitorStatus: "Rakip alt bandının %5 altında",
+      trendDirection: "Dengede",
+      aiSuggestionText: "Kâr korumak için 99 TL fiyat artışı denenebilir.",
+      status: "Marj Riski",
+      competitorCount: 4,
+      estimatedLostRevenue: 12000,
+      estimatedProfitUplift: 24500,
+      trendSummary: "Arama hacmi yatay, fiyat toleransı yüksek kalıyor.",
+      updatedAt: "Bugün 09:42"
     },
     {
-      id: 3,
-      sku: "SKU-1029",
+      id: "p-103",
       name: "Gaming Mouse RGB",
-      currentPrice: 850,
-      competitorMin: 850,
-      aiPrice: 849,
-      status: "ok"
+      sku: "SKU-1029",
+      category: "Oyuncu Aksesuarı",
+      currentPrice: 849,
+      competitorStatus: "Rakip lider ile aynı bantta",
+      trendDirection: "Yükselişte",
+      aiSuggestionText: "Mevcut fiyat korunabilir, görünürlük kampanya ile desteklenmeli.",
+      status: "Dengede",
+      competitorCount: 3,
+      estimatedLostRevenue: 8000,
+      estimatedProfitUplift: 9500,
+      trendSummary: "Son 48 saatte oyuncu ekipmanları aramalarında hızlanma var.",
+      updatedAt: "Bugün 11:05"
     },
     {
-      id: 4,
-      sku: "SKU-5520",
-      name: "Laptop Soğutucu V3",
-      currentPrice: 450,
-      competitorMin: 399,
-      aiPrice: 395,
-      status: "high"
-    },
-    {
-      id: 5,
-      sku: "SKU-3321",
+      id: "p-104",
       name: "USB-C Hub 7 in 1",
-      currentPrice: 620,
-      competitorMin: 620,
-      aiPrice: 620,
-      status: "ok"
+      sku: "SKU-3321",
+      category: "Bilgisayar Aksesuarı",
+      currentPrice: 619,
+      competitorStatus: "İki rakip son 24 saatte fiyat kırdı",
+      trendDirection: "Düşüşte",
+      aiSuggestionText: "Talep zayıflarken fiyatı korumak yerine paket teklif öneriliyor.",
+      status: "Fiyat Riski",
+      competitorCount: 2,
+      estimatedLostRevenue: 27000,
+      estimatedProfitUplift: 10800,
+      trendSummary: "Google Trends ilgisi haftalık bazda %9 geriledi.",
+      updatedAt: "Bugün 08:57"
     }
-  ],
-  scenarios: [
-    { id: "normal", label: "Normal" },
-    { id: "empty", label: "Boş Veri" },
-    { id: "warning", label: "Risk Yoğun" },
-    { id: "conflict", label: "Çakışma" }
-  ]
-};
+  ];
+
+  const competitorDetails = [
+    {
+      id: "c-101",
+      productId: "p-101",
+      sourceName: "Trendyol / trendyol.com",
+      url: "https://www.trendyol.com/marketplace/kablosuz-kulaklik-x-200",
+      price: 1190
+    },
+    {
+      id: "c-102",
+      productId: "p-101",
+      sourceName: "Hepsiburada / hepsiburada.com",
+      url: "https://www.hepsiburada.com/marketplace/kablosuz-kulaklik-x-200",
+      price: 1219
+    },
+    {
+      id: "c-103",
+      productId: "p-101",
+      sourceName: "Amazon TR / amazon.com.tr",
+      url: "https://www.amazon.com.tr/dp/x200-pricesmart-demo",
+      price: 1189
+    },
+    {
+      id: "c-104",
+      productId: "p-102",
+      sourceName: "N11 / n11.com",
+      url: "https://www.n11.com/marketplace/akilli-saat-ultra-pro",
+      price: 3599
+    },
+    {
+      id: "c-105",
+      productId: "p-102",
+      sourceName: "Trendyol / trendyol.com",
+      url: "https://www.trendyol.com/marketplace/akilli-saat-ultra-pro",
+      price: 3625
+    },
+    {
+      id: "c-106",
+      productId: "p-102",
+      sourceName: "Pazarama / pazarama.com",
+      url: "https://www.pazarama.com/marketplace/akilli-saat-ultra-pro",
+      price: 3600
+    },
+    {
+      id: "c-107",
+      productId: "p-103",
+      sourceName: "Amazon TR / amazon.com.tr",
+      url: "https://www.amazon.com.tr/dp/rgb-mouse-pricesmart-demo",
+      price: 849
+    },
+    {
+      id: "c-108",
+      productId: "p-103",
+      sourceName: "Vatan / vatanbilgisayar.com",
+      url: "https://www.vatanbilgisayar.com/gaming-mouse-rgb",
+      price: 859
+    },
+    {
+      id: "c-109",
+      productId: "p-103",
+      sourceName: "Teknosa / teknosa.com",
+      url: "https://www.teknosa.com/gaming-mouse-rgb",
+      price: 849
+    },
+    {
+      id: "c-110",
+      productId: "p-104",
+      sourceName: "Hepsiburada / hepsiburada.com",
+      url: "https://www.hepsiburada.com/marketplace/usb-c-hub-7in1",
+      price: 579
+    },
+    {
+      id: "c-111",
+      productId: "p-104",
+      sourceName: "Trendyol / trendyol.com",
+      url: "https://www.trendyol.com/marketplace/usb-c-hub-7in1",
+      price: 585
+    }
+  ];
+
+  const marketPulse = {
+    trendTopic: "Kablosuz kulaklık ve aksesuar segmenti",
+    trendDirection: "Yükselişte",
+    competitorPressure: "7 ürün grubunda fiyat baskısı arttı, 4 rakip bugün yeni indirim geçti.",
+    aiSummary: "Fiyat rekabeti ses ürünlerinde hızlanırken trend desteği güçlü. Kulaklık ve aksesuar kategorilerinde küçük indirimler dönüşüm kaybını azaltabilir; akıllı saat tarafında ise fiyat yukarı yönlü test için alan var."
+  };
+
+  const dynamicPricing = {
+    strategies: [
+      {
+        id: "balanced-auto",
+        name: "Dengeli Otomatik",
+        summary: "Gelir, marj ve rekabet baskısını aynı anda dengeleyen varsayılan strateji.",
+        aiSummary: "YZ; rakip fiyatı, talep yönü ve ürün marjını birlikte okuyarak fiyatı kontrollü şekilde yukarı veya aşağı taşır.",
+        movement: "Karışık hareket",
+        businessGoal: "Geliri ve marjı dengede tutar",
+        riskLevel: "Düşük"
+      },
+      {
+        id: "stay-competitive",
+        name: "Rekabette Kal",
+        summary: "Rakip baskısının yükseldiği ürünlerde daha hızlı tepki vererek görünürlüğü korur.",
+        aiSummary: "YZ, rakiplerin alt banda indiği anlarda fiyatı daha çevik günceller; talep zayıfladığında agresifleşir.",
+        movement: "Daha çok aşağı",
+        businessGoal: "Dönüşüm kaybını azaltır",
+        riskLevel: "Orta"
+      },
+      {
+        id: "maximize-margin",
+        name: "Marjı Maksimize Et",
+        summary: "Talebi güçlü kalan ürünlerde gereksiz indirimleri azaltarak kârlılığı öne çıkarır.",
+        aiSummary: "YZ, fiyat toleransı yüksek ürünleri korur; yalnızca baskı oluştuğunda sınırlı geri çekilir.",
+        movement: "Daha çok yukarı",
+        businessGoal: "Kârı büyütür",
+        riskLevel: "Orta"
+      },
+      {
+        id: "clear-stock",
+        name: "Stok Erit",
+        summary: "Dönen stok baskısını azaltmak için fiyatı daha agresif optimize eder.",
+        aiSummary: "YZ, stok yükü ve zayıf talep sinyallerini gördüğünde fiyatı daha hızlı aşağı çekerek çıkışı hızlandırır.",
+        movement: "Hızlı aşağı",
+        businessGoal: "Stok devir hızını artırır",
+        riskLevel: "Yüksek"
+      }
+    ],
+    assignments: [
+      {
+        id: "dp-201",
+        strategyId: "stay-competitive",
+        targetType: "category",
+        targetId: "Ses Sistemleri",
+        targetLabel: "Ses Sistemleri",
+        affectedProducts: 1,
+        status: "Aktif",
+        lastUpdate: "Bugün 10:50",
+        performance: "+4,8% gelir"
+      },
+      {
+        id: "dp-202",
+        strategyId: "maximize-margin",
+        targetType: "product",
+        targetId: "p-102",
+        targetLabel: "Akıllı Saat Ultra Pro",
+        affectedProducts: 1,
+        status: "Aktif",
+        lastUpdate: "Bugün 09:40",
+        performance: "+2,1 puan marj"
+      },
+      {
+        id: "dp-203",
+        strategyId: "balanced-auto",
+        targetType: "segment",
+        targetId: "trend-up",
+        targetLabel: "Trend Yükselenler",
+        affectedProducts: 2,
+        status: "Duraklatıldı",
+        lastUpdate: "Dün 18:20",
+        performance: "İzlemede"
+      }
+    ]
+  };
+
+  globalThis.PriceSmartMvpData = {
+    trackedProducts,
+    competitorDetails,
+    marketPulse,
+    dynamicPricing
+  };
+})();
