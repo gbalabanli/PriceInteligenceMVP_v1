@@ -426,6 +426,47 @@ button {
   letter-spacing: -0.04em;
 }
 
+.recommendation-filters {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.recommendation-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.32fr) minmax(210px, 0.32fr);
+  gap: 12px;
+}
+
+.recommendation-search-field,
+.recommendation-select-field {
+  display: grid;
+  gap: 6px;
+}
+
+.recommendation-search-field span,
+.recommendation-select-field span {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+}
+
+.recommendation-search-field input,
+.recommendation-select-field select {
+  border: 1px solid #d8e0ee;
+  border-radius: 14px;
+  padding: 11px 12px;
+  background: #ffffff;
+  color: var(--text);
+}
+
+.recommendation-search-field input:focus,
+.recommendation-select-field select:focus {
+  outline: 2px solid #c7d2fe;
+  border-color: #6366f1;
+}
+
 .intent-hero {
   text-align: center;
   padding: 28px;
@@ -926,6 +967,19 @@ button {
   color: #1e1b4b;
 }
 
+.ab-context-label {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-weight: 800;
+}
+
+.ab-context-text {
+  max-width: 76ch;
+}
+
 .ab-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1344,14 +1398,47 @@ button {
   block-size: 58px;
   border-radius: 16px;
   border: 1px solid #dbe4ff;
-  background: #eef2ff;
-  color: #312e81;
   display: grid;
   place-items: center;
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  position: relative;
+  overflow: hidden;
   flex: 0 0 auto;
+}
+
+.ab-exp-avatar::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+}
+
+.ab-exp-avatar__glyph {
+  position: relative;
+  z-index: 1;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.ab-exp-avatar--audio {
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+  color: #1d4ed8;
+}
+
+.ab-exp-avatar--style {
+  background: linear-gradient(135deg, #fce7f3 0%, #fae8ff 100%);
+  color: #a21caf;
+}
+
+.ab-exp-avatar--device {
+  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+  color: #166534;
+}
+
+.ab-exp-avatar--general {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #312e81;
 }
 
 .ab-exp-product h3 {
@@ -1510,9 +1597,15 @@ button {
   gap: 8px;
 }
 
-.ab-exp-actions .ghost-button {
+.ab-exp-actions .ghost-button,
+.ab-exp-actions .outline-button,
+.ab-exp-actions .primary-button {
   font-size: 0.75rem;
   min-height: 40px;
+}
+
+.ab-exp-actions__detail {
+  box-shadow: 0 12px 22px rgba(79, 70, 229, 0.16);
 }
 
 .ab-exp-critical {
@@ -1994,6 +2087,83 @@ button {
   background: #15803d;
 }
 
+.action-board__head {
+  margin-bottom: 16px;
+}
+
+.action-board__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.action-highlight-card {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid #dbe4ff;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.action-highlight-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-highlight-card__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-weight: 800;
+}
+
+.action-highlight-card__title {
+  margin: 6px 0 0;
+  font-size: 1rem;
+}
+
+.action-highlight-card__value {
+  flex: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #eef2ff;
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.action-highlight-card__text,
+.action-highlight-card__recommendation {
+  margin: 14px 0 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.action-highlight-card__recommendation {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.action-highlight-card__meta {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e6ecf7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+}
+
+.action-highlight-card__meta strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
 .table-card {
   overflow: hidden;
 }
@@ -2021,13 +2191,34 @@ button {
 }
 
 .recommendation-type,
-.recommendation-priority {
+.recommendation-priority,
+.recommendation-impact {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 0.76rem;
-  font-weight: 700;
+  min-block-size: 30px;
+  padding: 0 12px;
+  font-size: 0.82rem;
+  line-height: 1;
+  white-space: nowrap;
+  font-weight: 800;
+  border: 1px solid transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.05);
+}
+
+.recommendation-impact.is-risk {
+  background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
+  border-color: rgba(225, 29, 72, 0.14);
+  color: #be123c;
+}
+
+.recommendation-impact.is-opportunity {
+  background: linear-gradient(180deg, #ecfdf5 0%, #dff8ea 100%);
+  border-color: rgba(4, 120, 87, 0.14);
+  color: #047857;
 }
 
 .recommendation-type.is-discount {
@@ -2165,11 +2356,30 @@ button {
   color: var(--text);
 }
 
+.product-cell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .product-meta {
   margin: 8px 0 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.product-open-hint {
+  flex: none;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #eef2ff;
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .muted-chip,
@@ -2815,6 +3025,7 @@ button {
 
   .kpi-grid,
   .recommendation-summary,
+  .action-board__grid,
   .pulse-grid,
   .dynamic-stats,
   .strategy-grid,
@@ -2842,6 +3053,7 @@ button {
 
   .ab-layout,
   .ab-filter-row,
+  .recommendation-filter-row,
   .ab-exp-grid {
     grid-template-columns: 1fr;
   }
@@ -2879,6 +3091,7 @@ button {
   .modal-hero,
   .kpi-grid,
   .recommendation-summary,
+  .action-board__grid,
   .pulse-grid,
   .modal-grid,
   .meta-grid,
@@ -2942,7 +3155,8 @@ button {
 
   .ab-library-head,
   .ab-library-meta,
-  .ab-exp-actions {
+  .ab-exp-actions,
+  .product-cell {
     display: grid;
   }
 

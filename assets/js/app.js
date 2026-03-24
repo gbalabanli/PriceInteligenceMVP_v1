@@ -18,6 +18,14 @@
     abTesting: "/ab-fiyatlandirma-testi",
     abTestingDetail: "/ab-fiyatlandirma-testi/detay"
   };
+  const ROUTE_TITLES = {
+    [ROUTES.dashboard]: "PriceSmart AI | Genel Bakış",
+    [ROUTES.recommendations]: "PriceSmart AI | YZ Fiyat Önerileri",
+    [ROUTES.dynamicPricing]: "PriceSmart AI | Dinamik Fiyatlandırma",
+    [ROUTES.abTesting]: "PriceSmart AI | A/B Fiyatlandırma Testi",
+    [ROUTES.abTestingDetail]: "PriceSmart AI | A/B Test Detayı"
+  };
+  const INTRO_SEEN_STORAGE_KEY = "pricesmart-intro-seen";
   const AB_CREATE_STRATEGIES = [
     {
       id: "psych-threshold",
@@ -70,7 +78,12 @@
       searchQuery: "",
       statusFilter: "all"
     },
-    introModalOpen: true,
+    recommendations: {
+      searchQuery: "",
+      typeFilter: "all",
+      priorityFilter: "all"
+    },
+    introModalOpen: false,
     abCreateModal: {
       open: false,
       selectedProductId: null,
@@ -95,6 +108,7 @@
   };
 
   let toastTimer = null;
+  let introEligibilityResolved = false;
 
   bootstrap();
 
@@ -117,11 +131,22 @@
     if (!Object.values(ROUTES).includes(normalizedRoute)) {
       window.location.hash = `#${ROUTES.dashboard}`;
       state.route = ROUTES.dashboard;
+      syncPageTitle();
+      syncIntroModalAvailability();
       render();
       return;
     }
 
+    if (!introEligibilityResolved) {
+      if (normalizedRoute !== ROUTES.dashboard) {
+        setIntroSeen();
+      }
+      introEligibilityResolved = true;
+    }
+
     state.route = normalizedRoute;
+    syncPageTitle();
+    syncIntroModalAvailability();
     render();
   }
 
@@ -165,6 +190,7 @@
     }
 
     const metrics = getMetrics();
+    const actionHighlights = getDashboardActionHighlights();
 
     elements.app.innerHTML = `
       <section class="kpi-grid" aria-label="KPI özetleri">
@@ -211,6 +237,19 @@
         </div>
       </section>
 
+      <section class="panel action-board">
+        <div class="panel-head action-board__head">
+          <div>
+            <h2 class="panel-title">Bugün Öncelikli Aksiyonlar</h2>
+            <p class="panel-text">Bugün karar bekleyen fiyat hareketlerini burada önceliklendiriyoruz. Her kart ürünün riski, rekabet sinyali ve YZ yönünü tek bakışta verir.</p>
+          </div>
+          <span class="panel-chip">${actionHighlights.length} kritik ürün</span>
+        </div>
+        <div class="action-board__grid">
+          ${actionHighlights.map(renderActionHighlightCard).join("")}
+        </div>
+      </section>
+
       <section class="table-card">
         <div class="table-card__head">
           <div>
@@ -245,7 +284,8 @@
   }
 
   function renderRecommendationsPage() {
-    const recommendations = getRecommendationRows();
+    const recommendations = getFilteredRecommendationRows();
+    const allRecommendations = getRecommendationRows();
     const highPriorityCount = recommendations.filter((item) => item.priority === "Yüksek").length;
 
     return `
@@ -261,16 +301,42 @@
         <div class="recommendation-summary">
           <article class="recommendation-summary__card">
             <p class="recommendation-summary__label">Aktif öneri</p>
-            <p class="recommendation-summary__value">${recommendations.length}</p>
+            <p class="recommendation-summary__value">${allRecommendations.length}</p>
           </article>
           <article class="recommendation-summary__card">
             <p class="recommendation-summary__label">Bekleyen indirim</p>
-            <p class="recommendation-summary__value">${recommendations.filter((item) => item.type === "İndirim").length}</p>
+            <p class="recommendation-summary__value">${allRecommendations.filter((item) => item.type === "İndirim").length}</p>
           </article>
           <article class="recommendation-summary__card">
             <p class="recommendation-summary__label">Marj artış fırsatı</p>
-            <p class="recommendation-summary__value">${recommendations.filter((item) => item.type === "Artış").length}</p>
+            <p class="recommendation-summary__value">${allRecommendations.filter((item) => item.type === "Artış").length}</p>
           </article>
+        </div>
+      </section>
+
+      <section class="panel recommendation-filters">
+        <div class="recommendation-filter-row">
+          <label class="recommendation-search-field">
+            <span>Ara</span>
+            <input type="text" placeholder="Ürün, SKU veya kategori ara..." value="${escapeAttribute(state.recommendations.searchQuery)}" data-recommendation-search>
+          </label>
+          <label class="recommendation-select-field">
+            <span>Öneri Tipi</span>
+            <select data-recommendation-type-filter>
+              <option value="all" ${state.recommendations.typeFilter === "all" ? "selected" : ""}>Tümü</option>
+              <option value="İndirim" ${state.recommendations.typeFilter === "İndirim" ? "selected" : ""}>İndirim</option>
+              <option value="Artış" ${state.recommendations.typeFilter === "Artış" ? "selected" : ""}>Artış</option>
+              <option value="Koruma" ${state.recommendations.typeFilter === "Koruma" ? "selected" : ""}>Koruma</option>
+            </select>
+          </label>
+          <label class="recommendation-select-field">
+            <span>Öncelik</span>
+            <select data-recommendation-priority-filter>
+              <option value="all" ${state.recommendations.priorityFilter === "all" ? "selected" : ""}>Tümü</option>
+              <option value="Yüksek" ${state.recommendations.priorityFilter === "Yüksek" ? "selected" : ""}>Yüksek</option>
+              <option value="Orta" ${state.recommendations.priorityFilter === "Orta" ? "selected" : ""}>Orta</option>
+            </select>
+          </label>
         </div>
       </section>
 
@@ -278,7 +344,7 @@
         <div class="table-card__head">
           <div>
             <h2 class="panel-title">YZ Öneri Listesi</h2>
-            <p class="table-card__hint">Bu ekran, YZ öneri tabinin ilk iskeletidir. Sonraki adımda onay akışı ve detay paneli eklenebilir.</p>
+            <p class="table-card__hint">Satır bazında onaylayabileceğiniz fiyat önerileri, gerekçesi ve önceliğiyle birlikte burada toplanır.</p>
           </div>
           <button class="secondary-button" type="button" data-route="${ROUTES.dashboard}">Genel Bakışa Dön</button>
         </div>
@@ -290,13 +356,14 @@
                 <th>Ürün</th>
                 <th>Mevcut Fiyat</th>
                 <th>YZ Önerilen Fiyat</th>
+                <th>TL Etkisi</th>
                 <th>Öneri Tipi</th>
                 <th>Öncelik</th>
                 <th>İşlem</th>
               </tr>
             </thead>
             <tbody>
-              ${recommendations.map(renderRecommendationRow).join("")}
+              ${recommendations.length ? recommendations.map(renderRecommendationRow).join("") : `<tr><td colspan="7" class="empty-state">Bu filtre ile eşleşen öneri bulunamadı.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -515,8 +582,8 @@
           <section class="panel">
             <div class="panel-head">
               <div>
-                <h2 class="panel-title">${escapeHtml(test.name)}</h2>
-                <p class="panel-text">Hedef: ${escapeHtml(test.targetLabel)} • KPI: ${escapeHtml(test.targetKpi)} • Trafik dağılımı: ${escapeHtml(test.trafficSplit)}</p>
+                <p class="ab-context-label">Canlı Test Özeti</p>
+                <p class="panel-text ab-context-text">${escapeHtml(test.name)} • Hedef: ${escapeHtml(test.targetLabel)} • KPI: ${escapeHtml(test.targetKpi)} • Trafik dağılımı: ${escapeHtml(test.trafficSplit)}</p>
               </div>
               <div class="ab-state-row">
                 <span class="ab-state-chip ${getAbStatusClass(test.status)}">${escapeHtml(test.status)}</span>
@@ -640,11 +707,16 @@
     return `
       <tr class="product-row" tabindex="0" data-product-row="${escapeHtml(product.id)}" aria-label="${escapeHtml(product.name)} detaylarını aç">
         <td>
-          <p class="product-name">${escapeHtml(product.name)}</p>
-          <div class="product-meta">
-            <span class="muted-chip">${escapeHtml(product.sku)}</span>
-            <span class="muted-chip">${escapeHtml(product.category)}</span>
-            <span class="muted-chip">${product.competitorCount} rakip</span>
+          <div class="product-cell">
+            <div>
+              <p class="product-name">${escapeHtml(product.name)}</p>
+              <div class="product-meta">
+                <span class="muted-chip">${escapeHtml(product.sku)}</span>
+                <span class="muted-chip">${escapeHtml(product.category)}</span>
+                <span class="muted-chip">${product.competitorCount} rakip</span>
+              </div>
+            </div>
+            <span class="product-open-hint">Detay</span>
           </div>
         </td>
         <td>${formatMoney(product.currentPrice)}</td>
@@ -713,6 +785,7 @@
             <p class="recommendation-reason-inline">${escapeHtml(item.reason)}</p>
           </div>
         </td>
+        <td><span class="recommendation-impact ${item.impactKind === "risk" ? "is-risk" : "is-opportunity"}">${escapeHtml(item.impactLabel)}</span></td>
         <td><span class="recommendation-type ${item.type === "İndirim" ? "is-discount" : item.type === "Artış" ? "is-increase" : "is-keep"}">${escapeHtml(item.type)}</span></td>
         <td><span class="recommendation-priority ${item.priority === "Yüksek" ? "is-high" : "is-medium"}">${escapeHtml(item.priority)}</span></td>
         <td>
@@ -722,6 +795,26 @@
           </div>
         </td>
       </tr>
+    `;
+  }
+
+  function renderActionHighlightCard(item) {
+    return `
+      <article class="action-highlight-card">
+        <div class="action-highlight-card__head">
+          <div>
+            <p class="action-highlight-card__eyebrow">${escapeHtml(item.status)}</p>
+            <h3 class="action-highlight-card__title">${escapeHtml(item.name)}</h3>
+          </div>
+          <span class="action-highlight-card__value">${escapeHtml(item.impactLabel)}</span>
+        </div>
+        <p class="action-highlight-card__text">${renderInlineCompetitorStatusText(item.competitorStatus)}</p>
+        <p class="action-highlight-card__recommendation">${renderAiSuggestionText(item.aiSuggestionText)}</p>
+        <div class="action-highlight-card__meta">
+          <span>${escapeHtml(item.category)}</span>
+          <strong>${formatMoney(item.currentPrice)}</strong>
+        </div>
+      </article>
     `;
   }
 
@@ -825,7 +918,9 @@
         <span class="ab-exp-badge">${cardLabel}</span>
         <div class="ab-exp-grid">
           <section class="ab-exp-product">
-            <span class="ab-exp-avatar">${escapeHtml(getInitials(test.productName || test.name))}</span>
+            <span class="ab-exp-avatar ab-exp-avatar--${escapeAttribute(getAbAvatarTone(test))}">
+              <span class="ab-exp-avatar__glyph">${escapeHtml(getAbAvatarLabel(test))}</span>
+            </span>
             <div>
               <h3>${escapeHtml(test.productName || test.name)}</h3>
               <p>${strategySummary}</p>
@@ -870,12 +965,11 @@
           </section>
 
           <section class="ab-exp-actions">
+            <button class="primary-button ab-exp-actions__detail" type="button" data-ab-open-detail="${escapeAttribute(test.id)}">Detayı Gör</button>
             ${tone === "winner"
-              ? `<button class="primary-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Kazananı Uygula</button>`
+              ? `<button class="outline-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Kazananı Uygula</button>`
               : `<button class="${actionClass}" type="button" data-ab-action="${actionType}" data-ab-test="${escapeAttribute(test.id)}">${actionLabel}</button>`
             }
-            <button class="ghost-button" type="button" data-ab-open-detail="${escapeAttribute(test.id)}">Detayları Gör</button>
-            <button class="ghost-button" type="button" data-ab-action="clone-test" data-ab-test="${escapeAttribute(test.id)}">Detaydan Yeni Test Klonla</button>
           </section>
         </div>
         ${tone === "critical" && test.criticalReason
@@ -1472,6 +1566,18 @@
       return;
     }
 
+    if (event.target.matches("[data-recommendation-type-filter]")) {
+      state.recommendations.typeFilter = String(event.target.value || "all");
+      renderWorkspace();
+      return;
+    }
+
+    if (event.target.matches("[data-recommendation-priority-filter]")) {
+      state.recommendations.priorityFilter = String(event.target.value || "all");
+      renderWorkspace();
+      return;
+    }
+
     if (event.target.matches("[data-ab-create-product]")) {
       state.abCreateModal.selectedProductId = String(event.target.value || "");
       renderAbCreateModal();
@@ -1481,6 +1587,12 @@
   function handleInput(event) {
     if (event.target.matches("[data-ab-search]")) {
       state.abTesting.searchQuery = String(event.target.value || "");
+      renderWorkspace();
+      return;
+    }
+
+    if (event.target.matches("[data-recommendation-search]")) {
+      state.recommendations.searchQuery = String(event.target.value || "");
       renderWorkspace();
     }
   }
@@ -1508,6 +1620,7 @@
 
   function closeIntroModal() {
     state.introModalOpen = false;
+    setIntroSeen();
     renderIntroModal();
   }
 
@@ -1736,9 +1849,40 @@
           suggestedPrice,
           type: isPriceRisk ? "İndirim" : isMarginRisk ? "Artış" : "Koruma",
           priority: product.status === "Dengede" ? "Orta" : "Yüksek",
-          reason: product.aiSuggestionText
+          reason: product.aiSuggestionText,
+          impactKind: isMarginRisk ? "opportunity" : "risk",
+          impactLabel: isMarginRisk
+            ? `${formatMoney(product.estimatedProfitUplift)} fırsat`
+            : `${formatMoney(product.estimatedLostRevenue)} risk`
         };
       });
+  }
+
+  function getFilteredRecommendationRows() {
+    const search = normalizeSearch(state.recommendations.searchQuery);
+    const typeFilter = state.recommendations.typeFilter;
+    const priorityFilter = state.recommendations.priorityFilter;
+
+    return getRecommendationRows().filter((item) => {
+      const searchable = normalizeSearch(`${item.name} ${item.sku} ${item.category} ${item.reason} ${item.type}`);
+      const matchesSearch = !search || searchable.includes(search);
+      const matchesType = typeFilter === "all" || item.type === typeFilter;
+      const matchesPriority = priorityFilter === "all" || item.priority === priorityFilter;
+      return matchesSearch && matchesType && matchesPriority;
+    });
+  }
+
+  function getDashboardActionHighlights() {
+    return state.products
+      .filter((item) => item.status !== "Dengede")
+      .sort((a, b) => (Number(b.estimatedLostRevenue) || 0) - (Number(a.estimatedLostRevenue) || 0))
+      .slice(0, 3)
+      .map((item) => ({
+        ...item,
+        impactLabel: item.status === "Marj Riski"
+          ? `${formatMoney(item.estimatedProfitUplift)} fırsat`
+          : `${formatMoney(item.estimatedLostRevenue)} risk`
+      }));
   }
 
   function ensureAbTestingSelection() {
@@ -1777,6 +1921,22 @@
       if (filter === "critical") return tone === "critical";
       return true;
     });
+  }
+
+  function getAbAvatarTone(test) {
+    const haystack = normalizeSearch(`${test.productName || ""} ${test.category || ""} ${test.categoryDetail || ""}`);
+    if (haystack.includes("ses") || haystack.includes("kulak")) return "audio";
+    if (haystack.includes("tekstil") || haystack.includes("t-shirt") || haystack.includes("giyim")) return "style";
+    if (haystack.includes("laptop") || haystack.includes("bilgisayar")) return "device";
+    return "general";
+  }
+
+  function getAbAvatarLabel(test) {
+    const tone = getAbAvatarTone(test);
+    if (tone === "audio") return "SES";
+    if (tone === "style") return "MOD";
+    if (tone === "device") return "PC";
+    return "YZ";
   }
 
   function getAbCardTone(test) {
@@ -2281,6 +2441,30 @@
     toastTimer = window.setTimeout(() => {
       elements.toast.classList.remove("is-visible");
     }, 1800);
+  }
+
+  function syncPageTitle() {
+    document.title = ROUTE_TITLES[state.route] || "PriceSmart AI";
+  }
+
+  function syncIntroModalAvailability() {
+    state.introModalOpen = state.route === ROUTES.dashboard && !hasSeenIntro();
+  }
+
+  function hasSeenIntro() {
+    try {
+      return window.sessionStorage.getItem(INTRO_SEEN_STORAGE_KEY) === "1";
+    } catch (error) {
+      return true;
+    }
+  }
+
+  function setIntroSeen() {
+    try {
+      window.sessionStorage.setItem(INTRO_SEEN_STORAGE_KEY, "1");
+    } catch (error) {
+      return;
+    }
   }
 
   function clone(value) {
