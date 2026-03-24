@@ -150,7 +150,8 @@
     trendTopic: "Kablosuz kulaklık ve aksesuar segmenti",
     trendDirection: "Yükselişte",
     competitorPressure: "7 ürün grubunda fiyat baskısı arttı, 4 rakip bugün yeni indirim geçti.",
-    aiSummary: "Fiyat rekabeti ses ürünlerinde hızlanırken trend desteği güçlü. Kulaklık ve aksesuar kategorilerinde küçük indirimler dönüşüm kaybını azaltabilir; akıllı saat tarafında ise fiyat yukarı yönlü test için alan var."
+    aiSummary: "Fiyat rekabeti ses ürünlerinde hızlanırken trend desteği güçlü. Kulaklık ve aksesuar kategorilerinde küçük indirimler dönüşüm kaybını azaltabilir; akıllı saat tarafında ise fiyat yukarı yönlü test için alan var.",
+    aiConfidenceScore: 92
   };
 
   const dynamicPricing = {
@@ -244,6 +245,8 @@
         sampleTarget: 1800,
         targetLabel: "Wireless Headphones",
         targetKpi: "Ziyaretçi başı gelir",
+        testDesignTypeId: "sequential-time-series",
+        testDesignLabel: "Zaman Serisi (Sequential) Testi",
         status: "Çalışıyor",
         startedAt: "2026-03-18",
         significance: 96,
@@ -255,7 +258,7 @@
           autoStop: true
         },
         alerts: [
-          "Örneklem güçlü. Karar vermek için yeterli güven seviyesi oluştu."
+          "Örneklem güçlü. Karar vermek için yeterli YZ güven skoru oluştu."
         ],
         variants: [
           {
@@ -300,6 +303,8 @@
         remainingDays: 4,
         targetLabel: "Clearance Items",
         targetKpi: "Satış adedi",
+        testDesignTypeId: "channel-based",
+        testDesignLabel: "Kanal Bazlı Test",
         status: "Durduruldu",
         startedAt: "2026-03-10",
         significance: 82,
@@ -346,6 +351,8 @@
         sampleTarget: 1200,
         targetLabel: "Gaming Laptop Segmenti",
         targetKpi: "Marj koruması",
+        testDesignTypeId: "geo-based",
+        testDesignLabel: "Coğrafi (Geo-Based) Test",
         status: "Durduruldu",
         startedAt: "2026-03-19",
         significance: 74,

@@ -35,6 +35,23 @@
       summary: "Rakip fiyat hamlelerine göre esnek fiyat bandı uygular."
     }
   ];
+  const AB_CREATE_TEST_TYPES = [
+    {
+      id: "sequential-time-series",
+      name: "Zaman Serisi (Sequential) Testi",
+      summary: "Fiyat etkisini zamana yayılmış örneklemde adım adım ölçer."
+    },
+    {
+      id: "geo-based",
+      name: "Coğrafi (Geo-Based) Test",
+      summary: "Bölgelere göre farklı fiyat tepkilerini karşılaştırır."
+    },
+    {
+      id: "channel-based",
+      name: "Kanal Bazlı Test",
+      summary: "Pazaryeri ve satış kanalı performansını ayrı ayrı izler."
+    }
+  ];
   const state = {
     route: ROUTES.dashboard,
     products: clone(appData.trackedProducts),
@@ -57,7 +74,9 @@
     abCreateModal: {
       open: false,
       selectedProductId: null,
-      selectedStrategyId: AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null
+      selectedStrategyAId: AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null,
+      selectedStrategyBId: AB_CREATE_STRATEGIES[1] ? AB_CREATE_STRATEGIES[1].id : (AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null),
+      selectedTestTypeId: AB_CREATE_TEST_TYPES[0] ? AB_CREATE_TEST_TYPES[0].id : null
     },
     drawer: {
       open: false,
@@ -180,7 +199,10 @@
         </div>
 
         <div class="pulse-summary">
-          <span class="pulse-summary__label pulse-summary__label--recommend">YZ Önerisi</span>
+          <div class="pulse-summary__head">
+            <span class="pulse-summary__label pulse-summary__label--recommend">YZ Önerisi</span>
+            <p class="pulse-summary__confidence">YZ Güven Skoru: <strong>%${Number(state.marketPulse.aiConfidenceScore) || 0}</strong></p>
+          </div>
           <p class="pulse-summary__text">${escapeHtml(state.marketPulse.aiSummary)}</p>
           <div class="pulse-summary__actions">
             <button class="pulse-summary__action pulse-summary__action--discard" type="button" data-discard-insight="1">Vazgeç</button>
@@ -255,7 +277,7 @@
       <section class="table-card">
         <div class="table-card__head">
           <div>
-            <h2 class="panel-title">Öneri Listesi</h2>
+            <h2 class="panel-title">YZ Öneri Listesi</h2>
             <p class="table-card__hint">Bu ekran, YZ öneri tabinin ilk iskeletidir. Sonraki adımda onay akışı ve detay paneli eklenebilir.</p>
           </div>
           <button class="secondary-button" type="button" data-route="${ROUTES.dashboard}">Genel Bakışa Dön</button>
@@ -267,10 +289,10 @@
               <tr>
                 <th>Ürün</th>
                 <th>Mevcut Fiyat</th>
-                <th>Önerilen Fiyat</th>
+                <th>YZ Önerilen Fiyat</th>
                 <th>Öneri Tipi</th>
                 <th>Öncelik</th>
-                <th>Gerekçe</th>
+                <th>İşlem</th>
               </tr>
             </thead>
             <tbody>
@@ -475,6 +497,7 @@
     const decision = getAbDecision(test);
     const rows = getAbComparisonRows(test);
     const snapshot = getAbLiveSnapshot(test);
+    const detailMeta = getAbDetailMeta(test);
 
     return `
       <section class="panel ab-hero">
@@ -497,8 +520,27 @@
               </div>
               <div class="ab-state-row">
                 <span class="ab-state-chip ${getAbStatusClass(test.status)}">${escapeHtml(test.status)}</span>
-                <span class="ab-state-chip is-soft">Güven: %${test.significance}</span>
+                <span class="ab-state-chip is-soft">YZ Güven Skoru: <strong>%${test.significance}</strong></span>
               </div>
+            </div>
+
+            <div class="ab-detail-meta-strip" aria-label="Test meta bilgileri">
+              <span class="ab-detail-meta-pill">
+                <small>Mevcut Strateji</small>
+                <strong>${escapeHtml(detailMeta.currentStrategy)}</strong>
+              </span>
+              <span class="ab-detail-meta-pill">
+                <small>Varyant A</small>
+                <strong>${escapeHtml(detailMeta.variantAStrategy)}</strong>
+              </span>
+              <span class="ab-detail-meta-pill">
+                <small>Varyant B</small>
+                <strong>${escapeHtml(detailMeta.variantBStrategy)}</strong>
+              </span>
+              <span class="ab-detail-meta-pill">
+                <small>Test Türü</small>
+                <strong>${escapeHtml(detailMeta.testType)}</strong>
+              </span>
             </div>
 
             <div class="ab-kpi-grid">
@@ -606,12 +648,52 @@
           </div>
         </td>
         <td>${formatMoney(product.currentPrice)}</td>
-        <td>${escapeHtml(product.competitorStatus)}</td>
+        <td>${renderCompetitorStatusCell(product.competitorStatus)}</td>
         <td><span class="trend-chip ${getTrendClass(product.trendDirection)}">${escapeHtml(product.trendDirection)}</span></td>
-        <td><p class="ai-note"><strong>YZ:</strong> ${escapeHtml(product.aiSuggestionText)}</p></td>
+        <td><p class="ai-note"><strong>YZ:</strong> ${renderAiSuggestionText(product.aiSuggestionText)}</p></td>
         <td><span class="status-chip ${getStatusClass(product.status)}">${escapeHtml(product.status)}</span></td>
       </tr>
     `;
+  }
+
+  function renderCompetitorStatusCell(statusText) {
+    return `
+      <div class="competitor-status">
+        <p class="competitor-status__text">${renderInlineCompetitorStatusText(statusText)}</p>
+      </div>
+    `;
+  }
+
+  function renderInlineCompetitorStatusText(statusText) {
+    const safeText = escapeHtml(statusText || "");
+    return safeText.replace(/% ?\d+\s*(altında|üstünde|üzerinde)|aynı bantta|fiyat kırdı/gi, (match) => {
+      const normalized = match.toLocaleLowerCase("tr-TR");
+      let tone = "is-default";
+      if (normalized.includes("altında")) tone = "is-below";
+      else if (normalized.includes("üstünde") || normalized.includes("üzerinde")) tone = "is-above";
+      else if (normalized.includes("aynı bantta")) tone = "is-neutral";
+      else if (normalized.includes("fiyat kırdı")) tone = "is-alert";
+      return `<span class="competitor-status-tag ${tone}">${match}</span>`;
+    });
+  }
+
+  function renderAiSuggestionText(text) {
+    let formatted = escapeHtml(text || "");
+    const tokens = [
+      { text: "dönüşüm kaybı", className: "is-loss" },
+      { text: "fiyat artışı", className: "is-increase" },
+      { text: "fiyat korunabilir", className: "is-keep" },
+      { text: "fiyatı korumak", className: "is-hold" }
+    ];
+
+    tokens.forEach((token) => {
+      const escapedToken = escapeHtml(token.text);
+      const escapedPattern = escapedToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedPattern, "gi");
+      formatted = formatted.replace(regex, (match) => `<span class="ai-highlight ${token.className}">${match}</span>`);
+    });
+
+    return formatted;
   }
 
   function renderRecommendationRow(item) {
@@ -625,10 +707,20 @@
           </div>
         </td>
         <td>${formatMoney(item.currentPrice)}</td>
-        <td>${formatMoney(item.suggestedPrice)}</td>
+        <td>
+          <div class="recommendation-price-stack">
+            <strong class="recommendation-price">${formatMoney(item.suggestedPrice)}</strong>
+            <p class="recommendation-reason-inline">${escapeHtml(item.reason)}</p>
+          </div>
+        </td>
         <td><span class="recommendation-type ${item.type === "İndirim" ? "is-discount" : item.type === "Artış" ? "is-increase" : "is-keep"}">${escapeHtml(item.type)}</span></td>
         <td><span class="recommendation-priority ${item.priority === "Yüksek" ? "is-high" : "is-medium"}">${escapeHtml(item.priority)}</span></td>
-        <td><p class="ai-note">${escapeHtml(item.reason)}</p></td>
+        <td>
+          <div class="recommendation-actions">
+            <button class="recommendation-action recommendation-action--discard" type="button" data-discard-recommendation="${escapeAttribute(item.id)}">Vazgeç</button>
+            <button class="recommendation-action recommendation-action--apply" type="button" data-apply-recommendation="${escapeAttribute(item.id)}">Uygula</button>
+          </div>
+        </td>
       </tr>
     `;
   }
@@ -687,14 +779,21 @@
     const tone = getAbCardTone(test);
     const decision = getAbDecision(test);
     const rows = getAbComparisonRows(test);
+    const hasExplicitControl = rows.some((item) => item.id === "control");
     const control = rows.find((item) => item.id === "control") || rows[0] || null;
+    const variantA = rows.find((item) => item.id === "variant-a") || rows[0] || null;
+    const variantB = rows.find((item) => item.id === "variant-b") || rows[1] || variantA;
     const winner = decision.winnerId
       ? rows.find((item) => item.id === decision.winnerId) || null
       : rows
         .filter((item) => item.id !== "control")
         .sort((a, b) => b.uplift - a.uplift)[0] || null;
-    const comparisonA = control ? control.rpv : 1;
-    const comparisonB = winner ? winner.rpv : comparisonA;
+    const comparisonA = hasExplicitControl
+      ? (control ? control.rpv : 1)
+      : (variantA ? variantA.rpv : 1);
+    const comparisonB = hasExplicitControl
+      ? (winner ? winner.rpv : comparisonA)
+      : (variantB ? variantB.rpv : comparisonA);
     const comparisonTotal = Math.max(1, comparisonA + comparisonB);
     const aWidth = Math.max(18, Math.round((comparisonA / comparisonTotal) * 100));
     const bWidth = Math.max(18, 100 - aWidth);
@@ -702,7 +801,7 @@
     const sampleTarget = Number(test.sampleTarget) || 0;
     const sampleProgress = sampleTarget > 0 ? Math.min(100, Math.round((sampleCollected / sampleTarget) * 100)) : 0;
     const uplift = winner && winner.id !== "control" ? winner.uplift : 0;
-    const hasPositiveWinner = Boolean(winner && winner.id !== "control" && winner.uplift > 0);
+    const winnerId = decision.winnerId || "";
     const isRunning = test.status === "Çalışıyor";
     const cardLabel = tone === "winner"
       ? "Kazanan Belirlendi"
@@ -716,6 +815,10 @@
         : "Testi Başlat";
     const actionType = tone === "critical" ? "clone-test" : "toggle-run";
     const actionClass = tone === "critical" ? "secondary-button" : "outline-button";
+    const testTypeLabel = test.testDesignLabel || "Zaman Serisi (Sequential) Testi";
+    const strategySummary = (test.strategyVariantAName && test.strategyVariantBName)
+      ? `Varyant A: <strong>${escapeHtml(test.strategyVariantAName)}</strong> · Varyant B: <strong>${escapeHtml(test.strategyVariantBName)}</strong>`
+      : `Strateji: <strong>${escapeHtml(test.strategyName || test.name)}</strong>`;
 
     return `
       <article class="ab-exp-card is-${tone}" data-ab-open-detail="${escapeAttribute(test.id)}" aria-label="${escapeHtml((test.productName || test.name) + " detay sayfasını aç")}">
@@ -725,7 +828,8 @@
             <span class="ab-exp-avatar">${escapeHtml(getInitials(test.productName || test.name))}</span>
             <div>
               <h3>${escapeHtml(test.productName || test.name)}</h3>
-              <p>Strateji: <strong>${escapeHtml(test.strategyName || test.name)}</strong></p>
+              <p>${strategySummary}</p>
+              <p class="ab-exp-testtype">Test Türü: <strong>${escapeHtml(testTypeLabel)}</strong></p>
               <div class="ab-exp-tags">
                 <span>${escapeHtml(test.category || test.targetLabel)}</span>
                 ${test.categoryDetail ? `<span>${escapeHtml(test.categoryDetail)}</span>` : ""}
@@ -738,18 +842,18 @@
               ? `
                 <p class="ab-exp-status">İlerleme: <strong>${new Intl.NumberFormat("tr-TR").format(sampleCollected)} / ${new Intl.NumberFormat("tr-TR").format(sampleTarget)} örneklem</strong></p>
                 <div class="ab-progress-track"><span style="width:${sampleProgress}%"></span></div>
-                <p class="ab-exp-note">Güven Seviyesi: <strong>%${test.significance}</strong></p>
+                <p class="ab-exp-note">YZ Güven Skoru: <strong>%${test.significance}</strong></p>
               `
               : `
                 <div class="ab-exp-legend">
-                  <span>A (Kontrol)</span>
-                  <span>${hasPositiveWinner ? "B (Kazanan)" : "B (Varyant)"}</span>
+                  <span>${hasExplicitControl ? "A (Kontrol)" : (winnerId === "variant-a" ? "A (Kazanan)" : "A (Varyant A)")}</span>
+                  <span>${hasExplicitControl ? (winnerId ? "B (Kazanan)" : "B (Varyant)") : (winnerId === "variant-b" ? "B (Kazanan)" : "B (Varyant B)")}</span>
                 </div>
                 <div class="ab-duel-track">
                   <span class="ab-duel-track__a" style="width:${aWidth}%"></span>
                   <span class="ab-duel-track__b" style="width:${bWidth}%"></span>
                 </div>
-                <p class="ab-exp-note">Güven Seviyesi: <strong>%${test.significance}</strong></p>
+                <p class="ab-exp-note">YZ Güven Skoru: <strong>%${test.significance}</strong></p>
               `
             }
           </section>
@@ -804,6 +908,18 @@
         <td>${formatPercent(row.marginRate)}</td>
       </tr>
     `;
+  }
+
+  function getAbDetailMeta(test) {
+    const hasVariantA = Array.isArray(test.variants) && test.variants.some((item) => item.id === "variant-a");
+    const hasVariantB = Array.isArray(test.variants) && test.variants.some((item) => item.id === "variant-b");
+
+    return {
+      currentStrategy: test.controlStrategyName || "Mevcut Fiyat / Kontrol",
+      variantAStrategy: hasVariantA ? (test.strategyVariantAName || test.strategyName || "-") : "-",
+      variantBStrategy: hasVariantB ? (test.strategyVariantBName || test.strategyName || "-") : "-",
+      testType: test.testDesignLabel || "Zaman Serisi (Sequential) Testi"
+    };
   }
 
   function renderDrawer() {
@@ -902,8 +1018,11 @@
     }
 
     const selectedProductId = state.abCreateModal.selectedProductId;
-    const selectedStrategyId = state.abCreateModal.selectedStrategyId;
-    const canStart = Boolean(selectedProductId && selectedStrategyId);
+    const selectedStrategyAId = state.abCreateModal.selectedStrategyAId;
+    const selectedStrategyBId = state.abCreateModal.selectedStrategyBId;
+    const selectedTestTypeId = state.abCreateModal.selectedTestTypeId;
+    const sameStrategySelected = selectedStrategyAId && selectedStrategyAId === selectedStrategyBId;
+    const canStart = Boolean(selectedProductId && selectedStrategyAId && selectedStrategyBId && selectedTestTypeId && !sameStrategySelected);
 
     elements.abCreateModalRoot.innerHTML = `
       <div class="modal-backdrop" data-close-ab-create="1">
@@ -929,11 +1048,27 @@
             </div>
 
             <div class="ab-create-strategy-wrap">
-              <p class="ab-create-strategy-label">Strateji Seç</p>
+              <p class="ab-create-strategy-label">Varyant A Stratejisi</p>
               <div class="ab-create-strategy-grid">
-                ${AB_CREATE_STRATEGIES.map((strategy) => renderAbCreateStrategyCard(strategy, strategy.id === selectedStrategyId)).join("")}
+                ${AB_CREATE_STRATEGIES.map((strategy) => renderAbCreateStrategyCard(strategy, strategy.id === selectedStrategyAId, "a")).join("")}
               </div>
             </div>
+
+            <div class="ab-create-strategy-wrap">
+              <p class="ab-create-strategy-label">Varyant B Stratejisi</p>
+              <div class="ab-create-strategy-grid">
+                ${AB_CREATE_STRATEGIES.map((strategy) => renderAbCreateStrategyCard(strategy, strategy.id === selectedStrategyBId, "b")).join("")}
+              </div>
+            </div>
+
+            <div class="ab-create-testtype-wrap">
+              <p class="ab-create-strategy-label">Test Türü Seç</p>
+              <div class="ab-create-testtype-grid">
+                ${AB_CREATE_TEST_TYPES.map((typeItem) => renderAbCreateTestTypeCard(typeItem, typeItem.id === selectedTestTypeId)).join("")}
+              </div>
+            </div>
+
+            ${sameStrategySelected ? `<p class="helper-text">Varyant A ve Varyant B için farklı stratejiler seçin.</p>` : ""}
 
             <div class="modal-actions">
               <button class="secondary-button" type="button" data-close-ab-create="1">Vazgeç</button>
@@ -946,11 +1081,20 @@
     syncOverlayState();
   }
 
-  function renderAbCreateStrategyCard(strategy, isSelected) {
+  function renderAbCreateStrategyCard(strategy, isSelected, slot) {
     return `
-      <button class="ab-create-strategy ${isSelected ? "is-selected" : ""}" type="button" data-ab-create-strategy="${escapeAttribute(strategy.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+      <button class="ab-create-strategy ${isSelected ? "is-selected" : ""}" type="button" data-ab-create-strategy="${escapeAttribute(strategy.id)}" data-ab-create-strategy-slot="${escapeAttribute(slot)}" aria-pressed="${isSelected ? "true" : "false"}">
         <span class="ab-create-strategy__title">${escapeHtml(strategy.name)}</span>
         <span class="ab-create-strategy__summary">${escapeHtml(strategy.summary)}</span>
+      </button>
+    `;
+  }
+
+  function renderAbCreateTestTypeCard(typeItem, isSelected) {
+    return `
+      <button class="ab-create-testtype ${isSelected ? "is-selected" : ""}" type="button" data-ab-create-test-type="${escapeAttribute(typeItem.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+        <span class="ab-create-testtype__title">${escapeHtml(typeItem.name)}</span>
+        <span class="ab-create-testtype__summary">${escapeHtml(typeItem.summary)}</span>
       </button>
     `;
   }
@@ -1124,7 +1268,20 @@
 
     const abCreateStrategyTrigger = event.target.closest("[data-ab-create-strategy]");
     if (abCreateStrategyTrigger) {
-      state.abCreateModal.selectedStrategyId = String(abCreateStrategyTrigger.dataset.abCreateStrategy || "");
+      const selectedStrategyId = String(abCreateStrategyTrigger.dataset.abCreateStrategy || "");
+      const slot = String(abCreateStrategyTrigger.dataset.abCreateStrategySlot || "a");
+      if (slot === "b") {
+        state.abCreateModal.selectedStrategyBId = selectedStrategyId;
+      } else {
+        state.abCreateModal.selectedStrategyAId = selectedStrategyId;
+      }
+      renderAbCreateModal();
+      return;
+    }
+
+    const abCreateTestTypeTrigger = event.target.closest("[data-ab-create-test-type]");
+    if (abCreateTestTypeTrigger) {
+      state.abCreateModal.selectedTestTypeId = String(abCreateTestTypeTrigger.dataset.abCreateTestType || "");
       renderAbCreateModal();
       return;
     }
@@ -1141,6 +1298,20 @@
 
     if (event.target.closest("[data-discard-insight]")) {
       showToast("YZ önerisi geçici olarak yok sayıldı.");
+      return;
+    }
+
+    const applyRecommendationTrigger = event.target.closest("[data-apply-recommendation]");
+    if (applyRecommendationTrigger) {
+      const product = getProductById(applyRecommendationTrigger.dataset.applyRecommendation);
+      showToast(product ? `${product.name} için YZ önerisi uygulandı.` : "YZ önerisi uygulandı.");
+      return;
+    }
+
+    const discardRecommendationTrigger = event.target.closest("[data-discard-recommendation]");
+    if (discardRecommendationTrigger) {
+      const product = getProductById(discardRecommendationTrigger.dataset.discardRecommendation);
+      showToast(product ? `${product.name} için YZ önerisi geçici olarak yok sayıldı.` : "YZ önerisi geçici olarak yok sayıldı.");
       return;
     }
 
@@ -1350,8 +1521,16 @@
       state.abCreateModal.selectedProductId = state.products[0].id;
     }
 
-    if (!AB_CREATE_STRATEGIES.some((item) => item.id === state.abCreateModal.selectedStrategyId)) {
-      state.abCreateModal.selectedStrategyId = AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null;
+    if (!AB_CREATE_STRATEGIES.some((item) => item.id === state.abCreateModal.selectedStrategyAId)) {
+      state.abCreateModal.selectedStrategyAId = AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null;
+    }
+
+    if (!AB_CREATE_STRATEGIES.some((item) => item.id === state.abCreateModal.selectedStrategyBId)) {
+      state.abCreateModal.selectedStrategyBId = AB_CREATE_STRATEGIES[1] ? AB_CREATE_STRATEGIES[1].id : (AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null);
+    }
+
+    if (!AB_CREATE_TEST_TYPES.some((item) => item.id === state.abCreateModal.selectedTestTypeId)) {
+      state.abCreateModal.selectedTestTypeId = AB_CREATE_TEST_TYPES[0] ? AB_CREATE_TEST_TYPES[0].id : null;
     }
 
     state.abCreateModal.open = true;
@@ -1365,24 +1544,36 @@
 
   function startAbCreateExperiment() {
     const product = getProductById(state.abCreateModal.selectedProductId);
-    const strategy = AB_CREATE_STRATEGIES.find((item) => item.id === state.abCreateModal.selectedStrategyId) || null;
+    const strategyA = AB_CREATE_STRATEGIES.find((item) => item.id === state.abCreateModal.selectedStrategyAId) || null;
+    const strategyB = AB_CREATE_STRATEGIES.find((item) => item.id === state.abCreateModal.selectedStrategyBId) || null;
+    const testType = AB_CREATE_TEST_TYPES.find((item) => item.id === state.abCreateModal.selectedTestTypeId) || null;
 
-    if (!product || !strategy) {
-      showToast("Deneyi başlatmak için ürün ve strateji seçimi zorunlu.");
+    if (!product || !strategyA || !strategyB || !testType) {
+      showToast("Deneyi başlatmak için ürün, strateji ve test türü seçimi zorunlu.");
+      return;
+    }
+
+    if (strategyA.id === strategyB.id) {
+      showToast("Varyant A ve Varyant B için farklı stratejiler seçin.");
       return;
     }
 
     const now = new Date();
     const startedAt = now.toISOString().slice(0, 10);
     const basePrice = Number(product.currentPrice) || 0;
-    const variantPrice = getAbCreateVariantPrice(basePrice, strategy.id);
-    const targetKpi = getAbCreateTargetKpi(strategy.id);
+    const variantAPrice = getAbCreateVariantPrice(basePrice, strategyA.id);
+    const variantBPrice = getAbCreateVariantPrice(basePrice, strategyB.id);
+    const targetKpi = getAbCreateTargetKpi(strategyA.id);
 
     const newTest = {
       id: `ab-${Date.now()}`,
-      name: `${product.name} ${strategy.name}`,
+      name: `${product.name} ${strategyA.name} vs ${strategyB.name}`,
       productName: product.name,
-      strategyName: strategy.name,
+      strategyName: `${strategyA.name} vs ${strategyB.name}`,
+      strategyVariantAName: strategyA.name,
+      strategyVariantBName: strategyB.name,
+      testDesignTypeId: testType.id,
+      testDesignLabel: testType.name,
       category: product.category,
       categoryDetail: `Kategori: ${product.category}`,
       cardTone: "running",
@@ -1403,22 +1594,22 @@
         autoStop: true
       },
       alerts: [
-        "Deney başlatıldı. İlk anlamlı örneklem oluşana kadar varyantlar izleniyor."
+        `${testType.name} ile deney başlatıldı. İlk anlamlı örneklem oluşana kadar varyantlar izleniyor.`
       ],
       variants: [
         {
-          id: "control",
-          label: "Kontrol",
-          price: basePrice,
+          id: "variant-a",
+          label: `Varyant A (${strategyA.name})`,
+          price: variantAPrice,
           sessions: 0,
           orders: 0,
           revenue: 0,
           marginRate: 0.22
         },
         {
-          id: "variant-a",
-          label: "Varyant A",
-          price: variantPrice,
+          id: "variant-b",
+          label: `Varyant B (${strategyB.name})`,
+          price: variantBPrice,
           sessions: 0,
           orders: 0,
           revenue: 0,
@@ -1576,7 +1767,7 @@
 
     return state.abTesting.tests.filter((test) => {
       const tone = getAbCardTone(test);
-      const searchable = normalizeSearch(`${test.name} ${test.productName} ${test.strategyName} ${test.category} ${test.targetLabel}`);
+      const searchable = normalizeSearch(`${test.name} ${test.productName} ${test.strategyName} ${test.category} ${test.targetLabel} ${test.testDesignLabel || ""}`);
       const matchesSearch = !search || searchable.includes(search);
       if (!matchesSearch) return false;
 
@@ -1641,12 +1832,10 @@
   function getAbDecision(test) {
     const rows = getAbComparisonRows(test);
     const control = rows.find((item) => item.id === "control") || null;
-    const candidates = rows
-      .filter((item) => item.id !== "control")
+    const hasControl = Boolean(control);
+    const eligibleRows = rows
       .filter((item) => item.marginRate * 100 >= test.guardrails.minMarginRate)
-      .sort((a, b) => b.uplift - a.uplift);
-
-    const winner = candidates[0] || null;
+      .sort((a, b) => b.rpv - a.rpv);
 
     if (test.status === "Durduruldu") {
       return {
@@ -1663,7 +1852,7 @@
       return {
         tone: "is-positive",
         title: `${applied ? applied.label : "Kazanan varyant"} yayına alındı`,
-        reason: `Test sonucu uygulandı. Güven seviyesi %${test.significance} olarak kaydedildi.`,
+        reason: `Test sonucu uygulandı. YZ güven skoru %${test.significance} olarak kaydedildi.`,
         winnerId: test.appliedWinnerId,
         canApply: false
       };
@@ -1673,11 +1862,50 @@
       return {
         tone: "is-warning",
         title: "Testi sürdür",
-        reason: `Güven seviyesi %${test.significance}. Karar için önerilen eşik %90.`,
+        reason: `YZ güven skoru %${test.significance}. Karar için önerilen eşik %90.`,
         winnerId: null,
         canApply: false
       };
     }
+
+    if (!hasControl) {
+      if (eligibleRows.length < 2) {
+        return {
+          tone: "is-neutral",
+          title: "Varyantları izlemeye devam et",
+          reason: "Marj eşiğini geçen iki varyant oluşmadan kazanan önerisi verilemez.",
+          winnerId: null,
+          canApply: false
+        };
+      }
+
+      const best = eligibleRows[0];
+      const runnerUp = eligibleRows[1];
+      const upliftAgainstRunner = runnerUp.rpv > 0 ? (best.rpv - runnerUp.rpv) / runnerUp.rpv : 0;
+
+      if (upliftAgainstRunner <= 0) {
+        return {
+          tone: "is-neutral",
+          title: "Varyantlar benzer performansta",
+          reason: "A ve B varyantları arasında anlamlı bir fark oluşmadı. Testi sürdürerek örneklem toplanabilir.",
+          winnerId: null,
+          canApply: false
+        };
+      }
+
+      return {
+        tone: "is-positive",
+        title: `${best.label} varyantını yayına al`,
+        reason: `${best.label}, ${runnerUp.label} varyantına göre ${formatPercent(upliftAgainstRunner)} daha yüksek ziyaretçi başı gelir üretti. YZ güven skoru: %${test.significance}.`,
+        winnerId: best.id,
+        canApply: true
+      };
+    }
+
+    const candidates = eligibleRows
+      .filter((item) => item.id !== "control")
+      .sort((a, b) => b.uplift - a.uplift);
+    const winner = candidates[0] || null;
 
     if (!winner || !control || winner.uplift <= 0) {
       return {
@@ -1692,7 +1920,7 @@
     return {
       tone: "is-positive",
       title: `${winner.label} varyantını yayına al`,
-      reason: `${winner.label}, kontrol varyantına göre ${formatPercent(winner.uplift)} daha yüksek ziyaretçi başı gelir üretti. Güven: %${test.significance}.`,
+      reason: `${winner.label}, kontrol varyantına göre ${formatPercent(winner.uplift)} daha yüksek ziyaretçi başı gelir üretti. YZ güven skoru: %${test.significance}.`,
       winnerId: winner.id,
       canApply: true
     };
