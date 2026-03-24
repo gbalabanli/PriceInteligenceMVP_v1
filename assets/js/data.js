@@ -234,6 +234,14 @@
       {
         id: "ab-301",
         name: "Kulaklık Fiyat Aralığı Testi",
+        productName: "Apple Airpods Pro 2",
+        strategyName: "Psikolojik Eşik Testi",
+        category: "Elektronik",
+        categoryDetail: "Kategori: Ses",
+        cardTone: "winner",
+        monthlyContribution: 12200,
+        sampleCollected: 1800,
+        sampleTarget: 1800,
         targetLabel: "Wireless Headphones",
         targetKpi: "Ziyaretçi başı gelir",
         status: "Çalışıyor",
@@ -282,6 +290,14 @@
       {
         id: "ab-302",
         name: "Stok Eritme Kampanya Testi",
+        productName: "Basic Cotton T-Shirt",
+        strategyName: "Marj Koruma vs Hacim",
+        category: "Tekstil",
+        cardTone: "running",
+        monthlyContribution: -1800,
+        sampleCollected: 640,
+        sampleTarget: 1000,
+        remainingDays: 4,
         targetLabel: "Clearance Items",
         targetKpi: "Satış adedi",
         status: "Durduruldu",
@@ -315,6 +331,53 @@
             orders: 214,
             revenue: 123906,
             marginRate: 0.132
+          }
+        ]
+      },
+      {
+        id: "ab-303",
+        name: "Laptop Fiyat Koridoru Testi",
+        productName: "Gaming Laptop V5",
+        strategyName: "Agresif Rekabet Kırılımı",
+        category: "Elektronik",
+        cardTone: "critical",
+        monthlyContribution: 0,
+        sampleCollected: 510,
+        sampleTarget: 1200,
+        targetLabel: "Gaming Laptop Segmenti",
+        targetKpi: "Marj koruması",
+        status: "Durduruldu",
+        startedAt: "2026-03-19",
+        significance: 74,
+        trafficSplit: "50/50",
+        guardrails: {
+          minMarginRate: 15,
+          maxPriceChange: 14,
+          minStock: 8,
+          autoStop: true
+        },
+        alerts: [
+          "Minimum marj sınırı ihlal edildiği için test otomatik durduruldu."
+        ],
+        criticalReason: "Varyant B fiyatı 24.500 TL'den 21.200 TL'ye indi ve marj eşiğini kırdı.",
+        variants: [
+          {
+            id: "control",
+            label: "Kontrol",
+            price: 24500,
+            sessions: 1200,
+            orders: 41,
+            revenue: 1004500,
+            marginRate: 0.19
+          },
+          {
+            id: "variant-b",
+            label: "Varyant B",
+            price: 21200,
+            sessions: 1200,
+            orders: 44,
+            revenue: 932800,
+            marginRate: 0.129
           }
         ]
       }

@@ -15,8 +15,26 @@
     dashboard: "/dashboard",
     recommendations: "/yz-fiyat-onerileri",
     dynamicPricing: "/dinamik-fiyatlandirma",
-    abTesting: "/ab-fiyatlandirma-testi"
+    abTesting: "/ab-fiyatlandirma-testi",
+    abTestingDetail: "/ab-fiyatlandirma-testi/detay"
   };
+  const AB_CREATE_STRATEGIES = [
+    {
+      id: "psych-threshold",
+      name: "Psikolojik Eşik Testi",
+      summary: "Farklı fiyat eşiklerini test ederek dönüşüm kırılma noktalarını yakalar."
+    },
+    {
+      id: "margin-vs-volume",
+      name: "Marj Koruma vs Hacim",
+      summary: "Satış adedi ile birim kâr dengesini aynı anda ölçer."
+    },
+    {
+      id: "competitive-response",
+      name: "Rekabet Tepkisi",
+      summary: "Rakip fiyat hamlelerine göre esnek fiyat bandı uygular."
+    }
+  ];
   const state = {
     route: ROUTES.dashboard,
     products: clone(appData.trackedProducts),
@@ -32,9 +50,15 @@
     abTesting: {
       tests: clone(abTestingData.tests),
       selectedTestId: abTestingData.tests[0] ? abTestingData.tests[0].id : null,
-      selectedRange: "30"
+      searchQuery: "",
+      statusFilter: "all"
     },
     introModalOpen: true,
+    abCreateModal: {
+      open: false,
+      selectedProductId: null,
+      selectedStrategyId: AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null
+    },
     drawer: {
       open: false,
       mode: null,
@@ -47,6 +71,7 @@
     drawer: document.getElementById("drawer"),
     drawerBackdrop: document.getElementById("drawer-backdrop"),
     introModalRoot: document.getElementById("intro-modal-root"),
+    abCreateModalRoot: document.getElementById("ab-create-modal-root"),
     toast: document.getElementById("toast")
   };
 
@@ -61,6 +86,7 @@
     window.addEventListener("hashchange", syncRoute);
     document.addEventListener("click", handleClick);
     document.addEventListener("change", handleChange);
+    document.addEventListener("input", handleInput);
     document.addEventListener("submit", handleSubmit);
     document.addEventListener("keydown", handleKeydown);
   }
@@ -85,11 +111,14 @@
     renderWorkspace();
     renderDrawer();
     renderIntroModal();
+    renderAbCreateModal();
   }
 
   function renderSidebarState() {
     document.querySelectorAll("[data-route]").forEach((item) => {
-      item.classList.toggle("is-active", item.dataset.route === state.route);
+      const isAbRoute = item.dataset.route === ROUTES.abTesting
+        && (state.route === ROUTES.abTesting || state.route === ROUTES.abTestingDetail);
+      item.classList.toggle("is-active", item.dataset.route === state.route || isAbRoute);
     });
   }
 
@@ -111,6 +140,11 @@
       return;
     }
 
+    if (state.route === ROUTES.abTestingDetail) {
+      elements.app.innerHTML = renderAbTestingDetailPage();
+      return;
+    }
+
     const metrics = getMetrics();
 
     elements.app.innerHTML = `
@@ -124,7 +158,7 @@
       <section class="panel">
         <div class="panel-head">
           <div>
-            <h2 class="panel-title">Piyasa Nabzı</h2>
+            <h2 class="panel-title panel-title--insight">YZ İçgörüsü</h2>
             <p class="panel-text">Rakip baskısı, trend yönü ve yapay zeka okuması aynı blokta toplanır. Karar verici ilk bakışta hangi segmentte hareket olduğunu görür.</p>
           </div>
           <span class="panel-chip">Canlı sinyal özeti</span>
@@ -146,8 +180,12 @@
         </div>
 
         <div class="pulse-summary">
-          <span class="pulse-summary__label">YZ içgörüsü</span>
+          <span class="pulse-summary__label pulse-summary__label--recommend">YZ Önerisi</span>
           <p class="pulse-summary__text">${escapeHtml(state.marketPulse.aiSummary)}</p>
+          <div class="pulse-summary__actions">
+            <button class="pulse-summary__action pulse-summary__action--discard" type="button" data-discard-insight="1">Vazgeç</button>
+            <button class="pulse-summary__action pulse-summary__action--apply" type="button" data-apply-insight="1">Uygula</button>
+          </div>
         </div>
       </section>
 
@@ -346,6 +384,79 @@
   }
 
   function renderAbTestingPage() {
+    const selectedTest = getSelectedAbTest();
+    const tests = getFilteredAbTests();
+    const activeCount = state.abTesting.tests.filter((item) => item.status === "Çalışıyor").length;
+    const totalContribution = state.abTesting.tests.reduce((sum, item) => sum + (Number(item.monthlyContribution) || 0), 0);
+
+    if (!state.abTesting.tests.length) {
+      return `
+        <section class="panel">
+          <h1 class="panel-title">A/B Fiyatlandırma Testi</h1>
+          <p class="panel-text">Gösterilecek test bulunamadı.</p>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="panel ab-library-hero">
+        <div class="ab-library-head">
+          <div>
+            <h1 class="ab-library-title">A/B Fiyatlandırma Deney Kütüphanesi</h1>
+            <p class="ab-library-text">
+              Şu anda <strong>${activeCount}</strong> farklı strateji canlı olarak test ediliyor.
+            </p>
+          </div>
+          <div class="ab-library-meta">
+            <article class="ab-library-metric">
+              <p>Toplam Test Katkısı</p>
+              <h2>${formatSignedMoney(totalContribution)} <span>/ ay</span></h2>
+            </article>
+            <button class="primary-button" type="button" data-open-ab-create="1" ${state.products.length ? "" : "disabled"}>
+              Yeni Deney Başlat
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel ab-library-filters">
+        <div class="ab-filter-row">
+          <label class="ab-search-field">
+            <span>Ara</span>
+            <input type="text" placeholder="Ürün, marka veya strateji ara..." data-ab-search value="${escapeAttribute(state.abTesting.searchQuery)}">
+          </label>
+          <label class="ab-status-field">
+            <span>Durum</span>
+            <select data-ab-status-filter>
+              <option value="all" ${state.abTesting.statusFilter === "all" ? "selected" : ""}>Tüm Durumlar</option>
+              <option value="winner" ${state.abTesting.statusFilter === "winner" ? "selected" : ""}>Anlamlı Sonuç (Kazanan Var)</option>
+              <option value="running" ${state.abTesting.statusFilter === "running" ? "selected" : ""}>Veri Toplanıyor</option>
+              <option value="critical" ${state.abTesting.statusFilter === "critical" ? "selected" : ""}>Kritik Uyarı</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="ab-library-list">
+        ${tests.length
+          ? tests.map((test) => renderAbExperimentCard(test)).join("")
+          : `
+            <section class="panel ab-library-empty">
+              <h3>Bu filtrede gösterilecek deney yok</h3>
+              <p>Arama metnini veya durum filtresini temizleyerek tüm deneyleri tekrar listeleyebilirsiniz.</p>
+            </section>
+          `
+        }
+      </section>
+
+      <section class="panel ab-library-archive">
+        <h3>Geçmiş Deney Arşivi</h3>
+        <p>Daha önce tamamlanan deneyleri arşiv sekmesinden inceleyebilir, kazanan kurguları yeni testlere klonlayabilirsiniz.</p>
+      </section>
+    `;
+  }
+
+  function renderAbTestingDetailPage() {
     const test = getSelectedAbTest();
 
     if (!test) {
@@ -357,34 +468,22 @@
       `;
     }
 
+    const detailText = test.name
+      ? `${test.name}. ${test.targetKpi ? `Bu test ${test.targetKpi.toLocaleLowerCase("tr-TR")} hedefiyle çalışır.` : "Bu test canlı performans verisiyle izlenir."}`
+      : "Ürün bazlı fiyat deneyinin canlı metrikleri ve karar önerisi bu ekranda gösterilir.";
+
     const decision = getAbDecision(test);
     const rows = getAbComparisonRows(test);
     const snapshot = getAbLiveSnapshot(test);
 
     return `
       <section class="panel ab-hero">
-        <div>
-          <h1 class="ab-hero__title">A/B Fiyatlandırma Testi</h1>
-          <p class="ab-hero__text">Test kur, sonucu canlı izle ve tek ekrandan kararı yayına al.</p>
+        <div class="ab-detail-heading">
+          <h1 class="ab-detail-heading__title">${escapeHtml(test.productName || test.name)}</h1>
+          <p class="ab-detail-heading__text">${escapeHtml(detailText)}</p>
         </div>
         <div class="ab-hero__controls">
-          <label class="ab-control">
-            <span>Aktif Test</span>
-            <select data-ab-test-select>
-              ${state.abTesting.tests.map((item) => {
-                const selected = item.id === state.abTesting.selectedTestId ? "selected" : "";
-                return `<option value="${escapeAttribute(item.id)}" ${selected}>${escapeHtml(item.name)}</option>`;
-              }).join("")}
-            </select>
-          </label>
-          <label class="ab-control">
-            <span>Tarih Aralığı</span>
-            <select data-ab-range>
-              <option value="7" ${state.abTesting.selectedRange === "7" ? "selected" : ""}>Son 7 Gün</option>
-              <option value="30" ${state.abTesting.selectedRange === "30" ? "selected" : ""}>Son 30 Gün</option>
-              <option value="90" ${state.abTesting.selectedRange === "90" ? "selected" : ""}>Son 90 Gün</option>
-            </select>
-          </label>
+          <button class="primary-button ab-back-button" type="button" data-ab-back="1" title="Listeye geri dön" aria-label="Listeye geri dön">Listeye Geri Dön</button>
         </div>
       </section>
 
@@ -427,10 +526,9 @@
             <h3 class="ab-decision__title">${escapeHtml(decision.title)}</h3>
             <p class="ab-decision__text">${escapeHtml(decision.reason)}</p>
             <div class="ab-action-row">
-              <button class="primary-button" type="button" data-ab-action="toggle-run">${test.status === "Çalışıyor" ? "Testi Durdur" : "Testi Başlat"}</button>
-              <button class="outline-button" type="button" data-ab-action="apply-winner" ${decision.canApply ? "" : "disabled"}>Kazananı Yayına Al</button>
-              <button class="ghost-button" type="button" data-ab-action="clone-test">Yeni Test Klonla</button>
-              <button class="ghost-button" type="button" data-ab-action="reset-range">Aralığı Sıfırla</button>
+              <button class="primary-button" type="button" data-ab-action="toggle-run" data-ab-test="${escapeAttribute(test.id)}">${test.status === "Çalışıyor" ? "Testi Durdur" : "Testi Başlat"}</button>
+              <button class="outline-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Kazananı Yayına Al</button>
+              <button class="ghost-button" type="button" data-ab-action="clone-test" data-ab-test="${escapeAttribute(test.id)}">Yeni Test Klonla</button>
             </div>
           </section>
 
@@ -464,7 +562,9 @@
 
         <aside class="ab-side">
           <section class="panel ab-guardrails">
-            <h3 class="ab-side__title">Guardrails</h3>
+            <p class="ab-guardrails__eyebrow">Canlı Koruma Katmanı</p>
+            <h3 class="ab-side__title">Denetim Mekanizması</h3>
+            <p class="ab-guardrails__text">Aşağıdaki sınırlar ihlal edilirse test akışı otomatik olarak yavaşlatılır veya durdurulur.</p>
             <div class="ab-side-list">
               <div><span>Min. Marj</span><strong>%${test.guardrails.minMarginRate}</strong></div>
               <div><span>Maks. Fiyat Değişimi</span><strong>%${test.guardrails.maxPriceChange}</strong></div>
@@ -480,37 +580,6 @@
             </div>
           </section>
         </aside>
-      </section>
-
-      <section class="table-card">
-        <div class="table-card__head">
-          <div>
-            <h2 class="panel-title">Test Geçmişi</h2>
-            <p class="table-card__hint">A/B testlerinin son durumunu tek listede takip edebilirsiniz.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Test</th>
-                <th>Hedef</th>
-                <th>Durum</th>
-                <th>Güven</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${state.abTesting.tests.map((item) => `
-                <tr>
-                  <td>${escapeHtml(item.name)}</td>
-                  <td>${escapeHtml(item.targetLabel)}</td>
-                  <td><span class="ab-state-chip ${getAbStatusClass(item.status)}">${escapeHtml(item.status)}</span></td>
-                  <td>%${item.significance}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
       </section>
     `;
   }
@@ -611,6 +680,110 @@
           </div>
         </td>
       </tr>
+    `;
+  }
+
+  function renderAbExperimentCard(test) {
+    const tone = getAbCardTone(test);
+    const decision = getAbDecision(test);
+    const rows = getAbComparisonRows(test);
+    const control = rows.find((item) => item.id === "control") || rows[0] || null;
+    const winner = decision.winnerId
+      ? rows.find((item) => item.id === decision.winnerId) || null
+      : rows
+        .filter((item) => item.id !== "control")
+        .sort((a, b) => b.uplift - a.uplift)[0] || null;
+    const comparisonA = control ? control.rpv : 1;
+    const comparisonB = winner ? winner.rpv : comparisonA;
+    const comparisonTotal = Math.max(1, comparisonA + comparisonB);
+    const aWidth = Math.max(18, Math.round((comparisonA / comparisonTotal) * 100));
+    const bWidth = Math.max(18, 100 - aWidth);
+    const sampleCollected = Number(test.sampleCollected) || 0;
+    const sampleTarget = Number(test.sampleTarget) || 0;
+    const sampleProgress = sampleTarget > 0 ? Math.min(100, Math.round((sampleCollected / sampleTarget) * 100)) : 0;
+    const uplift = winner && winner.id !== "control" ? winner.uplift : 0;
+    const hasPositiveWinner = Boolean(winner && winner.id !== "control" && winner.uplift > 0);
+    const isRunning = test.status === "Çalışıyor";
+    const cardLabel = tone === "winner"
+      ? "Kazanan Belirlendi"
+      : tone === "critical"
+        ? "Kritik Uyarı"
+        : "Veri Toplanıyor";
+    const actionLabel = tone === "critical"
+      ? "Stratejiyi Revize Et"
+      : isRunning
+        ? "Testi Durdur"
+        : "Testi Başlat";
+    const actionType = tone === "critical" ? "clone-test" : "toggle-run";
+    const actionClass = tone === "critical" ? "secondary-button" : "outline-button";
+
+    return `
+      <article class="ab-exp-card is-${tone}" data-ab-open-detail="${escapeAttribute(test.id)}" aria-label="${escapeHtml((test.productName || test.name) + " detay sayfasını aç")}">
+        <span class="ab-exp-badge">${cardLabel}</span>
+        <div class="ab-exp-grid">
+          <section class="ab-exp-product">
+            <span class="ab-exp-avatar">${escapeHtml(getInitials(test.productName || test.name))}</span>
+            <div>
+              <h3>${escapeHtml(test.productName || test.name)}</h3>
+              <p>Strateji: <strong>${escapeHtml(test.strategyName || test.name)}</strong></p>
+              <div class="ab-exp-tags">
+                <span>${escapeHtml(test.category || test.targetLabel)}</span>
+                ${test.categoryDetail ? `<span>${escapeHtml(test.categoryDetail)}</span>` : ""}
+              </div>
+            </div>
+          </section>
+
+          <section class="ab-exp-compare">
+            ${tone === "running"
+              ? `
+                <p class="ab-exp-status">İlerleme: <strong>${new Intl.NumberFormat("tr-TR").format(sampleCollected)} / ${new Intl.NumberFormat("tr-TR").format(sampleTarget)} örneklem</strong></p>
+                <div class="ab-progress-track"><span style="width:${sampleProgress}%"></span></div>
+                <p class="ab-exp-note">Güven Seviyesi: <strong>%${test.significance}</strong></p>
+              `
+              : `
+                <div class="ab-exp-legend">
+                  <span>A (Kontrol)</span>
+                  <span>${hasPositiveWinner ? "B (Kazanan)" : "B (Varyant)"}</span>
+                </div>
+                <div class="ab-duel-track">
+                  <span class="ab-duel-track__a" style="width:${aWidth}%"></span>
+                  <span class="ab-duel-track__b" style="width:${bWidth}%"></span>
+                </div>
+                <p class="ab-exp-note">Güven Seviyesi: <strong>%${test.significance}</strong></p>
+              `
+            }
+          </section>
+
+          <section class="ab-exp-kpis">
+            <div>
+              <p>${tone === "running" ? "Tahmini Uplift" : "Uplift"}</p>
+              <strong class="${uplift >= 0 ? "is-up" : "is-down"}">${formatSignedPercent(uplift)}</strong>
+            </div>
+            <div>
+              <p>${tone === "running" ? "Kalan Süre" : "Ek Gelir"}</p>
+              <strong>${tone === "running" ? `${test.remainingDays || 0} gün` : formatSignedMoney(test.monthlyContribution || 0)}</strong>
+            </div>
+          </section>
+
+          <section class="ab-exp-actions">
+            ${tone === "winner"
+              ? `<button class="primary-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Kazananı Uygula</button>`
+              : `<button class="${actionClass}" type="button" data-ab-action="${actionType}" data-ab-test="${escapeAttribute(test.id)}">${actionLabel}</button>`
+            }
+            <button class="ghost-button" type="button" data-ab-open-detail="${escapeAttribute(test.id)}">Detayları Gör</button>
+            <button class="ghost-button" type="button" data-ab-action="clone-test" data-ab-test="${escapeAttribute(test.id)}">Detaydan Yeni Test Klonla</button>
+          </section>
+        </div>
+        ${tone === "critical" && test.criticalReason
+          ? `
+            <div class="ab-exp-critical">
+              <p>İhlal Noktası</p>
+              <strong>${escapeHtml(test.criticalReason)}</strong>
+            </div>
+          `
+          : ""
+        }
+      </article>
     `;
   }
 
@@ -717,6 +890,69 @@
       </div>
     `;
     syncOverlayState();
+  }
+
+  function renderAbCreateModal() {
+    if (!elements.abCreateModalRoot) return;
+
+    if (!state.abCreateModal.open) {
+      elements.abCreateModalRoot.innerHTML = "";
+      syncOverlayState();
+      return;
+    }
+
+    const selectedProductId = state.abCreateModal.selectedProductId;
+    const selectedStrategyId = state.abCreateModal.selectedStrategyId;
+    const canStart = Boolean(selectedProductId && selectedStrategyId);
+
+    elements.abCreateModalRoot.innerHTML = `
+      <div class="modal-backdrop" data-close-ab-create="1">
+        <section class="modal-card ab-create-modal" role="dialog" aria-modal="true" aria-labelledby="ab-create-title">
+          <div class="ab-create-head">
+            <div>
+              <p class="modal-eyebrow">A/B Deney Kurulumu</p>
+              <h2 id="ab-create-title" class="ab-create-title">Yeni Deney Başlat</h2>
+              <p class="ab-create-text">Mevcut ürünlerden birini seçin, stratejiyi karttan belirleyin ve testi canlıya alın.</p>
+            </div>
+            <button class="icon-button" type="button" aria-label="Kapat" data-close-ab-create="1">×</button>
+          </div>
+
+          <form id="ab-create-form" class="ab-create-form">
+            <div class="field">
+              <label for="ab-create-product">Ürün Seç</label>
+              <select id="ab-create-product" name="productId" data-ab-create-product required>
+                ${state.products.map((product) => {
+                  const selected = product.id === selectedProductId ? "selected" : "";
+                  return `<option value="${escapeAttribute(product.id)}" ${selected}>${escapeHtml(product.name)} • ${escapeHtml(product.category)} • ${formatMoney(product.currentPrice)}</option>`;
+                }).join("")}
+              </select>
+            </div>
+
+            <div class="ab-create-strategy-wrap">
+              <p class="ab-create-strategy-label">Strateji Seç</p>
+              <div class="ab-create-strategy-grid">
+                ${AB_CREATE_STRATEGIES.map((strategy) => renderAbCreateStrategyCard(strategy, strategy.id === selectedStrategyId)).join("")}
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="secondary-button" type="button" data-close-ab-create="1">Vazgeç</button>
+              <button class="primary-button" type="submit" ${canStart ? "" : "disabled"}>Başlat</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    `;
+    syncOverlayState();
+  }
+
+  function renderAbCreateStrategyCard(strategy, isSelected) {
+    return `
+      <button class="ab-create-strategy ${isSelected ? "is-selected" : ""}" type="button" data-ab-create-strategy="${escapeAttribute(strategy.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+        <span class="ab-create-strategy__title">${escapeHtml(strategy.name)}</span>
+        <span class="ab-create-strategy__summary">${escapeHtml(strategy.summary)}</span>
+      </button>
+    `;
   }
 
   function renderAddProductDrawer() {
@@ -851,9 +1087,19 @@
       return;
     }
 
+    if (event.target.matches("[data-close-ab-create]")) {
+      closeAbCreateModal();
+      return;
+    }
+
     if (event.target.closest("[data-intro-add-product]")) {
       closeIntroModal();
       openAddDrawer();
+      return;
+    }
+
+    if (event.target.closest("[data-open-ab-create]")) {
+      openAbCreateModal();
       return;
     }
 
@@ -876,8 +1122,25 @@
       return;
     }
 
+    const abCreateStrategyTrigger = event.target.closest("[data-ab-create-strategy]");
+    if (abCreateStrategyTrigger) {
+      state.abCreateModal.selectedStrategyId = String(abCreateStrategyTrigger.dataset.abCreateStrategy || "");
+      renderAbCreateModal();
+      return;
+    }
+
     if (event.target.closest("[data-apply-strategy]")) {
       applyDynamicPricingStrategy();
+      return;
+    }
+
+    if (event.target.closest("[data-apply-insight]")) {
+      showToast("YZ önerisi uygulandı.");
+      return;
+    }
+
+    if (event.target.closest("[data-discard-insight]")) {
+      showToast("YZ önerisi geçici olarak yok sayıldı.");
       return;
     }
 
@@ -895,18 +1158,30 @@
 
     const abActionTrigger = event.target.closest("[data-ab-action]");
     if (abActionTrigger) {
+      const testId = abActionTrigger.dataset.abTest || null;
+      if (testId && state.abTesting.tests.some((item) => item.id === testId)) {
+        state.abTesting.selectedTestId = testId;
+      }
+
       const action = abActionTrigger.dataset.abAction;
       if (action === "toggle-run") {
-        toggleAbTestStatus();
+        toggleAbTestStatus(testId);
       } else if (action === "apply-winner") {
-        applyAbWinner();
+        applyAbWinner(testId);
       } else if (action === "clone-test") {
-        cloneAbTest();
-      } else if (action === "reset-range") {
-        state.abTesting.selectedRange = "30";
-        renderWorkspace();
-        showToast("Tarih aralığı varsayılana döndü.");
+        cloneAbTest(testId);
       }
+      return;
+    }
+
+    if (event.target.closest("[data-ab-back]")) {
+      navigateBackFromAbDetail();
+      return;
+    }
+
+    const abDetailTrigger = event.target.closest("[data-ab-open-detail]");
+    if (abDetailTrigger) {
+      openAbTestDetail(abDetailTrigger.dataset.abOpenDetail);
       return;
     }
 
@@ -923,6 +1198,12 @@
   }
 
   function handleSubmit(event) {
+    if (event.target.id === "ab-create-form") {
+      event.preventDefault();
+      startAbCreateExperiment();
+      return;
+    }
+
     if (event.target.id !== "add-product-form") return;
 
     event.preventDefault();
@@ -984,6 +1265,10 @@
         closeDrawer();
         return;
       }
+      if (state.abCreateModal.open) {
+        closeAbCreateModal();
+        return;
+      }
       if (state.introModalOpen) {
         closeIntroModal();
         return;
@@ -1010,14 +1295,21 @@
       return;
     }
 
-    if (event.target.matches("[data-ab-test-select]")) {
-      state.abTesting.selectedTestId = String(event.target.value || "");
+    if (event.target.matches("[data-ab-status-filter]")) {
+      state.abTesting.statusFilter = String(event.target.value || "all");
       renderWorkspace();
       return;
     }
 
-    if (event.target.matches("[data-ab-range]")) {
-      state.abTesting.selectedRange = String(event.target.value || "30");
+    if (event.target.matches("[data-ab-create-product]")) {
+      state.abCreateModal.selectedProductId = String(event.target.value || "");
+      renderAbCreateModal();
+    }
+  }
+
+  function handleInput(event) {
+    if (event.target.matches("[data-ab-search]")) {
+      state.abTesting.searchQuery = String(event.target.value || "");
       renderWorkspace();
     }
   }
@@ -1048,9 +1340,125 @@
     renderIntroModal();
   }
 
+  function openAbCreateModal() {
+    if (!state.products.length) {
+      showToast("Deney başlatmak için önce en az bir ürün ekleyin.");
+      return;
+    }
+
+    if (!state.products.some((item) => item.id === state.abCreateModal.selectedProductId)) {
+      state.abCreateModal.selectedProductId = state.products[0].id;
+    }
+
+    if (!AB_CREATE_STRATEGIES.some((item) => item.id === state.abCreateModal.selectedStrategyId)) {
+      state.abCreateModal.selectedStrategyId = AB_CREATE_STRATEGIES[0] ? AB_CREATE_STRATEGIES[0].id : null;
+    }
+
+    state.abCreateModal.open = true;
+    renderAbCreateModal();
+  }
+
+  function closeAbCreateModal() {
+    state.abCreateModal.open = false;
+    renderAbCreateModal();
+  }
+
+  function startAbCreateExperiment() {
+    const product = getProductById(state.abCreateModal.selectedProductId);
+    const strategy = AB_CREATE_STRATEGIES.find((item) => item.id === state.abCreateModal.selectedStrategyId) || null;
+
+    if (!product || !strategy) {
+      showToast("Deneyi başlatmak için ürün ve strateji seçimi zorunlu.");
+      return;
+    }
+
+    const now = new Date();
+    const startedAt = now.toISOString().slice(0, 10);
+    const basePrice = Number(product.currentPrice) || 0;
+    const variantPrice = getAbCreateVariantPrice(basePrice, strategy.id);
+    const targetKpi = getAbCreateTargetKpi(strategy.id);
+
+    const newTest = {
+      id: `ab-${Date.now()}`,
+      name: `${product.name} ${strategy.name}`,
+      productName: product.name,
+      strategyName: strategy.name,
+      category: product.category,
+      categoryDetail: `Kategori: ${product.category}`,
+      cardTone: "running",
+      monthlyContribution: 0,
+      sampleCollected: 0,
+      sampleTarget: 1000,
+      remainingDays: 7,
+      targetLabel: product.name,
+      targetKpi,
+      status: "Çalışıyor",
+      startedAt,
+      significance: 0,
+      trafficSplit: "50/50",
+      guardrails: {
+        minMarginRate: 15,
+        maxPriceChange: 12,
+        minStock: 20,
+        autoStop: true
+      },
+      alerts: [
+        "Deney başlatıldı. İlk anlamlı örneklem oluşana kadar varyantlar izleniyor."
+      ],
+      variants: [
+        {
+          id: "control",
+          label: "Kontrol",
+          price: basePrice,
+          sessions: 0,
+          orders: 0,
+          revenue: 0,
+          marginRate: 0.22
+        },
+        {
+          id: "variant-a",
+          label: "Varyant A",
+          price: variantPrice,
+          sessions: 0,
+          orders: 0,
+          revenue: 0,
+          marginRate: 0.2
+        }
+      ]
+    };
+
+    state.abTesting.tests.unshift(newTest);
+    state.abTesting.selectedTestId = newTest.id;
+    closeAbCreateModal();
+    renderWorkspace();
+    showToast("Yeni A/B deneyi başlatıldı.");
+  }
+
+  function openAbTestDetail(testId) {
+    if (testId && state.abTesting.tests.some((item) => item.id === testId)) {
+      state.abTesting.selectedTestId = testId;
+    }
+    window.location.hash = `#${ROUTES.abTestingDetail}`;
+  }
+
+  function navigateBackFromAbDetail() {
+    const currentHash = window.location.hash;
+    if (window.history.length > 1) {
+      window.history.back();
+      window.setTimeout(() => {
+        if (window.location.hash === currentHash) {
+          window.location.hash = `#${ROUTES.abTesting}`;
+        }
+      }, 120);
+      return;
+    }
+
+    window.location.hash = `#${ROUTES.abTesting}`;
+  }
+
   function syncOverlayState() {
     document.body.classList.toggle("drawer-open", state.drawer.open);
-    document.body.classList.toggle("overlay-open", state.drawer.open || state.introModalOpen);
+    document.body.classList.toggle("overlay-open", state.drawer.open || state.introModalOpen || state.abCreateModal.open);
   }
 
   function getMetrics() {
@@ -1088,6 +1496,34 @@
     return 999;
   }
 
+  function getAbCreateVariantPrice(basePrice, strategyId) {
+    const numericPrice = Number(basePrice) || 0;
+    if (numericPrice <= 0) return 0;
+
+    if (strategyId === "psych-threshold") {
+      const discounted = Math.max(1, Math.round(numericPrice * 0.97));
+      const threshold = Math.floor(discounted / 10) * 10 + 9;
+      return Math.max(1, threshold);
+    }
+
+    if (strategyId === "margin-vs-volume") {
+      return Math.max(1, Math.round(numericPrice * 1.035));
+    }
+
+    if (strategyId === "competitive-response") {
+      return Math.max(1, Math.round(numericPrice * 0.95));
+    }
+
+    return numericPrice;
+  }
+
+  function getAbCreateTargetKpi(strategyId) {
+    if (strategyId === "psych-threshold") return "Dönüşüm oranı";
+    if (strategyId === "margin-vs-volume") return "Ziyaretçi başı gelir";
+    if (strategyId === "competitive-response") return "Rekabet kazanım oranı";
+    return "Ziyaretçi başı gelir";
+  }
+
   function getRecommendationRows() {
     return state.products
       .filter((product) => product.status !== "Kurulum Bekliyor")
@@ -1117,7 +1553,6 @@
   function ensureAbTestingSelection() {
     if (!state.abTesting.tests.length) {
       state.abTesting.selectedTestId = null;
-      state.abTesting.selectedRange = "30";
       return;
     }
 
@@ -1128,6 +1563,40 @@
 
   function getSelectedAbTest() {
     return state.abTesting.tests.find((item) => item.id === state.abTesting.selectedTestId) || null;
+  }
+
+  function getAbTestById(testId) {
+    if (!testId) return null;
+    return state.abTesting.tests.find((item) => item.id === testId) || null;
+  }
+
+  function getFilteredAbTests() {
+    const search = normalizeSearch(state.abTesting.searchQuery);
+    const filter = state.abTesting.statusFilter;
+
+    return state.abTesting.tests.filter((test) => {
+      const tone = getAbCardTone(test);
+      const searchable = normalizeSearch(`${test.name} ${test.productName} ${test.strategyName} ${test.category} ${test.targetLabel}`);
+      const matchesSearch = !search || searchable.includes(search);
+      if (!matchesSearch) return false;
+
+      if (filter === "all") return true;
+      if (filter === "winner") return tone === "winner";
+      if (filter === "running") return tone === "running";
+      if (filter === "critical") return tone === "critical";
+      return true;
+    });
+  }
+
+  function getAbCardTone(test) {
+    if (test.cardTone === "winner" || test.cardTone === "running" || test.cardTone === "critical") {
+      return test.cardTone;
+    }
+    if (test.criticalReason) return "critical";
+
+    const decision = getAbDecision(test);
+    if (decision.canApply || (test.status === "Tamamlandı" && test.appliedWinnerId)) return "winner";
+    return "running";
   }
 
   function getAbComparisonRows(test) {
@@ -1229,8 +1698,8 @@
     };
   }
 
-  function toggleAbTestStatus() {
-    const test = getSelectedAbTest();
+  function toggleAbTestStatus(testId) {
+    const test = getAbTestById(testId) || getSelectedAbTest();
     if (!test) return;
 
     if (test.status === "Çalışıyor") {
@@ -1249,8 +1718,8 @@
     renderWorkspace();
   }
 
-  function applyAbWinner() {
-    const test = getSelectedAbTest();
+  function applyAbWinner(testId) {
+    const test = getAbTestById(testId) || getSelectedAbTest();
     if (!test) return;
 
     const decision = getAbDecision(test);
@@ -1266,8 +1735,8 @@
     renderWorkspace();
   }
 
-  function cloneAbTest() {
-    const test = getSelectedAbTest();
+  function cloneAbTest(testId) {
+    const test = getAbTestById(testId) || getSelectedAbTest();
     if (!test) return;
 
     const cloned = clone(test);
@@ -1277,6 +1746,10 @@
     cloned.significance = 0;
     cloned.appliedWinnerId = null;
     cloned.alerts = ["Klon test hazır. Parametreleri kontrol edip başlatın."];
+    cloned.cardTone = "running";
+    cloned.monthlyContribution = 0;
+    cloned.sampleCollected = 0;
+    cloned.sampleTarget = cloned.sampleTarget || 1000;
     cloned.variants = cloned.variants.map((item) => ({
       ...item,
       sessions: 0,
@@ -1541,6 +2014,34 @@
 
   function formatPercent(value) {
     return `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(value * 100)}%`;
+  }
+
+  function formatSignedPercent(value) {
+    const numeric = Number(value) || 0;
+    const sign = numeric > 0 ? "+" : numeric < 0 ? "-" : "";
+    const formatted = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(Math.abs(numeric) * 100);
+    return `${sign}%${formatted}`;
+  }
+
+  function formatSignedMoney(value) {
+    const numeric = Number(value) || 0;
+    const sign = numeric > 0 ? "+" : numeric < 0 ? "-" : "";
+    return `${sign}${formatMoney(Math.abs(numeric))}`;
+  }
+
+  function getInitials(text) {
+    const parts = String(text || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "AB";
+    if (parts.length === 1) return parts[0].slice(0, 2).toLocaleUpperCase("tr-TR");
+    return `${parts[0][0]}${parts[1][0]}`.toLocaleUpperCase("tr-TR");
+  }
+
+  function normalizeSearch(value) {
+    return String(value || "")
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
   }
 
   function showToast(message) {
