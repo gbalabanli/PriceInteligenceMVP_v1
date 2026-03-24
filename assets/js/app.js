@@ -3,6 +3,9 @@
   const dynamicPricingData = appData && appData.dynamicPricing
     ? appData.dynamicPricing
     : { strategies: [], assignments: [] };
+  const abTestingData = appData && appData.abTesting
+    ? appData.abTesting
+    : { tests: [] };
 
   if (!appData || !Array.isArray(appData.trackedProducts) || !Array.isArray(appData.competitorDetails)) {
     throw new Error("PriceSmartMvpData bulunamadı. Önce data.js yüklenmeli.");
@@ -11,7 +14,8 @@
   const ROUTES = {
     dashboard: "/dashboard",
     recommendations: "/yz-fiyat-onerileri",
-    dynamicPricing: "/dinamik-fiyatlandirma"
+    dynamicPricing: "/dinamik-fiyatlandirma",
+    abTesting: "/ab-fiyatlandirma-testi"
   };
   const state = {
     route: ROUTES.dashboard,
@@ -24,6 +28,11 @@
       selectedStrategyId: dynamicPricingData.strategies[0] ? dynamicPricingData.strategies[0].id : null,
       targetType: "segment",
       selectedTargetId: "all-products"
+    },
+    abTesting: {
+      tests: clone(abTestingData.tests),
+      selectedTestId: abTestingData.tests[0] ? abTestingData.tests[0].id : null,
+      selectedRange: "30"
     },
     introModalOpen: true,
     drawer: {
@@ -47,6 +56,7 @@
 
   function bootstrap() {
     ensureDynamicPricingSelection();
+    ensureAbTestingSelection();
     syncRoute();
     window.addEventListener("hashchange", syncRoute);
     document.addEventListener("click", handleClick);
@@ -93,6 +103,11 @@
 
     if (state.route === ROUTES.dynamicPricing) {
       elements.app.innerHTML = renderDynamicPricingPage();
+      return;
+    }
+
+    if (state.route === ROUTES.abTesting) {
+      elements.app.innerHTML = renderAbTestingPage();
       return;
     }
 
@@ -330,6 +345,176 @@
     `;
   }
 
+  function renderAbTestingPage() {
+    const test = getSelectedAbTest();
+
+    if (!test) {
+      return `
+        <section class="panel">
+          <h1 class="panel-title">A/B Fiyatlandırma Testi</h1>
+          <p class="panel-text">Gösterilecek test bulunamadı.</p>
+        </section>
+      `;
+    }
+
+    const decision = getAbDecision(test);
+    const rows = getAbComparisonRows(test);
+    const snapshot = getAbLiveSnapshot(test);
+
+    return `
+      <section class="panel ab-hero">
+        <div>
+          <h1 class="ab-hero__title">A/B Fiyatlandırma Testi</h1>
+          <p class="ab-hero__text">Test kur, sonucu canlı izle ve tek ekrandan kararı yayına al.</p>
+        </div>
+        <div class="ab-hero__controls">
+          <label class="ab-control">
+            <span>Aktif Test</span>
+            <select data-ab-test-select>
+              ${state.abTesting.tests.map((item) => {
+                const selected = item.id === state.abTesting.selectedTestId ? "selected" : "";
+                return `<option value="${escapeAttribute(item.id)}" ${selected}>${escapeHtml(item.name)}</option>`;
+              }).join("")}
+            </select>
+          </label>
+          <label class="ab-control">
+            <span>Tarih Aralığı</span>
+            <select data-ab-range>
+              <option value="7" ${state.abTesting.selectedRange === "7" ? "selected" : ""}>Son 7 Gün</option>
+              <option value="30" ${state.abTesting.selectedRange === "30" ? "selected" : ""}>Son 30 Gün</option>
+              <option value="90" ${state.abTesting.selectedRange === "90" ? "selected" : ""}>Son 90 Gün</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="ab-layout">
+        <div class="ab-main">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">${escapeHtml(test.name)}</h2>
+                <p class="panel-text">Hedef: ${escapeHtml(test.targetLabel)} • KPI: ${escapeHtml(test.targetKpi)} • Trafik dağılımı: ${escapeHtml(test.trafficSplit)}</p>
+              </div>
+              <div class="ab-state-row">
+                <span class="ab-state-chip ${getAbStatusClass(test.status)}">${escapeHtml(test.status)}</span>
+                <span class="ab-state-chip is-soft">Güven: %${test.significance}</span>
+              </div>
+            </div>
+
+            <div class="ab-kpi-grid">
+              <article class="ab-kpi-card">
+                <p>Dönüşüm Oranı</p>
+                <strong>${formatPercent(snapshot.conversionRate)}</strong>
+              </article>
+              <article class="ab-kpi-card">
+                <p>Ziyaretçi Başı Gelir</p>
+                <strong>${formatMoney(snapshot.bestRpv)}</strong>
+              </article>
+              <article class="ab-kpi-card">
+                <p>Marj Katkısı</p>
+                <strong>${formatMoney(snapshot.marginContribution)}</strong>
+              </article>
+              <article class="ab-kpi-card">
+                <p>Toplam Oturum</p>
+                <strong>${new Intl.NumberFormat("tr-TR").format(snapshot.totalSessions)}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel ab-decision ${decision.tone}">
+            <p class="ab-decision__eyebrow">Karar Çubuğu</p>
+            <h3 class="ab-decision__title">${escapeHtml(decision.title)}</h3>
+            <p class="ab-decision__text">${escapeHtml(decision.reason)}</p>
+            <div class="ab-action-row">
+              <button class="primary-button" type="button" data-ab-action="toggle-run">${test.status === "Çalışıyor" ? "Testi Durdur" : "Testi Başlat"}</button>
+              <button class="outline-button" type="button" data-ab-action="apply-winner" ${decision.canApply ? "" : "disabled"}>Kazananı Yayına Al</button>
+              <button class="ghost-button" type="button" data-ab-action="clone-test">Yeni Test Klonla</button>
+              <button class="ghost-button" type="button" data-ab-action="reset-range">Aralığı Sıfırla</button>
+            </div>
+          </section>
+
+          <section class="table-card ab-table">
+            <div class="table-card__head">
+              <div>
+                <h2 class="panel-title">Varyant Karşılaştırması</h2>
+                <p class="table-card__hint">Kontrol ve varyantlar için uplift, marj ve güven etkisi tek tabloda.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Varyant</th>
+                    <th>Fiyat</th>
+                    <th>Trafik</th>
+                    <th>Dönüşüm</th>
+                    <th>ZBG</th>
+                    <th>Uplift</th>
+                    <th>Marj</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows.map((row) => renderAbVariantRow(row, decision.winnerId)).join("")}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <aside class="ab-side">
+          <section class="panel ab-guardrails">
+            <h3 class="ab-side__title">Guardrails</h3>
+            <div class="ab-side-list">
+              <div><span>Min. Marj</span><strong>%${test.guardrails.minMarginRate}</strong></div>
+              <div><span>Maks. Fiyat Değişimi</span><strong>%${test.guardrails.maxPriceChange}</strong></div>
+              <div><span>Min. Stok</span><strong>${test.guardrails.minStock}</strong></div>
+              <div><span>Otomatik Durdurma</span><strong>${test.guardrails.autoStop ? "Açık" : "Kapalı"}</strong></div>
+            </div>
+          </section>
+
+          <section class="panel ab-alerts">
+            <h3 class="ab-side__title">Uyarılar</h3>
+            <div class="ab-alert-list">
+              ${test.alerts.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="table-card">
+        <div class="table-card__head">
+          <div>
+            <h2 class="panel-title">Test Geçmişi</h2>
+            <p class="table-card__hint">A/B testlerinin son durumunu tek listede takip edebilirsiniz.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Test</th>
+                <th>Hedef</th>
+                <th>Durum</th>
+                <th>Güven</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.abTesting.tests.map((item) => `
+                <tr>
+                  <td>${escapeHtml(item.name)}</td>
+                  <td>${escapeHtml(item.targetLabel)}</td>
+                  <td><span class="ab-state-chip ${getAbStatusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+                  <td>%${item.significance}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
+
   function renderKpiCard(label, value, note, modifier) {
     return `
       <article class="kpi-card ${modifier}">
@@ -425,6 +610,25 @@
             <button class="ghost-button is-danger" type="button" data-remove-assignment="${escapeAttribute(item.id)}">Kaldır</button>
           </div>
         </td>
+      </tr>
+    `;
+  }
+
+  function renderAbVariantRow(row, winnerId) {
+    const isWinner = winnerId && row.id === winnerId;
+    return `
+      <tr class="${isWinner ? "ab-row-winner" : ""}">
+        <td>
+          <span class="ab-variant-label">${escapeHtml(row.label)}</span>
+          ${row.id === "control" ? `<span class="muted-chip">Kontrol</span>` : ""}
+          ${isWinner ? `<span class="ab-winner-badge">Kazanan</span>` : ""}
+        </td>
+        <td>${formatMoney(row.price)}</td>
+        <td>${formatPercent(row.trafficShare)}</td>
+        <td>${formatPercent(row.conversionRate)}</td>
+        <td>${formatMoney(row.rpv)}</td>
+        <td class="${row.uplift > 0 ? "ab-uplift-up" : row.uplift < 0 ? "ab-uplift-down" : ""}">${row.id === "control" ? "-" : `${row.uplift > 0 ? "+" : ""}${formatPercent(row.uplift)}`}</td>
+        <td>${formatPercent(row.marginRate)}</td>
       </tr>
     `;
   }
@@ -689,6 +893,23 @@
       return;
     }
 
+    const abActionTrigger = event.target.closest("[data-ab-action]");
+    if (abActionTrigger) {
+      const action = abActionTrigger.dataset.abAction;
+      if (action === "toggle-run") {
+        toggleAbTestStatus();
+      } else if (action === "apply-winner") {
+        applyAbWinner();
+      } else if (action === "clone-test") {
+        cloneAbTest();
+      } else if (action === "reset-range") {
+        state.abTesting.selectedRange = "30";
+        renderWorkspace();
+        showToast("Tarih aralığı varsayılana döndü.");
+      }
+      return;
+    }
+
     const routeTrigger = event.target.closest("[data-route]");
     if (routeTrigger) {
       window.location.hash = `#${routeTrigger.dataset.route}`;
@@ -777,16 +998,28 @@
   }
 
   function handleChange(event) {
-    if (!event.target.matches("[data-target-scope]")) return;
+    if (event.target.matches("[data-target-scope]")) {
+      const scopeValue = String(event.target.value || "");
+      const parsedScope = parseDynamicScopeValue(scopeValue);
 
-    const scopeValue = String(event.target.value || "");
-    const parsedScope = parseDynamicScopeValue(scopeValue);
+      if (!parsedScope) return;
 
-    if (!parsedScope) return;
+      state.dynamicPricing.targetType = parsedScope.type;
+      state.dynamicPricing.selectedTargetId = parsedScope.id;
+      renderWorkspace();
+      return;
+    }
 
-    state.dynamicPricing.targetType = parsedScope.type;
-    state.dynamicPricing.selectedTargetId = parsedScope.id;
-    renderWorkspace();
+    if (event.target.matches("[data-ab-test-select]")) {
+      state.abTesting.selectedTestId = String(event.target.value || "");
+      renderWorkspace();
+      return;
+    }
+
+    if (event.target.matches("[data-ab-range]")) {
+      state.abTesting.selectedRange = String(event.target.value || "30");
+      renderWorkspace();
+    }
   }
 
   function openAddDrawer() {
@@ -879,6 +1112,182 @@
           reason: product.aiSuggestionText
         };
       });
+  }
+
+  function ensureAbTestingSelection() {
+    if (!state.abTesting.tests.length) {
+      state.abTesting.selectedTestId = null;
+      state.abTesting.selectedRange = "30";
+      return;
+    }
+
+    if (!state.abTesting.tests.some((item) => item.id === state.abTesting.selectedTestId)) {
+      state.abTesting.selectedTestId = state.abTesting.tests[0].id;
+    }
+  }
+
+  function getSelectedAbTest() {
+    return state.abTesting.tests.find((item) => item.id === state.abTesting.selectedTestId) || null;
+  }
+
+  function getAbComparisonRows(test) {
+    if (!test || !Array.isArray(test.variants) || !test.variants.length) return [];
+
+    const totalSessions = test.variants.reduce((sum, item) => sum + item.sessions, 0);
+    const control = test.variants.find((item) => item.id === "control") || test.variants[0];
+    const controlRpv = control.sessions > 0 ? control.revenue / control.sessions : 0;
+
+    return test.variants.map((item) => {
+      const conversionRate = item.sessions > 0 ? item.orders / item.sessions : 0;
+      const rpv = item.sessions > 0 ? item.revenue / item.sessions : 0;
+      const uplift = controlRpv > 0 ? (rpv - controlRpv) / controlRpv : 0;
+      return {
+        id: item.id,
+        label: item.label,
+        price: item.price,
+        trafficShare: totalSessions > 0 ? item.sessions / totalSessions : 0,
+        conversionRate,
+        rpv,
+        uplift,
+        marginRate: item.marginRate
+      };
+    });
+  }
+
+  function getAbLiveSnapshot(test) {
+    const rows = getAbComparisonRows(test);
+    const totalSessions = test.variants.reduce((sum, item) => sum + item.sessions, 0);
+    const totalOrders = test.variants.reduce((sum, item) => sum + item.orders, 0);
+    const totalMargin = test.variants.reduce((sum, item) => sum + (item.revenue * item.marginRate), 0);
+    const bestRpv = rows.reduce((best, item) => Math.max(best, item.rpv), 0);
+
+    return {
+      totalSessions,
+      conversionRate: totalSessions > 0 ? totalOrders / totalSessions : 0,
+      bestRpv,
+      marginContribution: totalMargin
+    };
+  }
+
+  function getAbDecision(test) {
+    const rows = getAbComparisonRows(test);
+    const control = rows.find((item) => item.id === "control") || null;
+    const candidates = rows
+      .filter((item) => item.id !== "control")
+      .filter((item) => item.marginRate * 100 >= test.guardrails.minMarginRate)
+      .sort((a, b) => b.uplift - a.uplift);
+
+    const winner = candidates[0] || null;
+
+    if (test.status === "Durduruldu") {
+      return {
+        tone: "is-neutral",
+        title: "Test durduruldu, karar bekliyor",
+        reason: "Test tekrar başlatılmadan otomatik öneri verilmez. Mevcut sonuçları değerlendirebilirsiniz.",
+        winnerId: null,
+        canApply: false
+      };
+    }
+
+    if (test.status === "Tamamlandı" && test.appliedWinnerId) {
+      const applied = rows.find((item) => item.id === test.appliedWinnerId);
+      return {
+        tone: "is-positive",
+        title: `${applied ? applied.label : "Kazanan varyant"} yayına alındı`,
+        reason: `Test sonucu uygulandı. Güven seviyesi %${test.significance} olarak kaydedildi.`,
+        winnerId: test.appliedWinnerId,
+        canApply: false
+      };
+    }
+
+    if (test.significance < 90) {
+      return {
+        tone: "is-warning",
+        title: "Testi sürdür",
+        reason: `Güven seviyesi %${test.significance}. Karar için önerilen eşik %90.`,
+        winnerId: null,
+        canApply: false
+      };
+    }
+
+    if (!winner || !control || winner.uplift <= 0) {
+      return {
+        tone: "is-neutral",
+        title: "Kontrol varyantını koru",
+        reason: "Varyantlar kontrol fiyatını anlamlı şekilde geçemedi. Testi yeni senaryoyla tekrar kurabilirsiniz.",
+        winnerId: control ? control.id : null,
+        canApply: false
+      };
+    }
+
+    return {
+      tone: "is-positive",
+      title: `${winner.label} varyantını yayına al`,
+      reason: `${winner.label}, kontrol varyantına göre ${formatPercent(winner.uplift)} daha yüksek ziyaretçi başı gelir üretti. Güven: %${test.significance}.`,
+      winnerId: winner.id,
+      canApply: true
+    };
+  }
+
+  function toggleAbTestStatus() {
+    const test = getSelectedAbTest();
+    if (!test) return;
+
+    if (test.status === "Çalışıyor") {
+      test.status = "Durduruldu";
+      test.alerts = ["Test manuel olarak durduruldu. Karar öncesi son metrikleri doğrulayın.", ...test.alerts].slice(0, 3);
+      showToast("A/B testi durduruldu.");
+    } else {
+      test.status = "Çalışıyor";
+      if (test.significance < 90) {
+        test.significance = Math.min(99, test.significance + 3);
+      }
+      test.alerts = ["Test yeniden başlatıldı. Yeni örneklem akışı izleniyor.", ...test.alerts].slice(0, 3);
+      showToast("A/B testi başlatıldı.");
+    }
+
+    renderWorkspace();
+  }
+
+  function applyAbWinner() {
+    const test = getSelectedAbTest();
+    if (!test) return;
+
+    const decision = getAbDecision(test);
+    if (!decision.canApply || !decision.winnerId) {
+      showToast("Yayına alınabilir bir kazanan yok.");
+      return;
+    }
+
+    test.status = "Tamamlandı";
+    test.appliedWinnerId = decision.winnerId;
+    test.alerts = ["Kazanan varyant üretime alındı. Performans izleme moduna geçildi.", ...test.alerts].slice(0, 3);
+    showToast("Kazanan varyant yayına alındı.");
+    renderWorkspace();
+  }
+
+  function cloneAbTest() {
+    const test = getSelectedAbTest();
+    if (!test) return;
+
+    const cloned = clone(test);
+    cloned.id = `ab-${Date.now()}`;
+    cloned.name = `${test.name} (Klon)`;
+    cloned.status = "Durduruldu";
+    cloned.significance = 0;
+    cloned.appliedWinnerId = null;
+    cloned.alerts = ["Klon test hazır. Parametreleri kontrol edip başlatın."];
+    cloned.variants = cloned.variants.map((item) => ({
+      ...item,
+      sessions: 0,
+      orders: 0,
+      revenue: 0
+    }));
+
+    state.abTesting.tests.unshift(cloned);
+    state.abTesting.selectedTestId = cloned.id;
+    renderWorkspace();
+    showToast("Yeni A/B test klonu oluşturuldu.");
   }
 
   function ensureDynamicPricingSelection() {
@@ -1090,6 +1499,12 @@
     return "D";
   }
 
+  function getAbStatusClass(status) {
+    if (status === "Çalışıyor") return "is-running";
+    if (status === "Tamamlandı") return "is-completed";
+    return "is-paused";
+  }
+
   function getRiskClass(riskLevel) {
     if (riskLevel === "Yüksek") return "high";
     if (riskLevel === "Orta") return "medium";
@@ -1122,6 +1537,10 @@
       currency: "TRY",
       maximumFractionDigits: 0
     }).format(value);
+  }
+
+  function formatPercent(value) {
+    return `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(value * 100)}%`;
   }
 
   function showToast(message) {

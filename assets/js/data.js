@@ -229,10 +229,103 @@
     ]
   };
 
+  const abTesting = {
+    tests: [
+      {
+        id: "ab-301",
+        name: "Kulaklık Fiyat Aralığı Testi",
+        targetLabel: "Wireless Headphones",
+        targetKpi: "Ziyaretçi başı gelir",
+        status: "Çalışıyor",
+        startedAt: "2026-03-18",
+        significance: 96,
+        trafficSplit: "50/25/25",
+        guardrails: {
+          minMarginRate: 15,
+          maxPriceChange: 12,
+          minStock: 20,
+          autoStop: true
+        },
+        alerts: [
+          "Örneklem güçlü. Karar vermek için yeterli güven seviyesi oluştu."
+        ],
+        variants: [
+          {
+            id: "control",
+            label: "Kontrol",
+            price: 1249,
+            sessions: 5200,
+            orders: 416,
+            revenue: 519584,
+            marginRate: 0.22
+          },
+          {
+            id: "variant-a",
+            label: "Varyant A",
+            price: 1219,
+            sessions: 2600,
+            orders: 238,
+            revenue: 290122,
+            marginRate: 0.205
+          },
+          {
+            id: "variant-b",
+            label: "Varyant B",
+            price: 1279,
+            sessions: 2600,
+            orders: 198,
+            revenue: 253242,
+            marginRate: 0.233
+          }
+        ]
+      },
+      {
+        id: "ab-302",
+        name: "Stok Eritme Kampanya Testi",
+        targetLabel: "Clearance Items",
+        targetKpi: "Satış adedi",
+        status: "Durduruldu",
+        startedAt: "2026-03-10",
+        significance: 82,
+        trafficSplit: "50/50",
+        guardrails: {
+          minMarginRate: 12,
+          maxPriceChange: 18,
+          minStock: 10,
+          autoStop: true
+        },
+        alerts: [
+          "Anlamlılık düşük kaldı. Test tekrar başlatılmadan karar önerilmez."
+        ],
+        variants: [
+          {
+            id: "control",
+            label: "Kontrol",
+            price: 619,
+            sessions: 2100,
+            orders: 199,
+            revenue: 123181,
+            marginRate: 0.18
+          },
+          {
+            id: "variant-a",
+            label: "Varyant A",
+            price: 579,
+            sessions: 2100,
+            orders: 214,
+            revenue: 123906,
+            marginRate: 0.132
+          }
+        ]
+      }
+    ]
+  };
+
   globalThis.PriceSmartMvpData = {
     trackedProducts,
     competitorDetails,
     marketPulse,
-    dynamicPricing
+    dynamicPricing,
+    abTesting
   };
 })();
