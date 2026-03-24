@@ -193,14 +193,34 @@
     const actionHighlights = getDashboardActionHighlights();
 
     elements.app.innerHTML = `
-      <section class="kpi-grid" aria-label="KPI özetleri">
-        ${renderKpiCard("Takip Edilen Ürün", String(metrics.trackedCount), `${metrics.actionableProducts} ürün aksiyon bekliyor.`, "is-primary")}
-        ${renderKpiCard("Fiyat Nedeniyle Kaçan Gelir", formatMoney(metrics.lostRevenue), "Rakip altına inen ürünlerde görünür kayıp oluşuyor.", "is-danger")}
-        ${renderKpiCard("Marj Kaybı Riski", `${metrics.marginRiskCount} ürün`, "Fiyatı gereğinden düşük kalan ürünler marj yakıyor.", "is-warning")}
-        ${renderKpiCard("Tahmini Ek Kâr Potansiyeli", formatMoney(metrics.gainPotential), "Doğru fiyat adımları ile toplanabilecek ek potansiyel.", "is-success")}
+      <section class="panel dashboard-hero">
+        <div class="dashboard-hero__head">
+          <div class="dashboard-hero__copy">
+            <p class="dashboard-hero__eyebrow">Genel Bakış</p>
+            <h1 class="dashboard-hero__title">Fiyat baskısı, YZ içgörüsü ve öncelikli kararlar aynı akışta.</h1>
+            <p class="dashboard-hero__text">Ekipler bugün hangi üründe fiyat korumalı, nerede agresifleşmeli ve hangi fırsatı hemen değerlendirmeli; bu ekran tüm kritik sinyalleri tek bakışta toplar.</p>
+          </div>
+          <aside class="dashboard-hero__spotlight">
+            <div class="dashboard-hero__spotlight-icon">
+              ${renderUiIcon("spark")}
+            </div>
+            <div>
+              <p class="dashboard-hero__spotlight-label">Bugünün odağı</p>
+              <strong class="dashboard-hero__spotlight-value">${formatMoney(metrics.gainPotential)} potansiyel</strong>
+              <p class="dashboard-hero__spotlight-text">${metrics.actionableProducts} ürün şu anda fiyat kararı bekliyor.</p>
+            </div>
+          </aside>
+        </div>
       </section>
 
-      <section class="panel">
+      <section class="kpi-grid" aria-label="KPI özetleri">
+        ${renderKpiCard("Takip Edilen Ürün", String(metrics.trackedCount), `${metrics.actionableProducts} ürün aksiyon bekliyor.`, "is-primary", "grid")}
+        ${renderKpiCard("Fiyat Nedeniyle Kaçan Gelir", formatMoney(metrics.lostRevenue), "Rakip altına inen ürünlerde görünür kayıp oluşuyor.", "is-danger", "discount")}
+        ${renderKpiCard("Marj Kaybı Riski", `${metrics.marginRiskCount} ürün`, "Fiyatı gereğinden düşük kalan ürünler marj yakıyor.", "is-warning", "priority")}
+        ${renderKpiCard("Tahmini Ek Kâr Potansiyeli", formatMoney(metrics.gainPotential), "Doğru fiyat adımları ile toplanabilecek ek potansiyel.", "is-success", "growth")}
+      </section>
+
+      <section class="panel dashboard-insight">
         <div class="panel-head">
           <div>
             <h2 class="panel-title panel-title--insight">YZ İçgörüsü</h2>
@@ -210,15 +230,18 @@
         </div>
 
         <div class="pulse-grid">
-          <article class="pulse-cell">
+          <article class="pulse-cell pulse-cell--topic">
+            <span class="pulse-cell__icon">${renderUiIcon("spark")}</span>
             <p class="pulse-label">Odak konu</p>
             <p class="pulse-value">${escapeHtml(state.marketPulse.trendTopic)}</p>
           </article>
-          <article class="pulse-cell">
+          <article class="pulse-cell pulse-cell--trend">
+            <span class="pulse-cell__icon">${renderUiIcon("growth")}</span>
             <p class="pulse-label">Google Trends yönü</p>
             <p class="pulse-value">${escapeHtml(state.marketPulse.trendDirection)}</p>
           </article>
-          <article class="pulse-cell">
+          <article class="pulse-cell pulse-cell--pressure">
+            <span class="pulse-cell__icon">${renderUiIcon("priority")}</span>
             <p class="pulse-label">Rakip baskısı</p>
             <p class="pulse-value">${escapeHtml(state.marketPulse.competitorPressure)}</p>
           </article>
@@ -250,11 +273,14 @@
         </div>
       </section>
 
-      <section class="table-card">
+      <section class="table-card dashboard-table-card">
         <div class="table-card__head">
-          <div>
-            <h2 class="panel-title">Takip Edilen Ürünler</h2>
+          <div class="dashboard-table-card__titleblock">
+            <span class="dashboard-table-card__icon">${renderUiIcon("grid")}</span>
+            <div>
+              <h2 class="panel-title dashboard-table-card__title">Takip Edilen Ürünler</h2>
             <p class="table-card__hint">Bir ürün satırına tıklayarak rakip URL, fiyat ve trend detayını açın.</p>
+            </div>
           </div>
           <div class="table-card__actions">
             <button class="outline-button" type="button" data-route="${ROUTES.recommendations}">YZ Öneri Sayfası</button>
@@ -289,28 +315,29 @@
     const highPriorityCount = recommendations.filter((item) => item.priority === "Yüksek").length;
 
     return `
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <h1 class="panel-title">YZ Fiyat Önerileri</h1>
-            <p class="panel-text">Rakip fiyatı, trend yönü ve mevcut fiyat farkı birlikte okunarak üretilen öneriler burada toplanır.</p>
+      <section class="panel recommendation-hero">
+        <div class="recommendation-hero__head">
+          <div class="recommendation-hero__copy">
+            <p class="recommendation-hero__eyebrow">YZ karar akışı</p>
+            <h1 class="recommendation-hero__title">YZ Fiyat Önerileri</h1>
+            <p class="recommendation-hero__text">Rakip fiyatı, trend yönü ve mevcut fiyat farkı birlikte okunur. Ortaya çıkan öneriler, ekiplerin hızla karar alabileceği net bir operasyon görünümüne çevrilir.</p>
           </div>
-          <span class="panel-chip">${highPriorityCount} yüksek öncelikli öneri</span>
+          <aside class="recommendation-hero__spotlight">
+            <div class="recommendation-hero__spotlight-icon">
+              ${renderUiIcon("spark")}
+            </div>
+            <div>
+              <p class="recommendation-hero__spotlight-label">Karar baskısı</p>
+              <strong class="recommendation-hero__spotlight-value">${highPriorityCount} yüksek öncelikli öneri</strong>
+              <p class="recommendation-hero__spotlight-text">Bugün aksiyon isteyen fiyat hareketleri tek listede toplanır.</p>
+            </div>
+          </aside>
         </div>
 
-        <div class="recommendation-summary">
-          <article class="recommendation-summary__card">
-            <p class="recommendation-summary__label">Aktif öneri</p>
-            <p class="recommendation-summary__value">${allRecommendations.length}</p>
-          </article>
-          <article class="recommendation-summary__card">
-            <p class="recommendation-summary__label">Bekleyen indirim</p>
-            <p class="recommendation-summary__value">${allRecommendations.filter((item) => item.type === "İndirim").length}</p>
-          </article>
-          <article class="recommendation-summary__card">
-            <p class="recommendation-summary__label">Marj artış fırsatı</p>
-            <p class="recommendation-summary__value">${allRecommendations.filter((item) => item.type === "Artış").length}</p>
-          </article>
+        <div class="recommendation-summary recommendation-summary--showcase">
+          ${renderRecommendationMetricCard("Aktif öneri", allRecommendations.length, "list")}
+          ${renderRecommendationMetricCard("Bekleyen indirim", allRecommendations.filter((item) => item.type === "İndirim").length, "discount")}
+          ${renderRecommendationMetricCard("Marj artış fırsatı", allRecommendations.filter((item) => item.type === "Artış").length, "growth")}
         </div>
       </section>
 
@@ -318,33 +345,45 @@
         <div class="recommendation-filter-row">
           <label class="recommendation-search-field">
             <span>Ara</span>
-            <input type="text" placeholder="Ürün, SKU veya kategori ara..." value="${escapeAttribute(state.recommendations.searchQuery)}" data-recommendation-search>
+            <span class="recommendation-field">
+              <span class="recommendation-field__icon">${renderUiIcon("search")}</span>
+              <input type="text" placeholder="Ürün, SKU veya kategori ara..." value="${escapeAttribute(state.recommendations.searchQuery)}" data-recommendation-search>
+            </span>
           </label>
           <label class="recommendation-select-field">
             <span>Öneri Tipi</span>
-            <select data-recommendation-type-filter>
-              <option value="all" ${state.recommendations.typeFilter === "all" ? "selected" : ""}>Tümü</option>
-              <option value="İndirim" ${state.recommendations.typeFilter === "İndirim" ? "selected" : ""}>İndirim</option>
-              <option value="Artış" ${state.recommendations.typeFilter === "Artış" ? "selected" : ""}>Artış</option>
-              <option value="Koruma" ${state.recommendations.typeFilter === "Koruma" ? "selected" : ""}>Koruma</option>
-            </select>
+            <span class="recommendation-field recommendation-field--select">
+              <span class="recommendation-field__icon">${renderUiIcon("switch")}</span>
+              <select data-recommendation-type-filter>
+                <option value="all" ${state.recommendations.typeFilter === "all" ? "selected" : ""}>Tümü</option>
+                <option value="İndirim" ${state.recommendations.typeFilter === "İndirim" ? "selected" : ""}>İndirim</option>
+                <option value="Artış" ${state.recommendations.typeFilter === "Artış" ? "selected" : ""}>Artış</option>
+                <option value="Koruma" ${state.recommendations.typeFilter === "Koruma" ? "selected" : ""}>Koruma</option>
+              </select>
+            </span>
           </label>
           <label class="recommendation-select-field">
             <span>Öncelik</span>
-            <select data-recommendation-priority-filter>
-              <option value="all" ${state.recommendations.priorityFilter === "all" ? "selected" : ""}>Tümü</option>
-              <option value="Yüksek" ${state.recommendations.priorityFilter === "Yüksek" ? "selected" : ""}>Yüksek</option>
-              <option value="Orta" ${state.recommendations.priorityFilter === "Orta" ? "selected" : ""}>Orta</option>
-            </select>
+            <span class="recommendation-field recommendation-field--select">
+              <span class="recommendation-field__icon">${renderUiIcon("priority")}</span>
+              <select data-recommendation-priority-filter>
+                <option value="all" ${state.recommendations.priorityFilter === "all" ? "selected" : ""}>Tümü</option>
+                <option value="Yüksek" ${state.recommendations.priorityFilter === "Yüksek" ? "selected" : ""}>Yüksek</option>
+                <option value="Orta" ${state.recommendations.priorityFilter === "Orta" ? "selected" : ""}>Orta</option>
+              </select>
+            </span>
           </label>
         </div>
       </section>
 
-      <section class="table-card">
+      <section class="table-card recommendation-table-card">
         <div class="table-card__head">
-          <div>
-            <h2 class="panel-title">YZ Öneri Listesi</h2>
+          <div class="recommendation-table-card__titleblock">
+            <span class="recommendation-table-card__icon">${renderUiIcon("grid")}</span>
+            <div>
+              <h2 class="panel-title recommendation-table-card__title">YZ Öneri Listesi</h2>
             <p class="table-card__hint">Satır bazında onaylayabileceğiniz fiyat önerileri, gerekçesi ve önceliğiyle birlikte burada toplanır.</p>
+            </div>
           </div>
           <button class="secondary-button" type="button" data-route="${ROUTES.dashboard}">Genel Bakışa Dön</button>
         </div>
@@ -375,19 +414,44 @@
     const preview = getDynamicPricingPreview();
     const activeAssignments = state.dynamicPricing.assignments;
     const scopeOptions = getDynamicPricingScopes();
+    const selectedStrategy = getStrategyById(state.dynamicPricing.selectedStrategyId);
 
     return `
       <section class="panel intent-hero">
-        <h1 class="intent-hero__title">Dinamik Fiyatlandırma Paneli</h1>
-        <p class="intent-hero__text">Kural yazmayı bırakın. Stratejinizi belirleyin, YZ pazar ritmine göre hareket etsin.</p>
+        <div class="intent-hero__head">
+          <div class="intent-hero__copy">
+            <p class="intent-hero__eyebrow">Otomatik fiyat akışı</p>
+            <h1 class="intent-hero__title">Dinamik Fiyatlandırma Paneli</h1>
+            <p class="intent-hero__text">Kural yazmayı bırakın. Stratejiyi seçin, hedef alanı belirleyin ve YZ’nin pazar ritmine göre nasıl karar aldığını tek ekranda görün.</p>
+          </div>
+          <aside class="intent-hero__spotlight">
+            <div class="intent-hero__spotlight-icon">
+              ${renderUiIcon("spark")}
+            </div>
+            <div>
+              <p class="intent-hero__spotlight-label">Canlı yönlendirme</p>
+              <strong class="intent-hero__spotlight-value">${escapeHtml(preview.expectedImpact)}</strong>
+              <p class="intent-hero__spotlight-text">${escapeHtml(preview.targetLabel)} için önerilen akış şu anda hazır.</p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="intent-summary">
+          ${renderIntentMetricCard("Seçili strateji", selectedStrategy ? selectedStrategy.name : "-", "Şu an uygulanacak ana fiyat mantığı", "switch")}
+          ${renderIntentMetricCard("Hedef kitle", preview.targetLabel, "Stratejinin uygulanacağı ürün grubu", "grid")}
+          ${renderIntentMetricCard("Aktif akış", `${activeAssignments.length}`, "Canlı çalışan strateji ataması", "growth")}
+        </div>
       </section>
 
       <section class="intent-layout" aria-label="Niyet temelli fiyatlandırma">
         <div class="intent-main">
-          <section>
-            <div class="intent-step">
+          <section class="panel intent-section">
+            <div class="intent-step intent-step--spacious">
               <span class="intent-step__index">1</span>
-              <h2 class="intent-step__title">Strateji Seç</h2>
+              <div>
+                <h2 class="intent-step__title">Strateji Seç</h2>
+                <p class="intent-step__text">İş hedefinize en yakın fiyat davranışını seçin. Her kart farklı risk seviyesi ve ticari öncelik taşır.</p>
+              </div>
             </div>
             <div class="intent-strategy-grid">
               ${state.dynamicPricing.strategies.map((item) => renderStrategyCard(item, item.id === state.dynamicPricing.selectedStrategyId)).join("")}
@@ -395,20 +459,26 @@
           </section>
 
           <section class="panel intent-target-card">
-            <div class="intent-step">
+            <div class="intent-step intent-step--spacious">
               <span class="intent-step__index">2</span>
-              <h2 class="intent-step__title">Hedef Kitleyi Belirle</h2>
+              <div>
+                <h2 class="intent-step__title">Hedef Kitleyi Belirle</h2>
+                <p class="intent-step__text">YZ’nin bu stratejiyi hangi ürün, kategori veya koleksiyon üzerinde çalıştıracağını seçin.</p>
+              </div>
             </div>
-            <select class="intent-select" data-target-scope aria-label="Hedef kitle seçimi">
-              ${scopeOptions.map((item) => renderScopeOption(item)).join("")}
-            </select>
+            <label class="intent-select-field">
+              <span class="intent-select-field__icon">${renderUiIcon("grid")}</span>
+              <select class="intent-select" data-target-scope aria-label="Hedef kitle seçimi">
+                ${scopeOptions.map((item) => renderScopeOption(item)).join("")}
+              </select>
+            </label>
           </section>
         </div>
 
         <aside class="intent-side">
           <section class="intent-ai-card">
             <div class="intent-ai-card__head">
-              <span class="intent-ai-dot" aria-hidden="true"></span>
+              <span class="intent-ai-card__icon" aria-hidden="true">${renderUiIcon("spark")}</span>
               <p class="intent-ai-card__title">YZ Öngörü Özeti</p>
             </div>
             <p class="intent-ai-card__quote">"${escapeHtml(preview.aiQuote)}"</p>
@@ -429,7 +499,14 @@
           </section>
 
           <section class="panel intent-guard-card">
-            <h3 class="intent-guard-card__title">Güvenlik Duvarı</h3>
+            <div class="intent-guard-card__head">
+              <span class="intent-guard-card__icon">${renderUiIcon("shield")}</span>
+              <div>
+                <p class="intent-guard-card__eyebrow">Koruma katmanı</p>
+                <h3 class="intent-guard-card__title">Güvenlik Duvarı</h3>
+              </div>
+            </div>
+            <p class="intent-guard-card__text">Bu sınırlar aşıldığında sistem fiyat hareketini yavaşlatır veya tamamen durdurur.</p>
             <div class="intent-guard-list">
               <div class="intent-guard-item">
                 <span>Min. Kâr Marjı</span>
@@ -447,9 +524,12 @@
 
       <section class="table-card intent-table">
         <div class="table-card__head">
-          <div>
+          <div class="intent-table-card__titleblock">
+            <span class="intent-table-card__icon">${renderUiIcon("list")}</span>
+            <div>
             <h2 class="panel-title">Aktif Stratejiler</h2>
             <p class="table-card__hint">Canlı çalışan stratejileri tek listede izleyebilir, duraklatıp yeniden başlatabilirsiniz.</p>
+            </div>
           </div>
         </div>
         <div class="table-wrap">
@@ -472,11 +552,28 @@
     `;
   }
 
+  function renderIntentMetricCard(label, value, note, iconName) {
+    return `
+      <article class="intent-summary__card">
+        <div class="intent-summary__icon">
+          ${renderUiIcon(iconName)}
+        </div>
+        <div>
+          <p class="intent-summary__label">${escapeHtml(label)}</p>
+          <p class="intent-summary__value">${escapeHtml(String(value))}</p>
+          <p class="intent-summary__note">${escapeHtml(note)}</p>
+        </div>
+      </article>
+    `;
+  }
+
   function renderAbTestingPage() {
     const selectedTest = getSelectedAbTest();
     const tests = getFilteredAbTests();
     const activeCount = state.abTesting.tests.filter((item) => item.status === "Çalışıyor").length;
     const totalContribution = state.abTesting.tests.reduce((sum, item) => sum + (Number(item.monthlyContribution) || 0), 0);
+    const winnerCount = state.abTesting.tests.filter((item) => getAbCardTone(item) === "winner").length;
+    const criticalCount = state.abTesting.tests.filter((item) => getAbCardTone(item) === "critical").length;
 
     if (!state.abTesting.tests.length) {
       return `
@@ -490,21 +587,32 @@
     return `
       <section class="panel ab-library-hero">
         <div class="ab-library-head">
-          <div>
+          <div class="ab-library-head__copy">
+            <p class="ab-library-eyebrow">Deney Orkestrasyonu</p>
             <h1 class="ab-library-title">A/B Fiyatlandırma Deney Kütüphanesi</h1>
             <p class="ab-library-text">
-              Şu anda <strong>${activeCount}</strong> farklı strateji canlı olarak test ediliyor.
+              Canlı deneyleri, güven eşiğini ve hangi varyantın üretime daha yakın olduğunu tek akışta okuyun. Ürün, strateji ve test türü aynı kartta sade biçimde görünür.
             </p>
           </div>
           <div class="ab-library-meta">
-            <article class="ab-library-metric">
-              <p>Toplam Test Katkısı</p>
-              <h2>${formatSignedMoney(totalContribution)} <span>/ ay</span></h2>
+            <article class="ab-library-spotlight">
+              <span class="ab-library-spotlight__icon">${renderUiIcon("spark")}</span>
+              <div>
+                <p class="ab-library-spotlight__label">Deney Etkisi</p>
+                <strong class="ab-library-spotlight__value">${formatSignedMoney(totalContribution)} <span>/ ay</span></strong>
+                <p class="ab-library-spotlight__text">${activeCount} canlı test, ${winnerCount} karar aşamasında deney.</p>
+              </div>
             </article>
             <button class="primary-button" type="button" data-open-ab-create="1" ${state.products.length ? "" : "disabled"}>
               Yeni Deney Başlat
             </button>
           </div>
+        </div>
+
+        <div class="ab-library-summary">
+          ${renderAbLibraryMetricCard("Canlı test", String(activeCount), "Şu anda veri toplayan deney", "list")}
+          ${renderAbLibraryMetricCard("Karar hazır", String(winnerCount), "Kazananı uygulamaya yakın test", "growth")}
+          ${renderAbLibraryMetricCard("Kritik uyarı", String(criticalCount), "Denetim gerektiren akış", "priority")}
         </div>
       </section>
 
@@ -512,16 +620,22 @@
         <div class="ab-filter-row">
           <label class="ab-search-field">
             <span>Ara</span>
-            <input type="text" placeholder="Ürün, marka veya strateji ara..." data-ab-search value="${escapeAttribute(state.abTesting.searchQuery)}">
+            <span class="ab-library-field">
+              <span class="ab-library-field__icon">${renderUiIcon("search")}</span>
+              <input type="text" placeholder="Ürün, marka veya strateji ara..." data-ab-search value="${escapeAttribute(state.abTesting.searchQuery)}">
+            </span>
           </label>
           <label class="ab-status-field">
             <span>Durum</span>
-            <select data-ab-status-filter>
-              <option value="all" ${state.abTesting.statusFilter === "all" ? "selected" : ""}>Tüm Durumlar</option>
-              <option value="winner" ${state.abTesting.statusFilter === "winner" ? "selected" : ""}>Anlamlı Sonuç (Kazanan Var)</option>
-              <option value="running" ${state.abTesting.statusFilter === "running" ? "selected" : ""}>Veri Toplanıyor</option>
-              <option value="critical" ${state.abTesting.statusFilter === "critical" ? "selected" : ""}>Kritik Uyarı</option>
-            </select>
+            <span class="ab-library-field ab-library-field--select">
+              <span class="ab-library-field__icon">${renderUiIcon("switch")}</span>
+              <select data-ab-status-filter>
+                <option value="all" ${state.abTesting.statusFilter === "all" ? "selected" : ""}>Tüm Durumlar</option>
+                <option value="winner" ${state.abTesting.statusFilter === "winner" ? "selected" : ""}>Anlamlı Sonuç (Kazanan Var)</option>
+                <option value="running" ${state.abTesting.statusFilter === "running" ? "selected" : ""}>Veri Toplanıyor</option>
+                <option value="critical" ${state.abTesting.statusFilter === "critical" ? "selected" : ""}>Kritik Uyarı</option>
+              </select>
+            </span>
           </label>
         </div>
       </section>
@@ -693,10 +807,13 @@
     `;
   }
 
-  function renderKpiCard(label, value, note, modifier) {
+  function renderKpiCard(label, value, note, modifier, iconName) {
     return `
       <article class="kpi-card ${modifier}">
-        <p class="kpi-label">${escapeHtml(label)}</p>
+        <div class="kpi-card__head">
+          <span class="kpi-card__icon">${renderUiIcon(iconName || "spark")}</span>
+          <p class="kpi-label">${escapeHtml(label)}</p>
+        </div>
         <p class="kpi-value">${escapeHtml(value)}</p>
         <p class="kpi-note">${escapeHtml(note)}</p>
       </article>
@@ -772,10 +889,17 @@
     return `
       <tr>
         <td>
-          <p class="product-name">${escapeHtml(item.name)}</p>
-          <div class="product-meta">
-            <span class="muted-chip">${escapeHtml(item.sku)}</span>
-            <span class="muted-chip">${escapeHtml(item.category)}</span>
+          <div class="recommendation-product">
+            <span class="recommendation-product__icon recommendation-product__icon--${escapeAttribute(getRecommendationVisualTone(item))}">
+              ${renderUiIcon(getRecommendationIconName(item))}
+            </span>
+            <div>
+              <p class="product-name">${escapeHtml(item.name)}</p>
+              <div class="product-meta">
+                <span class="muted-chip">${escapeHtml(item.sku)}</span>
+                <span class="muted-chip">${escapeHtml(item.category)}</span>
+              </div>
+            </div>
           </div>
         </td>
         <td>${formatMoney(item.currentPrice)}</td>
@@ -795,6 +919,35 @@
           </div>
         </td>
       </tr>
+    `;
+  }
+
+  function renderRecommendationMetricCard(label, value, iconName) {
+    return `
+      <article class="recommendation-summary__card recommendation-summary__card--showcase">
+        <div class="recommendation-summary__icon">
+          ${renderUiIcon(iconName)}
+        </div>
+        <div>
+          <p class="recommendation-summary__label">${escapeHtml(label)}</p>
+          <p class="recommendation-summary__value">${escapeHtml(String(value))}</p>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderAbLibraryMetricCard(label, value, note, iconName) {
+    return `
+      <article class="ab-library-summary__card">
+        <div class="ab-library-summary__icon">
+          ${renderUiIcon(iconName)}
+        </div>
+        <div>
+          <p class="ab-library-summary__label">${escapeHtml(label)}</p>
+          <p class="ab-library-summary__value">${escapeHtml(value)}</p>
+          <p class="ab-library-summary__note">${escapeHtml(note)}</p>
+        </div>
+      </article>
     `;
   }
 
@@ -828,9 +981,9 @@
           <span class="intent-strategy-card__icon intent-strategy-card__icon--${strategyTone}" aria-hidden="true">${strategyIcon}</span>
           <div>
             <p class="intent-strategy-card__title">${escapeHtml(strategy.name)}</p>
+            ${strategy.id === "balanced-auto" ? `<span class="intent-tag intent-tag--recommended">Önerilen</span>` : ""}
             <p class="intent-strategy-card__summary">${escapeHtml(strategy.summary)}</p>
           </div>
-          ${strategy.id === "balanced-auto" ? `<span class="intent-tag intent-tag--recommended">Önerilen</span>` : ""}
         </div>
         <div class="intent-strategy-card__meta">
           <span>Risk: <strong class="strategy-risk strategy-risk--${getRiskClass(strategy.riskLevel)}">${escapeHtml(strategy.riskLevel)}</strong></span>
@@ -922,6 +1075,10 @@
               <span class="ab-exp-avatar__glyph">${escapeHtml(getAbAvatarLabel(test))}</span>
             </span>
             <div>
+              <p class="ab-exp-product__eyebrow">
+                <span class="ab-exp-product__eyebrow-icon">${renderUiIcon("spark")}</span>
+                Deney kartı
+              </p>
               <h3>${escapeHtml(test.productName || test.name)}</h3>
               <p>${strategySummary}</p>
               <p class="ab-exp-testtype">Test Türü: <strong>${escapeHtml(testTypeLabel)}</strong></p>
@@ -933,6 +1090,10 @@
           </section>
 
           <section class="ab-exp-compare">
+            <p class="ab-exp-section-label">
+              <span class="ab-exp-section-label__icon">${renderUiIcon("switch")}</span>
+              Varyant görünümü
+            </p>
             ${tone === "running"
               ? `
                 <p class="ab-exp-status">İlerleme: <strong>${new Intl.NumberFormat("tr-TR").format(sampleCollected)} / ${new Intl.NumberFormat("tr-TR").format(sampleTarget)} örneklem</strong></p>
@@ -954,6 +1115,10 @@
           </section>
 
           <section class="ab-exp-kpis">
+            <p class="ab-exp-section-label">
+              <span class="ab-exp-section-label__icon">${renderUiIcon("growth")}</span>
+              Ticari sonuç
+            </p>
             <div>
               <p>${tone === "running" ? "Tahmini Uplift" : "Uplift"}</p>
               <strong class="${uplift >= 0 ? "is-up" : "is-down"}">${formatSignedPercent(uplift)}</strong>
@@ -1885,6 +2050,18 @@
       }));
   }
 
+  function getRecommendationVisualTone(item) {
+    if (item.type === "İndirim") return "discount";
+    if (item.type === "Artış") return "growth";
+    return "keep";
+  }
+
+  function getRecommendationIconName(item) {
+    if (item.type === "İndirim") return "discount";
+    if (item.type === "Artış") return "growth";
+    return "shield";
+  }
+
   function ensureAbTestingSelection() {
     if (!state.abTesting.tests.length) {
       state.abTesting.selectedTestId = null;
@@ -1937,6 +2114,22 @@
     if (tone === "style") return "MOD";
     if (tone === "device") return "PC";
     return "YZ";
+  }
+
+  function renderUiIcon(name) {
+    const icons = {
+      spark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9L12 2zM19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14zM6 15l1.2 2.8L10 19l-2.8 1.2L6 23l-1.2-2.8L2 19l2.8-1.2L6 15z" fill="currentColor"/></svg>`,
+      list: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5A1.5 1.5 0 1 1 5 4.5a1.5 1.5 0 0 1 0 3zm4 0V4.5h10v3H9zm-4 6A1.5 1.5 0 1 1 5 10.5a1.5 1.5 0 0 1 0 3zm4 0v-3h10v3H9zm-4 6A1.5 1.5 0 1 1 5 16.5a1.5 1.5 0 0 1 0 3zm4 0v-3h10v3H9z" fill="currentColor"/></svg>`,
+      discount: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h7l7 7-9 9-7-7V4zm3 4.2A1.8 1.8 0 1 0 9 4.6a1.8 1.8 0 0 0 0 3.6z" fill="currentColor"/></svg>`,
+      growth: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17.5h4.5l4.2-5.2 3.4 3.4L21 9.8V15h2V6h-9v2h5.2l-3 3-3.6-3.6L7.6 15.5H4v2z" fill="currentColor"/></svg>`,
+      search: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm8.9 11.5L23 21.1 21.1 23l-3.6-3.6 1.9-1.9z" fill="currentColor"/></svg>`,
+      switch: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3 1.4-1.4L24 8l-5.6 5.4L17 12l3-3H7V7zm10 8H4l3 3-1.4 1.4L0 14l5.6-5.4L7 10l-3 3h13v2z" fill="currentColor"/></svg>`,
+      priority: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 16H3L12 2zm0 5.2L6.6 16h10.8L12 7.2zM11 10h2v3h-2v-3zm0 4h2v2h-2v-2z" fill="currentColor"/></svg>`,
+      grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" fill="currentColor"/></svg>`,
+      shield: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l7 3v6c0 5-3.4 9.7-7 11-3.6-1.3-7-6-7-11V5l7-3z" fill="currentColor"/></svg>`
+    };
+
+    return icons[name] || icons.spark;
   }
 
   function getAbCardTone(test) {
@@ -2354,10 +2547,10 @@
   }
 
   function getStrategyIcon(strategyId) {
-    if (strategyId === "stay-competitive") return "R";
-    if (strategyId === "maximize-margin") return "M";
-    if (strategyId === "clear-stock") return "S";
-    return "D";
+    if (strategyId === "stay-competitive") return renderUiIcon("switch");
+    if (strategyId === "maximize-margin") return renderUiIcon("growth");
+    if (strategyId === "clear-stock") return renderUiIcon("discount");
+    return renderUiIcon("spark");
   }
 
   function getAbStatusClass(status) {
