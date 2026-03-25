@@ -19,11 +19,11 @@
     abTestingDetail: "/ab-fiyatlandirma-testi/detay"
   };
   const ROUTE_TITLES = {
-    [ROUTES.dashboard]: "PriceSmart AI | Genel Bakış",
-    [ROUTES.recommendations]: "PriceSmart AI | YZ Fiyat Önerileri",
-    [ROUTES.dynamicPricing]: "PriceSmart AI | Dinamik Fiyatlandırma",
-    [ROUTES.abTesting]: "PriceSmart AI | A/B Fiyatlandırma Testi",
-    [ROUTES.abTestingDetail]: "PriceSmart AI | A/B Test Detayı"
+    [ROUTES.dashboard]: "YZ Akıllı Fiyatlandırma | Genel Bakış",
+    [ROUTES.recommendations]: "YZ Akıllı Fiyatlandırma | YZ Fiyat Önerileri",
+    [ROUTES.dynamicPricing]: "YZ Akıllı Fiyatlandırma | Dinamik Fiyatlandırma",
+    [ROUTES.abTesting]: "YZ Akıllı Fiyatlandırma | A/B Fiyatlandırma Testi",
+    [ROUTES.abTestingDetail]: "YZ Akıllı Fiyatlandırma | A/B Test Detayı"
   };
   const INTRO_SEEN_STORAGE_KEY = "pricesmart-intro-seen";
   const AB_CREATE_STRATEGIES = [
@@ -1237,7 +1237,7 @@
               <h2 id="intro-modal-title" class="modal-title">Doğru ürün, doğru fiyat ile doğru zamanda görünmediğinde potansiyel gelir sessizce kaybolur.</h2>
               <p class="modal-text">
                 E-ticaret ekipleri ne zaman hangi fiyatta hangi ürünü satacağını net olarak bilemediğinde ya satış kaçırıyor ya da gereksiz marj kaybı yaşıyor.
-                PriceSmart AI, rakip ürün bilgilerini ve Google Trends sinyallerini tek akışta toplayıp hangi ürünün aksiyon istediğini ilk bakışta görünür hale getirir.
+                YZ Akıllı Fiyatlandırma, rakip ürün bilgilerini ve Google Trends sinyallerini tek akışta toplayıp hangi ürünün aksiyon istediğini ilk bakışta görünür hale getirir.
               </p>
             </div>
 
@@ -2668,7 +2668,7 @@
   }
 
   function syncPageTitle() {
-    document.title = ROUTE_TITLES[state.route] || "PriceSmart AI";
+    document.title = ROUTE_TITLES[state.route] || "YZ Akıllı Fiyatlandırma";
   }
 
   function syncIntroModalAvailability() {
