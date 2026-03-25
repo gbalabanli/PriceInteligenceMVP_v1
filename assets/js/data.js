@@ -8,7 +8,7 @@
       currentPrice: 1249,
       competitorStatus: "Rakip ortalamasının %6 üzerinde",
       trendDirection: "Yükselişte",
-      aiSuggestionText: "39 TL indirim ile dönüşüm kaybı frenlenebilir.",
+      aiSuggestionText: "49 TL indirim ile dönüşüm kaybı frenlenebilir.",
       status: "Fiyat Riski",
       competitorCount: 3,
       estimatedLostRevenue: 48000,
