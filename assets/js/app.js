@@ -613,7 +613,8 @@
               </div>
             </article>
             <button class="primary-button" type="button" data-open-ab-create="1" ${state.products.length ? "" : "disabled"}>
-              Yeni Deney Başlat
+              <span class="ab-library-button__icon" aria-hidden="true">${renderUiIcon("experiment")}</span>
+              <span>Yeni Deney Başlat</span>
             </button>
           </div>
         </div>
@@ -968,13 +969,13 @@
             <p class="action-highlight-card__eyebrow">${escapeHtml(item.status)}</p>
             <h3 class="action-highlight-card__title">${escapeHtml(item.name)}</h3>
           </div>
-          <span class="action-highlight-card__value">${escapeHtml(item.impactLabel)}</span>
+          <span class="action-highlight-card__category">${escapeHtml(item.category)}</span>
         </div>
         <p class="action-highlight-card__text">${renderInlineCompetitorStatusText(item.competitorStatus)}</p>
         <p class="action-highlight-card__recommendation">${renderAiSuggestionText(item.aiSuggestionText)}</p>
         <div class="action-highlight-card__meta">
           <div class="action-highlight-card__meta-main">
-            <span>${escapeHtml(item.category)}</span>
+            <span class="action-highlight-card__impact">${escapeHtml(item.impactLabel)}</span>
             <div class="action-highlight-card__actions">
               <button class="outline-button" type="button" data-discard-highlight="${escapeAttribute(item.id)}">Atla</button>
               <button class="primary-button" type="button" data-apply-highlight="${escapeAttribute(item.id)}">Uygula</button>
@@ -2153,6 +2154,7 @@
       growth: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17.5h4.5l4.2-5.2 3.4 3.4L21 9.8V15h2V6h-9v2h5.2l-3 3-3.6-3.6L7.6 15.5H4v2z" fill="currentColor"/></svg>`,
       search: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm8.9 11.5L23 21.1 21.1 23l-3.6-3.6 1.9-1.9z" fill="currentColor"/></svg>`,
       switch: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3 1.4-1.4L24 8l-5.6 5.4L17 12l3-3H7V7zm10 8H4l3 3-1.4 1.4L0 14l5.6-5.4L7 10l-3 3h13v2z" fill="currentColor"/></svg>`,
+      experiment: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6v2l-1.5 2.3V10l4.8 7.3A3 3 0 0 1 15.8 22H8.2a3 3 0 0 1-2.5-4.7L10.5 10V6.3L9 4V2zm2 4.9V10L7.4 15.4h9.2L13 10V6.9l.8-1.2h-3.6l.8 1.2z" fill="currentColor"/></svg>`,
       priority: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 16H3L12 2zm0 5.2L6.6 16h10.8L12 7.2zM11 10h2v3h-2v-3zm0 4h2v2h-2v-2z" fill="currentColor"/></svg>`,
       grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" fill="currentColor"/></svg>`,
       shield: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l7 3v6c0 5-3.4 9.7-7 11-3.6-1.3-7-6-7-11V5l7-3z" fill="currentColor"/></svg>`

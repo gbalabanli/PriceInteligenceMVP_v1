@@ -105,6 +105,11 @@ button {
   letter-spacing: 0.06em;
 }
 
+.brand-mark svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
 .brand-text {
   display: flex;
   flex-direction: column;
@@ -1944,6 +1949,26 @@ button {
   flex-wrap: wrap;
 }
 
+.ab-library-meta .primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ab-library-button__icon {
+  inline-size: 18px;
+  block-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ab-library-button__icon svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
 .ab-library-spotlight {
   min-inline-size: 300px;
   display: grid;
@@ -3006,14 +3031,11 @@ button {
   font-size: 1.08rem;
 }
 
-.action-highlight-card__value {
+.action-highlight-card__category {
   flex: none;
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: #eef2ff;
-  color: var(--primary);
-  font-size: 0.74rem;
-  font-weight: 800;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .action-highlight-card__text,
@@ -3045,6 +3067,17 @@ button {
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
+}
+
+.action-highlight-card__impact {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #eef2ff;
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 800;
 }
 
 .action-highlight-card__actions {
