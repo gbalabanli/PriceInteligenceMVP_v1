@@ -50,6 +50,17 @@ Alternatif tam yol:
 - `assets/js/data.js`: mock ürün, rakip ve market pulse verileri
 - `assets/js/app.js`: render ve etkileşim mantığı
 
+## Documentation Split
+
+Implementation planning documents remain in `docs/`:
+
+- `docs/master_plan.md`
+- `docs/phases/`
+
+Product documentation, UX artifacts, QA notes, and exported mockups moved to the dedicated docs repository:
+
+- [PriceInteligenceDocs](https://github.com/gbalabanli/PriceInteligenceDocs)
+
 ## Kapsam dışı
 
 Bu iterasyonda aşağıdakiler yoktur:
