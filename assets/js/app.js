@@ -208,6 +208,15 @@
               <p class="dashboard-hero__spotlight-label">Bugünün odağı</p>
               <strong class="dashboard-hero__spotlight-value">${formatMoney(metrics.gainPotential)} potansiyel</strong>
               <p class="dashboard-hero__spotlight-text">${metrics.actionableProducts} ürün şu anda fiyat kararı bekliyor.</p>
+              <div class="dashboard-hero__confidence">
+                <span class="dashboard-hero__confidence-meter" style="--confidence:${Number(state.marketPulse.aiConfidenceScore) || 0};" aria-label="YZ Güven Skoru yüzde ${Number(state.marketPulse.aiConfidenceScore) || 0}">
+                  <strong>%${Number(state.marketPulse.aiConfidenceScore) || 0}</strong>
+                </span>
+                <span class="dashboard-hero__confidence-copy">
+                  <span class="dashboard-hero__confidence-label">YZ Güven Skoru</span>
+                  <strong class="dashboard-hero__confidence-value">Karar güveni yüksek</strong>
+                </span>
+              </div>
             </div>
           </aside>
         </div>
@@ -914,7 +923,7 @@
         <td><span class="recommendation-priority ${item.priority === "Yüksek" ? "is-high" : "is-medium"}">${escapeHtml(item.priority)}</span></td>
         <td>
           <div class="recommendation-actions">
-            <button class="recommendation-action recommendation-action--discard" type="button" data-discard-recommendation="${escapeAttribute(item.id)}">Vazgeç</button>
+            <button class="recommendation-action recommendation-action--discard" type="button" data-discard-recommendation="${escapeAttribute(item.id)}">Atla</button>
             <button class="recommendation-action recommendation-action--apply" type="button" data-apply-recommendation="${escapeAttribute(item.id)}">Uygula</button>
           </div>
         </td>
@@ -964,7 +973,13 @@
         <p class="action-highlight-card__text">${renderInlineCompetitorStatusText(item.competitorStatus)}</p>
         <p class="action-highlight-card__recommendation">${renderAiSuggestionText(item.aiSuggestionText)}</p>
         <div class="action-highlight-card__meta">
-          <span>${escapeHtml(item.category)}</span>
+          <div class="action-highlight-card__meta-main">
+            <span>${escapeHtml(item.category)}</span>
+            <div class="action-highlight-card__actions">
+              <button class="outline-button" type="button" data-discard-highlight="${escapeAttribute(item.id)}">Atla</button>
+              <button class="primary-button" type="button" data-apply-highlight="${escapeAttribute(item.id)}">Uygula</button>
+            </div>
+          </div>
           <strong>${formatMoney(item.currentPrice)}</strong>
         </div>
       </article>
@@ -1571,6 +1586,20 @@
     if (discardRecommendationTrigger) {
       const product = getProductById(discardRecommendationTrigger.dataset.discardRecommendation);
       showToast(product ? `${product.name} için YZ önerisi geçici olarak yok sayıldı.` : "YZ önerisi geçici olarak yok sayıldı.");
+      return;
+    }
+
+    const applyHighlightTrigger = event.target.closest("[data-apply-highlight]");
+    if (applyHighlightTrigger) {
+      const product = getProductById(applyHighlightTrigger.dataset.applyHighlight);
+      showToast(product ? `${product.name} için aksiyon uygulandı.` : "Aksiyon uygulandı.");
+      return;
+    }
+
+    const discardHighlightTrigger = event.target.closest("[data-discard-highlight]");
+    if (discardHighlightTrigger) {
+      const product = getProductById(discardHighlightTrigger.dataset.discardHighlight);
+      showToast(product ? `${product.name} için aksiyon atlandı.` : "Aksiyon atlandı.");
       return;
     }
 
