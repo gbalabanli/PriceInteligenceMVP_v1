@@ -1,72 +1,93 @@
-﻿# PriceSmart AI V1 Genel Bakış İskeleti
+# PriceInteligence MVP
 
-PriceSmart AI, e-ticaret ekiplerinin yanlış fiyat yüzünden kaybettiği geliri görünür kılmak için hazırlanmış statik bir mockup'tır.
-Bu iterasyonda `Genel Bakış`, `YZ Fiyat Önerileri`, `Dinamik Fiyatlandırma` ve `A/B Fiyatlandırma Testi` sayfaları vardır. Uygulama tamamen `HTML + CSS + vanilla JS` ile yazılmıştır ve `file://` altında çalışır.
+PriceInteligence is an AI pricing intelligence product for e-commerce teams. This repository contains the current demo-ready MVP: a static frontend prototype that shows the core pricing workflow end to end.
 
-## Bu iterasyonda neler var
+The product is designed for teams that manage large catalogs, track competitor prices, and need to make SKU-level pricing decisions faster and with more confidence. The current MVP focuses on the decision workflow rather than production infrastructure.
 
-- `#/dashboard`, `#/yz-fiyat-onerileri`, `#/dinamik-fiyatlandirma` ve `#/ab-fiyatlandirma-testi` route'ları
-- Sol menüde `Genel Bakış`, `YZ Fiyat Önerileri`, `Dinamik Fiyatlandırma` ve `A/B Fiyatlandırma Testi` aktif
-- Referans tasarıma yakın korunan üst header
-- Problem/çözüm bandı
-- 4 KPI kartı
-- `Market Pulse` modülü
-- `Takip Edilen Ürünler` tablosu
-- Sağ drawer ile çalışan `Ürün Ekle` akışı
-- Ürün satırına tıklayınca açılan rakip detay drawer'ı
-- Dinamik fiyatlandırma için strateji kartları, hedef seçimi, YZ özet paneli ve aktif atama listesi
-- A/B fiyatlandırma için test seçimi, karar çubuğu, varyant karşılaştırma tablosu ve guardrail paneli
+## What The MVP Does
 
-## Çalıştırma
+The current version demonstrates four core product areas:
 
-Sunucu gerekmez.
+- `Overview`: highlights which products need pricing attention
+- `AI Recommendations`: shows SKU-level pricing suggestions and rationale
+- `Dynamic Pricing`: lets users configure and simulate pricing strategies
+- `A/B Pricing Tests`: supports price testing workflows and decision review
 
-1. `index.html` dosyasını çift tıklayın.
-2. Uygulama doğrudan tarayıcıda açılır.
-3. Hash route otomatik olarak `#/dashboard` değerine gelir.
+The goal of this MVP is to make the pricing decision process visible and demoable:
 
-Alternatif tam yol:
+`monitor -> inspect -> recommend -> apply strategy -> test`
+
+## Current Stage
+
+This is a pre-pilot MVP. It is functional as a product demo and workflow prototype, but it is not yet a production deployment.
+
+What is included today:
+
+- Static frontend built with `HTML`, `CSS`, and vanilla `JavaScript`
+- Hash-based routes for the main product flows
+- Mock pricing, competitor, and market data
+- Interactive drawers, tables, strategy cards, and test controls
+- End-to-end demo flow for pricing review and action
+
+What is not included yet:
+
+- Backend services
+- Real API integrations
+- Live data ingestion
+- Automated repricing in production
+- Persistent database storage
+
+## Local Run
+
+No server is required.
+
+1. Open [`index.html`](index.html) in a browser.
+2. The app runs directly from static files.
+3. The default route loads the dashboard flow.
+
+Full local path:
 
 `C:\Users\Bora\Desktop\Workspace\agents\PriceInteligenceMVP_v1\index.html`
 
-## Test akışı
+## Demo Checklist
 
-1. Sayfa açıldığında üstte indigo header ve solda menü görünmeli.
-2. Sol menüde `Genel Bakış`, `YZ Fiyat Önerileri`, `Dinamik Fiyatlandırma` ve `A/B Fiyatlandırma Testi` sayfalarına geçiş yapılabilmeli.
-3. `Ürün Ekle` butonuna basınca sağ drawer açılmalı.
-4. `Ürün Adı`, `SKU`, `Kategori` alanlarını doldurup kaydedince yeni ürün tabloya eklenmeli.
-5. Yeni ürünün durumu `Kurulum Bekliyor` olarak görünmeli.
-6. Herhangi bir ürün satırına tıklayınca sağ drawer'da rakip URL ve fiyat detayları açılmalı.
-7. `Dinamik Fiyatlandırma` sayfasında strateji kartı seçilip hedef belirlendiğinde sağdaki YZ özeti güncellenmeli.
-8. `Stratejiyi Başlat` butonu ile aktif atama listesine yeni satır eklenebilmeli veya mevcut satır güncellenebilmeli.
-9. Aktif atama satırlarında `Duraklat` ve `Kaldır` aksiyonları çalışmalı.
-10. `A/B Fiyatlandırma Testi` sayfasında test seçimi, tarih aralığı değişimi, `Testi Durdur/Başlat`, `Kazananı Yayına Al` ve `Yeni Test Klonla` aksiyonları çalışmalı.
-11. `Esc`, `Kapat` veya backdrop ile drawer kapanmalı.
+1. Open the app and confirm the top header and left navigation render correctly.
+2. Navigate between `Overview`, `AI Recommendations`, `Dynamic Pricing`, and `A/B Pricing Tests`.
+3. Click the add-product action and confirm the right-side drawer opens.
+4. Add a product and verify it appears in the tracked products table.
+5. Click a product row and confirm the competitor details drawer opens.
+6. On `Dynamic Pricing`, select a strategy and verify the summary panel updates.
+7. Start a strategy and confirm the active assignment list updates.
+8. Pause or remove an active assignment and verify the state changes.
+9. On `A/B Pricing Tests`, change the selected test and confirm the comparison and guardrail views update.
+10. Use close actions such as `Esc`, close button, or backdrop where applicable.
 
-## Dosya yapısı
+## Repository Structure
 
-- `index.html`: uygulama kabuğu
-- `assets/css/styles.css`: tema ve layout
-- `assets/js/data.js`: mock ürün, rakip ve market pulse verileri
-- `assets/js/app.js`: render ve etkileşim mantığı
+- [`index.html`](index.html): app shell
+- [`assets/css/styles.css`](assets/css/styles.css): layout and theme
+- [`assets/js/data.js`](assets/js/data.js): mock product, competitor, and market data
+- [`assets/js/app.js`](assets/js/app.js): rendering and interaction logic
 
-## Documentation Split
+## Documentation
 
 Implementation planning documents remain in `docs/`:
 
-- `docs/master_plan.md`
+- [`docs/master_plan.md`](docs/master_plan.md)
 - `docs/phases/`
 
-Product documentation, UX artifacts, QA notes, and exported mockups moved to the dedicated docs repository:
+Additional product documentation, UX artifacts, QA notes, and exported mockups live in the companion repository:
 
 - [PriceInteligenceDocs](https://github.com/gbalabanli/PriceInteligenceDocs)
 
-## Kapsam dışı
+## Product Direction
 
-Bu iterasyonda aşağıdakiler yoktur:
+The production version of PriceInteligence is planned to include:
 
-- backend
-- gerçek API entegrasyonu
-- çoklu sayfa akışı
-- dil değiştirme
-- gerçek zamanlı veri akışı
+- Real marketplace and commerce platform integrations
+- Pricing signal ingestion pipelines
+- Guardrailed recommendation and automation logic
+- Closed-loop experimentation and performance feedback
+- A stronger decision engine for continuous SKU-level pricing
+
+The long-term goal is not just to show competitor prices, but to become the decision layer e-commerce teams use to make faster and better pricing decisions.
