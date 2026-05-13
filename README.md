@@ -45,9 +45,9 @@ No server is required.
 2. The app runs directly from static files.
 3. The default route loads the dashboard flow.
 
-Full local path:
+Live GitHub Pages demo:
 
-`C:\Users\Bora\Desktop\Workspace\agents\PriceInteligenceMVP_v1\index.html`
+- [Run the MVP on GitHub Pages](https://gbalabanli.github.io/PriceInteligenceMVP_v1/)
 
 ## Demo Checklist
 
