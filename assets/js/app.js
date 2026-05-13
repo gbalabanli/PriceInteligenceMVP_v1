@@ -1988,11 +1988,11 @@
   function getSeedPrice(category) {
     const normalized = category.toLocaleLowerCase("en-US");
 
-    if (normalized.includes("saat")) return 3499;
-    if (normalized.includes("kulak") || normalized.includes("ses")) return 1299;
-    if (normalized.includes("bilgisayar") || normalized.includes("hub")) return 649;
-    if (normalized.includes("oyun") || normalized.includes("aksesuar")) return 899;
-    return 999;
+    if (normalized.includes("watch")) return 109;
+    if (normalized.includes("headphone") || normalized.includes("audio") || normalized.includes("speaker")) return 39;
+    if (normalized.includes("computer") || normalized.includes("hub")) return 19;
+    if (normalized.includes("gaming") || normalized.includes("accessories")) return 27;
+    return 32;
   }
 
   function getAbCreateVariantPrice(basePrice, strategyId) {
@@ -2032,7 +2032,7 @@
         const suggestedPrice = isPriceRisk
           ? Math.max(1, product.currentPrice - getRecommendedDiscount(product.currentPrice))
           : isMarginRisk
-            ? product.currentPrice + 99
+            ? product.currentPrice + 5
             : product.currentPrice;
 
         return {
@@ -2082,16 +2082,16 @@
     const lostRevenue = Number(item.estimatedLostRevenue) || 0;
     const profitUplift = Number(item.estimatedProfitUplift) || 0;
 
-    if (item.status === "Margin Risk" && profitUplift === 24500) {
-      return "Capture $24,500 upside";
+    if (item.status === "Margin Risk" && profitUplift === 760) {
+      return "Capture $760 upside";
     }
 
-    if (item.status !== "Margin Risk" && lostRevenue === 48000) {
-      return "Prevent $48,000 downside";
+    if (item.status !== "Margin Risk" && lostRevenue === 1500) {
+      return "Prevent $1,500 downside";
     }
 
-    if (item.status !== "Margin Risk" && lostRevenue === 27000) {
-      return "Prevent $27,000 downside";
+    if (item.status !== "Margin Risk" && lostRevenue === 850) {
+      return "Prevent $850 downside";
     }
 
     return item.status === "Margin Risk"
@@ -2584,7 +2584,7 @@
 
   function getExpectedImpactLabel(strategyId) {
     if (strategyId === "stay-competitive") return "Conversion Rate +12%";
-    if (strategyId === "maximize-margin") return "Margin Rate +2.4%";
+    if (strategyId === "maximize-margin") return "Margin Rate +2.4 pts";
     if (strategyId === "clear-stock") return "Inventory Holding Time -24%";
     return "Revenue +4.2%";
   }
@@ -2616,9 +2616,10 @@
   }
 
   function getRecommendedDiscount(currentPrice) {
-    if (currentPrice >= 2000) return 79;
-    if (currentPrice >= 1000) return 49;
-    return 29;
+    if (currentPrice >= 100) return 5;
+    if (currentPrice >= 40) return 3;
+    if (currentPrice >= 20) return 2;
+    return 1;
   }
 
   function getTrendClass(direction) {

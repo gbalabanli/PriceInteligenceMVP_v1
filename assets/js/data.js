@@ -5,14 +5,14 @@
       name: "Wireless Headphones X-200",
       sku: "SKU-9821",
       category: "Audio Systems",
-      currentPrice: 1249,
+      currentPrice: 39,
       competitorStatus: "6% above competitor average",
       trendDirection: "Rising",
-      aiSuggestionText: "A $49 discount can reduce conversion loss.",
+      aiSuggestionText: "A $3 discount can reduce conversion loss.",
       status: "Price Risk",
       competitorCount: 3,
-      estimatedLostRevenue: 48000,
-      estimatedProfitUplift: 16000,
+      estimatedLostRevenue: 1500,
+      estimatedProfitUplift: 500,
       trendSummary: "Google Trends interest increased 18% over the last 7 days.",
       updatedAt: "Today 10:24"
     },
@@ -21,14 +21,14 @@
       name: "Smart Watch Ultra Pro",
       sku: "SKU-4412",
       category: "Wearable Tech",
-      currentPrice: 3399,
+      currentPrice: 109,
       competitorStatus: "5% below the competitor lower band",
       trendDirection: "Stable",
-      aiSuggestionText: "A $99 price increase could protect margin.",
+      aiSuggestionText: "A $5 price increase could protect margin.",
       status: "Margin Risk",
       competitorCount: 4,
-      estimatedLostRevenue: 12000,
-      estimatedProfitUplift: 24500,
+      estimatedLostRevenue: 375,
+      estimatedProfitUplift: 760,
       trendSummary: "Search volume is flat and price tolerance remains high.",
       updatedAt: "Today 09:42"
     },
@@ -37,14 +37,14 @@
       name: "Gaming Mouse RGB",
       sku: "SKU-1029",
       category: "Gaming Accessories",
-      currentPrice: 849,
+      currentPrice: 27,
       competitorStatus: "In line with the leading competitor band",
       trendDirection: "Rising",
       aiSuggestionText: "The current price can hold, but visibility should be supported with a campaign.",
       status: "Stable",
       competitorCount: 3,
-      estimatedLostRevenue: 8000,
-      estimatedProfitUplift: 9500,
+      estimatedLostRevenue: 250,
+      estimatedProfitUplift: 300,
       trendSummary: "Searches for gaming gear accelerated over the last 48 hours.",
       updatedAt: "Today 11:05"
     },
@@ -53,14 +53,14 @@
       name: "USB-C Hub 7 in 1",
       sku: "SKU-3321",
       category: "Computer Accessories",
-      currentPrice: 619,
+      currentPrice: 19,
       competitorStatus: "Two competitors cut price in the last 24 hours",
       trendDirection: "Falling",
       aiSuggestionText: "Demand is weakening, so a bundle offer is recommended instead of holding price.",
       status: "Price Risk",
       competitorCount: 2,
-      estimatedLostRevenue: 27000,
-      estimatedProfitUplift: 10800,
+      estimatedLostRevenue: 850,
+      estimatedProfitUplift: 340,
       trendSummary: "Google Trends interest declined 9% week over week.",
       updatedAt: "Today 08:57"
     }
@@ -72,77 +72,77 @@
       productId: "p-101",
       sourceName: "Trendyol / trendyol.com",
       url: "https://www.trendyol.com/marketplace/kablosuz-kulaklik-x-200",
-      price: 1190
+      price: 37
     },
     {
       id: "c-102",
       productId: "p-101",
       sourceName: "Hepsiburada / hepsiburada.com",
       url: "https://www.hepsiburada.com/marketplace/kablosuz-kulaklik-x-200",
-      price: 1219
+      price: 38
     },
     {
       id: "c-103",
       productId: "p-101",
       sourceName: "Amazon TR / amazon.com.tr",
       url: "https://www.amazon.com.tr/dp/x200-pricesmart-demo",
-      price: 1189
+      price: 37
     },
     {
       id: "c-104",
       productId: "p-102",
       sourceName: "N11 / n11.com",
       url: "https://www.n11.com/marketplace/akilli-saat-ultra-pro",
-      price: 3599
+      price: 115
     },
     {
       id: "c-105",
       productId: "p-102",
       sourceName: "Trendyol / trendyol.com",
       url: "https://www.trendyol.com/marketplace/akilli-saat-ultra-pro",
-      price: 3625
+      price: 117
     },
     {
       id: "c-106",
       productId: "p-102",
       sourceName: "Pazarama / pazarama.com",
       url: "https://www.pazarama.com/marketplace/akilli-saat-ultra-pro",
-      price: 3600
+      price: 116
     },
     {
       id: "c-107",
       productId: "p-103",
       sourceName: "Amazon TR / amazon.com.tr",
       url: "https://www.amazon.com.tr/dp/rgb-mouse-pricesmart-demo",
-      price: 849
+      price: 27
     },
     {
       id: "c-108",
       productId: "p-103",
       sourceName: "Vatan / vatanbilgisayar.com",
       url: "https://www.vatanbilgisayar.com/gaming-mouse-rgb",
-      price: 859
+      price: 28
     },
     {
       id: "c-109",
       productId: "p-103",
       sourceName: "Teknosa / teknosa.com",
       url: "https://www.teknosa.com/gaming-mouse-rgb",
-      price: 849
+      price: 27
     },
     {
       id: "c-110",
       productId: "p-104",
       sourceName: "Hepsiburada / hepsiburada.com",
       url: "https://www.hepsiburada.com/marketplace/usb-c-hub-7in1",
-      price: 579
+      price: 18
     },
     {
       id: "c-111",
       productId: "p-104",
       sourceName: "Trendyol / trendyol.com",
       url: "https://www.trendyol.com/marketplace/usb-c-hub-7in1",
-      price: 585
+      price: 18
     }
   ];
 
@@ -240,7 +240,7 @@
         category: "Electronics",
         categoryDetail: "Category: Audio",
         cardTone: "winner",
-        monthlyContribution: 12200,
+        monthlyContribution: 380,
         sampleCollected: 1800,
         sampleTarget: 1800,
         targetLabel: "Wireless Headphones",
@@ -264,28 +264,28 @@
           {
             id: "control",
             label: "Control",
-            price: 1249,
+            price: 39,
             sessions: 5200,
             orders: 416,
-            revenue: 519584,
+            revenue: 16224,
             marginRate: 0.22
           },
           {
             id: "variant-a",
             label: "Variant A",
-            price: 1219,
+            price: 37,
             sessions: 2600,
             orders: 238,
-            revenue: 290122,
+            revenue: 8806,
             marginRate: 0.205
           },
           {
             id: "variant-b",
             label: "Variant B",
-            price: 1279,
+            price: 41,
             sessions: 2600,
             orders: 198,
-            revenue: 253242,
+            revenue: 8118,
             marginRate: 0.233
           }
         ]
@@ -297,7 +297,7 @@
         strategyName: "Margin Protection vs Volume",
         category: "Apparel",
         cardTone: "running",
-        monthlyContribution: -1800,
+        monthlyContribution: -55,
         sampleCollected: 640,
         sampleTarget: 1000,
         remainingDays: 4,
@@ -322,19 +322,19 @@
           {
             id: "control",
             label: "Control",
-            price: 619,
+            price: 19,
             sessions: 2100,
             orders: 199,
-            revenue: 123181,
+            revenue: 3781,
             marginRate: 0.18
           },
           {
             id: "variant-a",
             label: "Variant A",
-            price: 579,
+            price: 18,
             sessions: 2100,
             orders: 214,
-            revenue: 123906,
+            revenue: 3852,
             marginRate: 0.132
           }
         ]
@@ -366,24 +366,24 @@
         alerts: [
           "The test was automatically stopped because the minimum margin threshold was breached."
         ],
-        criticalReason: "Variant B dropped from $24,500 to $21,200 and breached the margin threshold.",
+        criticalReason: "Variant B dropped from $760 to $660 and breached the margin threshold.",
         variants: [
           {
             id: "control",
             label: "Control",
-            price: 24500,
+            price: 760,
             sessions: 1200,
             orders: 41,
-            revenue: 1004500,
+            revenue: 31160,
             marginRate: 0.19
           },
           {
             id: "variant-b",
             label: "Variant B",
-            price: 21200,
+            price: 660,
             sessions: 1200,
             orders: 44,
-            revenue: 932800,
+            revenue: 29040,
             marginRate: 0.129
           }
         ]
