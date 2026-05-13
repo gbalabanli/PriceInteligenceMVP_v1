@@ -1,68 +1,68 @@
-﻿(function () {
+(function () {
   const trackedProducts = [
     {
       id: "p-101",
-      name: "Kablosuz Kulaklık X-200",
+      name: "Wireless Headphones X-200",
       sku: "SKU-9821",
-      category: "Ses Sistemleri",
+      category: "Audio Systems",
       currentPrice: 1249,
-      competitorStatus: "Rakip ortalamasının %6 üzerinde",
-      trendDirection: "Yükselişte",
-      aiSuggestionText: "49 TL indirim ile dönüşüm kaybı frenlenebilir.",
-      status: "Fiyat Riski",
+      competitorStatus: "6% above competitor average",
+      trendDirection: "Rising",
+      aiSuggestionText: "A TRY 49 discount can reduce conversion loss.",
+      status: "Price Risk",
       competitorCount: 3,
       estimatedLostRevenue: 48000,
       estimatedProfitUplift: 16000,
-      trendSummary: "Google Trends araması son 7 günde %18 artış gösterdi.",
-      updatedAt: "Bugün 10:24"
+      trendSummary: "Google Trends interest increased 18% over the last 7 days.",
+      updatedAt: "Today 10:24"
     },
     {
       id: "p-102",
-      name: "Akıllı Saat Ultra Pro",
+      name: "Smart Watch Ultra Pro",
       sku: "SKU-4412",
-      category: "Giyilebilir Teknoloji",
+      category: "Wearable Tech",
       currentPrice: 3399,
-      competitorStatus: "Rakip alt bandının %5 altında",
-      trendDirection: "Dengede",
-      aiSuggestionText: "Kâr korumak için 99 TL fiyat artışı denenebilir.",
-      status: "Marj Riski",
+      competitorStatus: "5% below the competitor lower band",
+      trendDirection: "Stable",
+      aiSuggestionText: "A TRY 99 price increase could protect margin.",
+      status: "Margin Risk",
       competitorCount: 4,
       estimatedLostRevenue: 12000,
       estimatedProfitUplift: 24500,
-      trendSummary: "Arama hacmi yatay, fiyat toleransı yüksek kalıyor.",
-      updatedAt: "Bugün 09:42"
+      trendSummary: "Search volume is flat and price tolerance remains high.",
+      updatedAt: "Today 09:42"
     },
     {
       id: "p-103",
       name: "Gaming Mouse RGB",
       sku: "SKU-1029",
-      category: "Oyuncu Aksesuarı",
+      category: "Gaming Accessories",
       currentPrice: 849,
-      competitorStatus: "Rakip lider ile aynı bantta",
-      trendDirection: "Yükselişte",
-      aiSuggestionText: "Mevcut fiyat korunabilir, görünürlük kampanya ile desteklenmeli.",
-      status: "Dengede",
+      competitorStatus: "In line with the leading competitor band",
+      trendDirection: "Rising",
+      aiSuggestionText: "The current price can hold, but visibility should be supported with a campaign.",
+      status: "Stable",
       competitorCount: 3,
       estimatedLostRevenue: 8000,
       estimatedProfitUplift: 9500,
-      trendSummary: "Son 48 saatte oyuncu ekipmanları aramalarında hızlanma var.",
-      updatedAt: "Bugün 11:05"
+      trendSummary: "Searches for gaming gear accelerated over the last 48 hours.",
+      updatedAt: "Today 11:05"
     },
     {
       id: "p-104",
       name: "USB-C Hub 7 in 1",
       sku: "SKU-3321",
-      category: "Bilgisayar Aksesuarı",
+      category: "Computer Accessories",
       currentPrice: 619,
-      competitorStatus: "İki rakip son 24 saatte fiyat kırdı",
-      trendDirection: "Düşüşte",
-      aiSuggestionText: "Talep zayıflarken fiyatı korumak yerine paket teklif öneriliyor.",
-      status: "Fiyat Riski",
+      competitorStatus: "Two competitors cut price in the last 24 hours",
+      trendDirection: "Falling",
+      aiSuggestionText: "Demand is weakening, so a bundle offer is recommended instead of holding price.",
+      status: "Price Risk",
       competitorCount: 2,
       estimatedLostRevenue: 27000,
       estimatedProfitUplift: 10800,
-      trendSummary: "Google Trends ilgisi haftalık bazda %9 geriledi.",
-      updatedAt: "Bugün 08:57"
+      trendSummary: "Google Trends interest declined 9% week over week.",
+      updatedAt: "Today 08:57"
     }
   ];
 
@@ -147,10 +147,10 @@
   ];
 
   const marketPulse = {
-    trendTopic: "Kablosuz kulaklık ve aksesuar segmenti",
-    trendDirection: "Yükselişte",
-    competitorPressure: "7 ürün grubunda fiyat baskısı arttı, 4 rakip bugün yeni indirim geçti.",
-    aiSummary: "Fiyat rekabeti ses ürünlerinde hızlanırken trend desteği güçlü. Kulaklık ve aksesuar kategorilerinde küçük indirimler dönüşüm kaybını azaltabilir; akıllı saat tarafında ise fiyat yukarı yönlü test için alan var.",
+    trendTopic: "Wireless headphones and accessories segment",
+    trendDirection: "Rising",
+    competitorPressure: "Pricing pressure increased across 7 product groups, and 4 competitors launched new discounts today.",
+    aiSummary: "Price competition is accelerating in audio products while trend support remains strong. Small discounts in headphones and accessories could reduce conversion loss, while smart watches have room for upward price tests.",
     aiConfidenceScore: 92
   };
 
@@ -158,39 +158,39 @@
     strategies: [
       {
         id: "balanced-auto",
-        name: "Dengeli Otomatik",
-        summary: "Gelir, marj ve rekabet baskısını aynı anda dengeleyen varsayılan strateji.",
-        aiSummary: "YZ; rakip fiyatı, talep yönü ve ürün marjını birlikte okuyarak fiyatı kontrollü şekilde yukarı veya aşağı taşır.",
-        movement: "Karışık hareket",
-        businessGoal: "Geliri ve marjı dengede tutar",
-        riskLevel: "Düşük"
+        name: "Balanced Auto",
+        summary: "Default strategy that balances revenue, margin, and competitor pressure at the same time.",
+        aiSummary: "AI reads competitor pricing, demand direction, and product margin together to move price up or down in a controlled way.",
+        movement: "Mixed movement",
+        businessGoal: "Balances revenue and margin",
+        riskLevel: "Low"
       },
       {
         id: "stay-competitive",
-        name: "Rekabette Kal",
-        summary: "Rakip baskısının yükseldiği ürünlerde daha hızlı tepki vererek görünürlüğü korur.",
-        aiSummary: "YZ, rakiplerin alt banda indiği anlarda fiyatı daha çevik günceller; talep zayıfladığında agresifleşir.",
-        movement: "Daha çok aşağı",
-        businessGoal: "Dönüşüm kaybını azaltır",
-        riskLevel: "Orta"
+        name: "Stay Competitive",
+        summary: "Responds faster on products under competitor pressure to protect visibility.",
+        aiSummary: "AI updates price more aggressively when competitors move to the lower band and demand weakens.",
+        movement: "Mostly downward",
+        businessGoal: "Reduces conversion loss",
+        riskLevel: "Medium"
       },
       {
         id: "maximize-margin",
-        name: "Marjı Maksimize Et",
-        summary: "Talebi güçlü kalan ürünlerde gereksiz indirimleri azaltarak kârlılığı öne çıkarır.",
-        aiSummary: "YZ, fiyat toleransı yüksek ürünleri korur; yalnızca baskı oluştuğunda sınırlı geri çekilir.",
-        movement: "Daha çok yukarı",
-        businessGoal: "Kârı büyütür",
-        riskLevel: "Orta"
+        name: "Maximize Margin",
+        summary: "Reduces unnecessary discounting on products with resilient demand to prioritize profitability.",
+        aiSummary: "AI holds products with high price tolerance and only pulls back when pressure builds.",
+        movement: "Mostly upward",
+        businessGoal: "Expands profit",
+        riskLevel: "Medium"
       },
       {
         id: "clear-stock",
-        name: "Stok Erit",
-        summary: "Dönen stok baskısını azaltmak için fiyatı daha agresif optimize eder.",
-        aiSummary: "YZ, stok yükü ve zayıf talep sinyallerini gördüğünde fiyatı daha hızlı aşağı çekerek çıkışı hızlandırır.",
-        movement: "Hızlı aşağı",
-        businessGoal: "Stok devir hızını artırır",
-        riskLevel: "Yüksek"
+        name: "Clear Stock",
+        summary: "Optimizes price more aggressively to reduce aging inventory pressure.",
+        aiSummary: "AI pulls price down faster when it sees inventory pressure and weak demand signals to accelerate sell-through.",
+        movement: "Fast downward",
+        businessGoal: "Increases inventory turnover",
+        riskLevel: "High"
       }
     ],
     assignments: [
@@ -198,34 +198,34 @@
         id: "dp-201",
         strategyId: "stay-competitive",
         targetType: "category",
-        targetId: "Ses Sistemleri",
-        targetLabel: "Ses Sistemleri",
+        targetId: "Audio Systems",
+        targetLabel: "Audio Systems",
         affectedProducts: 1,
-        status: "Aktif",
-        lastUpdate: "Bugün 10:50",
-        performance: "+4,8% gelir"
+        status: "Active",
+        lastUpdate: "Today 10:50",
+        performance: "+4.8% revenue"
       },
       {
         id: "dp-202",
         strategyId: "maximize-margin",
         targetType: "product",
         targetId: "p-102",
-        targetLabel: "Akıllı Saat Ultra Pro",
+        targetLabel: "Smart Watch Ultra Pro",
         affectedProducts: 1,
-        status: "Aktif",
-        lastUpdate: "Bugün 09:40",
-        performance: "+2,1 puan marj"
+        status: "Active",
+        lastUpdate: "Today 09:40",
+        performance: "+2.1 margin points"
       },
       {
         id: "dp-203",
         strategyId: "balanced-auto",
         targetType: "segment",
         targetId: "trend-up",
-        targetLabel: "Trend Yükselenler",
+        targetLabel: "Rising Trends",
         affectedProducts: 2,
-        status: "Duraklatıldı",
-        lastUpdate: "Dün 18:20",
-        performance: "İzlemede"
+        status: "Paused",
+        lastUpdate: "Yesterday 18:20",
+        performance: "Monitoring"
       }
     ]
   };
@@ -234,20 +234,20 @@
     tests: [
       {
         id: "ab-301",
-        name: "Kulaklık Fiyat Aralığı Testi",
+        name: "Headphone Price Range Test",
         productName: "Apple Airpods Pro 2",
-        strategyName: "Psikolojik Eşik Testi",
-        category: "Elektronik",
-        categoryDetail: "Kategori: Ses",
+        strategyName: "Psychological Threshold Test",
+        category: "Electronics",
+        categoryDetail: "Category: Audio",
         cardTone: "winner",
         monthlyContribution: 12200,
         sampleCollected: 1800,
         sampleTarget: 1800,
         targetLabel: "Wireless Headphones",
-        targetKpi: "Ziyaretçi başı gelir",
+        targetKpi: "Revenue per visitor",
         testDesignTypeId: "sequential-time-series",
-        testDesignLabel: "Zaman Serisi (Sequential) Testi",
-        status: "Çalışıyor",
+        testDesignLabel: "Sequential Time-Series Test",
+        status: "Running",
         startedAt: "2026-03-18",
         significance: 96,
         trafficSplit: "50/25/25",
@@ -258,12 +258,12 @@
           autoStop: true
         },
         alerts: [
-          "Örneklem güçlü. Karar vermek için yeterli YZ güven skoru oluştu."
+          "Sample strength is high. There is enough AI confidence to make a decision."
         ],
         variants: [
           {
             id: "control",
-            label: "Kontrol",
+            label: "Control",
             price: 1249,
             sessions: 5200,
             orders: 416,
@@ -272,7 +272,7 @@
           },
           {
             id: "variant-a",
-            label: "Varyant A",
+            label: "Variant A",
             price: 1219,
             sessions: 2600,
             orders: 238,
@@ -281,7 +281,7 @@
           },
           {
             id: "variant-b",
-            label: "Varyant B",
+            label: "Variant B",
             price: 1279,
             sessions: 2600,
             orders: 198,
@@ -292,20 +292,20 @@
       },
       {
         id: "ab-302",
-        name: "Stok Eritme Kampanya Testi",
+        name: "Clearance Campaign Test",
         productName: "Basic Cotton T-Shirt",
-        strategyName: "Marj Koruma vs Hacim",
-        category: "Tekstil",
+        strategyName: "Margin Protection vs Volume",
+        category: "Apparel",
         cardTone: "running",
         monthlyContribution: -1800,
         sampleCollected: 640,
         sampleTarget: 1000,
         remainingDays: 4,
         targetLabel: "Clearance Items",
-        targetKpi: "Satış adedi",
+        targetKpi: "Units sold",
         testDesignTypeId: "channel-based",
-        testDesignLabel: "Kanal Bazlı Test",
-        status: "Durduruldu",
+        testDesignLabel: "Channel-Based Test",
+        status: "Stopped",
         startedAt: "2026-03-10",
         significance: 82,
         trafficSplit: "50/50",
@@ -316,12 +316,12 @@
           autoStop: true
         },
         alerts: [
-          "Anlamlılık düşük kaldı. Test tekrar başlatılmadan karar önerilmez."
+          "Significance is still low. No recommendation should be made before the test restarts."
         ],
         variants: [
           {
             id: "control",
-            label: "Kontrol",
+            label: "Control",
             price: 619,
             sessions: 2100,
             orders: 199,
@@ -330,7 +330,7 @@
           },
           {
             id: "variant-a",
-            label: "Varyant A",
+            label: "Variant A",
             price: 579,
             sessions: 2100,
             orders: 214,
@@ -341,19 +341,19 @@
       },
       {
         id: "ab-303",
-        name: "Laptop Fiyat Koridoru Testi",
+        name: "Laptop Price Corridor Test",
         productName: "Gaming Laptop V5",
-        strategyName: "Agresif Rekabet Kırılımı",
-        category: "Elektronik",
+        strategyName: "Aggressive Competitive Breakout",
+        category: "Electronics",
         cardTone: "critical",
         monthlyContribution: 0,
         sampleCollected: 510,
         sampleTarget: 1200,
-        targetLabel: "Gaming Laptop Segmenti",
-        targetKpi: "Marj koruması",
+        targetLabel: "Gaming Laptop Segment",
+        targetKpi: "Margin protection",
         testDesignTypeId: "geo-based",
-        testDesignLabel: "Coğrafi (Geo-Based) Test",
-        status: "Durduruldu",
+        testDesignLabel: "Geo-Based Test",
+        status: "Stopped",
         startedAt: "2026-03-19",
         significance: 74,
         trafficSplit: "50/50",
@@ -364,13 +364,13 @@
           autoStop: true
         },
         alerts: [
-          "Minimum marj sınırı ihlal edildiği için test otomatik durduruldu."
+          "The test was automatically stopped because the minimum margin threshold was breached."
         ],
-        criticalReason: "Varyant B fiyatı 24.500 TL'den 21.200 TL'ye indi ve marj eşiğini kırdı.",
+        criticalReason: "Variant B dropped from TRY 24,500 to TRY 21,200 and breached the margin threshold.",
         variants: [
           {
             id: "control",
-            label: "Kontrol",
+            label: "Control",
             price: 24500,
             sessions: 1200,
             orders: 41,
@@ -379,7 +379,7 @@
           },
           {
             id: "variant-b",
-            label: "Varyant B",
+            label: "Variant B",
             price: 21200,
             sessions: 1200,
             orders: 44,

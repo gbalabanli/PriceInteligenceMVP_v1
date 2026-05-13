@@ -8,7 +8,7 @@
     : { tests: [] };
 
   if (!appData || !Array.isArray(appData.trackedProducts) || !Array.isArray(appData.competitorDetails)) {
-    throw new Error("PriceSmartMvpData bulunamadı. Önce data.js yüklenmeli.");
+    throw new Error("PriceSmartMvpData not found. Load data.js first.");
   }
 
   const ROUTES = {
@@ -19,45 +19,45 @@
     abTestingDetail: "/ab-fiyatlandirma-testi/detay"
   };
   const ROUTE_TITLES = {
-    [ROUTES.dashboard]: "YZ Akıllı Fiyatlandırma | Genel Bakış",
-    [ROUTES.recommendations]: "YZ Akıllı Fiyatlandırma | YZ Fiyat Önerileri",
-    [ROUTES.dynamicPricing]: "YZ Akıllı Fiyatlandırma | Dinamik Fiyatlandırma",
-    [ROUTES.abTesting]: "YZ Akıllı Fiyatlandırma | A/B Fiyatlandırma Testi",
-    [ROUTES.abTestingDetail]: "YZ Akıllı Fiyatlandırma | A/B Test Detayı"
+    [ROUTES.dashboard]: "AI Pricing Intelligence | Overview",
+    [ROUTES.recommendations]: "AI Pricing Intelligence | AI Recommendations",
+    [ROUTES.dynamicPricing]: "AI Pricing Intelligence | Dynamic Pricing",
+    [ROUTES.abTesting]: "AI Pricing Intelligence | A/B Pricing Tests",
+    [ROUTES.abTestingDetail]: "AI Pricing Intelligence | A/B Test Detail"
   };
   const INTRO_SEEN_STORAGE_KEY = "pricesmart-intro-seen";
   const AB_CREATE_STRATEGIES = [
     {
       id: "psych-threshold",
-      name: "Psikolojik Eşik Testi",
-      summary: "Farklı fiyat eşiklerini test ederek dönüşüm kırılma noktalarını yakalar."
+      name: "Psychological Threshold Test",
+      summary: "Tests different price thresholds to identify conversion breakpoints."
     },
     {
       id: "margin-vs-volume",
-      name: "Marj Koruma vs Hacim",
-      summary: "Satış adedi ile birim kâr dengesini aynı anda ölçer."
+      name: "Margin Protection vs Volume",
+      summary: "Measures unit volume and per-unit margin tradeoffs at the same time."
     },
     {
       id: "competitive-response",
-      name: "Rekabet Tepkisi",
-      summary: "Rakip fiyat hamlelerine göre esnek fiyat bandı uygular."
+      name: "Competitive Response",
+      summary: "Applies a flexible pricing band based on competitor moves."
     }
   ];
   const AB_CREATE_TEST_TYPES = [
     {
       id: "sequential-time-series",
-      name: "Zaman Serisi (Sequential) Testi",
-      summary: "Fiyat etkisini zamana yayılmış örneklemde adım adım ölçer."
+      name: "Sequential Time-Series Test",
+      summary: "Measures price impact step by step across a time-based sample."
     },
     {
       id: "geo-based",
-      name: "Coğrafi (Geo-Based) Test",
-      summary: "Bölgelere göre farklı fiyat tepkilerini karşılaştırır."
+      name: "Geo-Based Test",
+      summary: "Compares pricing response across regions."
     },
     {
       id: "channel-based",
-      name: "Kanal Bazlı Test",
-      summary: "Pazaryeri ve satış kanalı performansını ayrı ayrı izler."
+      name: "Channel-Based Test",
+      summary: "Tracks marketplace and sales channel performance separately."
     }
   ];
   const state = {
@@ -196,25 +196,25 @@
       <section class="panel dashboard-hero">
         <div class="dashboard-hero__head">
           <div class="dashboard-hero__copy">
-            <p class="dashboard-hero__eyebrow">Genel Bakış</p>
-            <h1 class="dashboard-hero__title">Fiyat baskısı, YZ içgörüsü ve öncelikli kararlar aynı akışta.</h1>
-            <p class="dashboard-hero__text">Ekipler bugün hangi üründe fiyat korumalı, nerede agresifleşmeli ve hangi fırsatı hemen değerlendirmeli; bu ekran tüm kritik sinyalleri tek bakışta toplar.</p>
+            <p class="dashboard-hero__eyebrow">Overview</p>
+            <h1 class="dashboard-hero__title">Price pressure, AI insight, and priority decisions in one flow.</h1>
+            <p class="dashboard-hero__text">This view shows which products need price protection, where to get more aggressive, and which opportunities deserve immediate action.</p>
           </div>
           <aside class="dashboard-hero__spotlight">
             <div class="dashboard-hero__spotlight-icon">
               ${renderUiIcon("spark")}
             </div>
             <div>
-              <p class="dashboard-hero__spotlight-label">Bugünün odağı</p>
-              <strong class="dashboard-hero__spotlight-value">${formatMoney(metrics.gainPotential)} potansiyel</strong>
-              <p class="dashboard-hero__spotlight-text">${metrics.actionableProducts} ürün şu anda fiyat kararı bekliyor.</p>
+              <p class="dashboard-hero__spotlight-label">Focus for today</p>
+              <strong class="dashboard-hero__spotlight-value">${formatMoney(metrics.gainPotential)} potential</strong>
+              <p class="dashboard-hero__spotlight-text">${metrics.actionableProducts} products are waiting for a pricing decision right now.</p>
               <div class="dashboard-hero__confidence">
-                <span class="dashboard-hero__confidence-meter" style="--confidence:${Number(state.marketPulse.aiConfidenceScore) || 0};" aria-label="YZ Güven Skoru yüzde ${Number(state.marketPulse.aiConfidenceScore) || 0}">
+                <span class="dashboard-hero__confidence-meter" style="--confidence:${Number(state.marketPulse.aiConfidenceScore) || 0};" aria-label="AI confidence score ${Number(state.marketPulse.aiConfidenceScore) || 0} percent">
                   <strong>%${Number(state.marketPulse.aiConfidenceScore) || 0}</strong>
                 </span>
                 <span class="dashboard-hero__confidence-copy">
-                  <span class="dashboard-hero__confidence-label">YZ Güven Skoru</span>
-                  <strong class="dashboard-hero__confidence-value">Karar güveni yüksek</strong>
+                  <span class="dashboard-hero__confidence-label">AI Confidence Score</span>
+                  <strong class="dashboard-hero__confidence-value">Decision confidence is high</strong>
                 </span>
               </div>
             </div>
@@ -222,49 +222,49 @@
         </div>
       </section>
 
-      <section class="kpi-grid" aria-label="KPI özetleri">
-        ${renderKpiCard("Takip Edilen Ürün", String(metrics.trackedCount), `${metrics.actionableProducts} ürün aksiyon bekliyor.`, "is-primary", "grid")}
-        ${renderKpiCard("Fiyat Nedeniyle Kaçan Gelir", formatMoney(metrics.lostRevenue), "Rakip altına inen ürünlerde görünür kayıp oluşuyor.", "is-danger", "discount")}
-        ${renderKpiCard("Marj Kaybı Riski", `${metrics.marginRiskCount} ürün`, "Fiyatı gereğinden düşük kalan ürünler marj yakıyor.", "is-warning", "priority")}
-        ${renderKpiCard("Tahmini Ek Kâr Potansiyeli", formatMoney(metrics.gainPotential), "Doğru fiyat adımları ile toplanabilecek ek potansiyel.", "is-success", "growth")}
+      <section class="kpi-grid" aria-label="KPI summaries">
+        ${renderKpiCard("Tracked Products", String(metrics.trackedCount), `${metrics.actionableProducts} products are waiting for action.`, "is-primary", "grid")}
+        ${renderKpiCard("Revenue Lost to Price Position", formatMoney(metrics.lostRevenue), "Loss is visible in products that fall behind competitors.", "is-danger", "discount")}
+        ${renderKpiCard("Margin Erosion Risk", `${metrics.marginRiskCount} products`, "Products priced too low are burning margin.", "is-warning", "priority")}
+        ${renderKpiCard("Estimated Incremental Profit Potential", formatMoney(metrics.gainPotential), "Additional upside available through the right pricing moves.", "is-success", "growth")}
       </section>
 
       <section class="panel dashboard-insight">
         <div class="panel-head">
           <div>
-            <h2 class="panel-title panel-title--insight">YZ İçgörüsü</h2>
-            <p class="panel-text">Rakip baskısı, trend yönü ve yapay zeka okuması aynı blokta toplanır. Karar verici ilk bakışta hangi segmentte hareket olduğunu görür.</p>
+            <h2 class="panel-title panel-title--insight">AI Insight</h2>
+            <p class="panel-text">Competitor pressure, trend direction, and AI interpretation are combined in one block so operators can see where the market is moving.</p>
           </div>
-          <span class="panel-chip">Canlı sinyal özeti</span>
+          <span class="panel-chip">Live signal summary</span>
         </div>
 
         <div class="pulse-grid">
           <article class="pulse-cell pulse-cell--topic">
             <span class="pulse-cell__icon">${renderUiIcon("spark")}</span>
-            <p class="pulse-label">Odak konu</p>
+            <p class="pulse-label">Focus topic</p>
             <p class="pulse-value">${escapeHtml(state.marketPulse.trendTopic)}</p>
           </article>
           <article class="pulse-cell pulse-cell--trend">
             <span class="pulse-cell__icon">${renderUiIcon("growth")}</span>
-            <p class="pulse-label">Google Trends yönü</p>
+            <p class="pulse-label">Google Trends direction</p>
             <p class="pulse-value">${escapeHtml(state.marketPulse.trendDirection)}</p>
           </article>
           <article class="pulse-cell pulse-cell--pressure">
             <span class="pulse-cell__icon">${renderUiIcon("priority")}</span>
-            <p class="pulse-label">Rakip baskısı</p>
+            <p class="pulse-label">Competitor pressure</p>
             <p class="pulse-value">${escapeHtml(state.marketPulse.competitorPressure)}</p>
           </article>
         </div>
 
         <div class="pulse-summary">
           <div class="pulse-summary__head">
-            <span class="pulse-summary__label pulse-summary__label--recommend">YZ Önerisi</span>
-            <p class="pulse-summary__confidence">YZ Güven Skoru: <strong>%${Number(state.marketPulse.aiConfidenceScore) || 0}</strong></p>
+            <span class="pulse-summary__label pulse-summary__label--recommend">AI Recommendation</span>
+            <p class="pulse-summary__confidence">AI Confidence Score: <strong>%${Number(state.marketPulse.aiConfidenceScore) || 0}</strong></p>
           </div>
           <p class="pulse-summary__text">${escapeHtml(state.marketPulse.aiSummary)}</p>
           <div class="pulse-summary__actions">
-            <button class="pulse-summary__action pulse-summary__action--discard" type="button" data-discard-insight="1">Vazgeç</button>
-            <button class="pulse-summary__action pulse-summary__action--apply" type="button" data-apply-insight="1">Uygula</button>
+            <button class="pulse-summary__action pulse-summary__action--discard" type="button" data-discard-insight="1">Dismiss</button>
+            <button class="pulse-summary__action pulse-summary__action--apply" type="button" data-apply-insight="1">Apply</button>
           </div>
         </div>
       </section>
@@ -272,10 +272,10 @@
       <section class="panel action-board">
         <div class="panel-head action-board__head">
           <div>
-            <h2 class="panel-title">Bugün Öncelikli Aksiyonlar</h2>
-            <p class="panel-text">Bugün karar bekleyen fiyat hareketlerini burada önceliklendiriyoruz. Her kart ürünün riski, rekabet sinyali ve YZ yönünü tek bakışta verir.</p>
+            <h2 class="panel-title">Priority Actions for Today</h2>
+            <p class="panel-text">This section prioritizes the pricing moves that need decisions today. Each card shows risk, competitor signal, and AI direction at a glance.</p>
           </div>
-          <span class="panel-chip">${actionHighlights.length} kritik ürün</span>
+          <span class="panel-chip">${actionHighlights.length} critical products</span>
         </div>
         <div class="action-board__grid">
           ${actionHighlights.map(renderActionHighlightCard).join("")}
@@ -287,13 +287,13 @@
           <div class="dashboard-table-card__titleblock">
             <span class="dashboard-table-card__icon">${renderUiIcon("grid")}</span>
             <div>
-              <h2 class="panel-title dashboard-table-card__title">Takip Edilen Ürünler</h2>
-            <p class="table-card__hint">Bir ürün satırına tıklayarak rakip URL, fiyat ve trend detayını açın.</p>
+              <h2 class="panel-title dashboard-table-card__title">Tracked Products</h2>
+            <p class="table-card__hint">Click a product row to open competitor URLs, prices, and trend details.</p>
             </div>
           </div>
           <div class="table-card__actions">
-            <button class="outline-button" type="button" data-route="${ROUTES.recommendations}">YZ Öneri Sayfası</button>
-            <button class="primary-button" type="button" data-open-add-product="1">Ürün Ekle</button>
+            <button class="outline-button" type="button" data-route="${ROUTES.recommendations}">AI Recommendations</button>
+            <button class="primary-button" type="button" data-open-add-product="1">Add Product</button>
           </div>
         </div>
 
@@ -301,16 +301,16 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Ürün</th>
-                <th>Mevcut Fiyat</th>
-                <th>Rakip Durumu</th>
+                <th>Product</th>
+                <th>Current Price</th>
+                <th>Competitor Status</th>
                 <th>Trend</th>
-                <th>YZ Öneri</th>
-                <th>Durum</th>
+                <th>AI Suggestion</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              ${state.products.length ? state.products.map(renderProductRow).join("") : `<tr><td colspan="6" class="empty-state">Henüz takip edilen ürün bulunmuyor.</td></tr>`}
+              ${state.products.length ? state.products.map(renderProductRow).join("") : `<tr><td colspan="6" class="empty-state">No tracked products yet.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -321,64 +321,64 @@
   function renderRecommendationsPage() {
     const recommendations = getFilteredRecommendationRows();
     const allRecommendations = getRecommendationRows();
-    const highPriorityCount = recommendations.filter((item) => item.priority === "Yüksek").length;
+    const highPriorityCount = recommendations.filter((item) => item.priority === "High").length;
 
     return `
       <section class="panel recommendation-hero">
         <div class="recommendation-hero__head">
           <div class="recommendation-hero__copy">
-            <p class="recommendation-hero__eyebrow">YZ karar akışı</p>
-            <h1 class="recommendation-hero__title">YZ Fiyat Önerileri</h1>
-            <p class="recommendation-hero__text">Rakip fiyatı, trend yönü ve mevcut fiyat farkı birlikte okunur. Ortaya çıkan öneriler, ekiplerin hızla karar alabileceği net bir operasyon görünümüne çevrilir.</p>
+            <p class="recommendation-hero__eyebrow">AI decision workflow</p>
+            <h1 class="recommendation-hero__title">AI Recommendations</h1>
+            <p class="recommendation-hero__text">Competitor pricing, trend direction, and current price gaps are read together and turned into a clear operating view for fast decisions.</p>
           </div>
           <aside class="recommendation-hero__spotlight">
             <div class="recommendation-hero__spotlight-icon">
               ${renderUiIcon("spark")}
             </div>
             <div>
-              <p class="recommendation-hero__spotlight-label">Karar baskısı</p>
-              <strong class="recommendation-hero__spotlight-value">${highPriorityCount} yüksek öncelikli öneri</strong>
-              <p class="recommendation-hero__spotlight-text">Bugün aksiyon isteyen fiyat hareketleri tek listede toplanır.</p>
+              <p class="recommendation-hero__spotlight-label">Decision pressure</p>
+              <strong class="recommendation-hero__spotlight-value">${highPriorityCount} high-priority recommendations</strong>
+              <p class="recommendation-hero__spotlight-text">Pricing moves that need action today are collected in one list.</p>
             </div>
           </aside>
         </div>
 
         <div class="recommendation-summary recommendation-summary--showcase">
-          ${renderRecommendationMetricCard("Aktif öneri", allRecommendations.length, "list")}
-          ${renderRecommendationMetricCard("Bekleyen indirim", allRecommendations.filter((item) => item.type === "İndirim").length, "discount")}
-          ${renderRecommendationMetricCard("Marj artış fırsatı", allRecommendations.filter((item) => item.type === "Artış").length, "growth")}
+          ${renderRecommendationMetricCard("Active recommendations", allRecommendations.length, "list")}
+          ${renderRecommendationMetricCard("Pending discounts", allRecommendations.filter((item) => item.type === "Discount").length, "discount")}
+          ${renderRecommendationMetricCard("Margin expansion opportunities", allRecommendations.filter((item) => item.type === "Increase").length, "growth")}
         </div>
       </section>
 
       <section class="panel recommendation-filters">
         <div class="recommendation-filter-row">
           <label class="recommendation-search-field">
-            <span>Ara</span>
+            <span>Search</span>
             <span class="recommendation-field">
               <span class="recommendation-field__icon">${renderUiIcon("search")}</span>
-              <input type="text" placeholder="Ürün, SKU veya kategori ara..." value="${escapeAttribute(state.recommendations.searchQuery)}" data-recommendation-search>
+              <input type="text" placeholder="Search product, SKU, or category..." value="${escapeAttribute(state.recommendations.searchQuery)}" data-recommendation-search>
             </span>
           </label>
           <label class="recommendation-select-field">
-            <span>Öneri Tipi</span>
+            <span>Recommendation Type</span>
             <span class="recommendation-field recommendation-field--select">
-              <span class="recommendation-field__icon">${renderUiIcon("switch")}</span>
+              <span class="recommendation-field__icon recommendation-field__icon--swap">${renderUiIcon("switch")}</span>
               <select data-recommendation-type-filter>
-                <option value="all" ${state.recommendations.typeFilter === "all" ? "selected" : ""}>Tümü</option>
-                <option value="İndirim" ${state.recommendations.typeFilter === "İndirim" ? "selected" : ""}>İndirim</option>
-                <option value="Artış" ${state.recommendations.typeFilter === "Artış" ? "selected" : ""}>Artış</option>
-                <option value="Koruma" ${state.recommendations.typeFilter === "Koruma" ? "selected" : ""}>Koruma</option>
+                <option value="all" ${state.recommendations.typeFilter === "all" ? "selected" : ""}>All</option>
+                <option value="Discount" ${state.recommendations.typeFilter === "Discount" ? "selected" : ""}>Discount</option>
+                <option value="Increase" ${state.recommendations.typeFilter === "Increase" ? "selected" : ""}>Increase</option>
+                <option value="Hold" ${state.recommendations.typeFilter === "Hold" ? "selected" : ""}>Hold</option>
               </select>
             </span>
           </label>
           <label class="recommendation-select-field">
-            <span>Öncelik</span>
+            <span>Priority</span>
             <span class="recommendation-field recommendation-field--select">
               <span class="recommendation-field__icon">${renderUiIcon("priority")}</span>
               <select data-recommendation-priority-filter>
-                <option value="all" ${state.recommendations.priorityFilter === "all" ? "selected" : ""}>Tümü</option>
-                <option value="Yüksek" ${state.recommendations.priorityFilter === "Yüksek" ? "selected" : ""}>Yüksek</option>
-                <option value="Orta" ${state.recommendations.priorityFilter === "Orta" ? "selected" : ""}>Orta</option>
+                <option value="all" ${state.recommendations.priorityFilter === "all" ? "selected" : ""}>All</option>
+                <option value="High" ${state.recommendations.priorityFilter === "High" ? "selected" : ""}>High</option>
+                <option value="Medium" ${state.recommendations.priorityFilter === "Medium" ? "selected" : ""}>Medium</option>
               </select>
             </span>
           </label>
@@ -390,28 +390,28 @@
           <div class="recommendation-table-card__titleblock">
             <span class="recommendation-table-card__icon">${renderUiIcon("grid")}</span>
             <div>
-              <h2 class="panel-title recommendation-table-card__title">YZ Öneri Listesi</h2>
-            <p class="table-card__hint">Satır bazında onaylayabileceğiniz fiyat önerileri, gerekçesi ve önceliğiyle birlikte burada toplanır.</p>
+              <h2 class="panel-title recommendation-table-card__title">AI Recommendation List</h2>
+            <p class="table-card__hint">Row-level price recommendations are collected here with rationale and priority.</p>
             </div>
           </div>
-          <button class="secondary-button" type="button" data-route="${ROUTES.dashboard}">Genel Bakışa Dön</button>
+          <button class="secondary-button" type="button" data-route="${ROUTES.dashboard}">Back to Overview</button>
         </div>
 
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>Ürün</th>
-                <th>Mevcut Fiyat</th>
-                <th>YZ Önerilen Fiyat</th>
-                <th>TL Etkisi</th>
-                <th>Öneri Tipi</th>
-                <th>Öncelik</th>
-                <th>İşlem</th>
+                <th>Product</th>
+                <th>Current Price</th>
+                <th>AI Suggested Price</th>
+                <th>Impact (TRY)</th>
+                <th>Recommendation Type</th>
+                <th>Priority</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              ${recommendations.length ? recommendations.map(renderRecommendationRow).join("") : `<tr><td colspan="7" class="empty-state">Bu filtre ile eşleşen öneri bulunamadı.</td></tr>`}
+              ${recommendations.length ? recommendations.map(renderRecommendationRow).join("") : `<tr><td colspan="7" class="empty-state">No recommendations match this filter.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -429,37 +429,37 @@
       <section class="panel intent-hero">
         <div class="intent-hero__head">
           <div class="intent-hero__copy">
-            <p class="intent-hero__eyebrow">Otomatik fiyat akışı</p>
-            <h1 class="intent-hero__title">Dinamik Fiyatlandırma Paneli</h1>
-            <p class="intent-hero__text">Kural yazmayı bırakın. Stratejiyi seçin, hedef alanı belirleyin ve YZ’nin pazar ritmine göre nasıl karar aldığını tek ekranda görün.</p>
+            <p class="intent-hero__eyebrow">Automated pricing flow</p>
+            <h1 class="intent-hero__title">Dynamic Pricing Panel</h1>
+            <p class="intent-hero__text">Stop writing rules. Choose a strategy, define the target scope, and see how AI responds to market rhythm in one view.</p>
           </div>
           <aside class="intent-hero__spotlight">
             <div class="intent-hero__spotlight-icon">
               ${renderUiIcon("spark")}
             </div>
             <div>
-              <p class="intent-hero__spotlight-label">Canlı yönlendirme</p>
+              <p class="intent-hero__spotlight-label">Live guidance</p>
               <strong class="intent-hero__spotlight-value">${escapeHtml(preview.expectedImpact)}</strong>
-              <p class="intent-hero__spotlight-text">${escapeHtml(preview.targetLabel)} için önerilen akış şu anda hazır.</p>
+              <p class="intent-hero__spotlight-text">The recommended flow for ${escapeHtml(preview.targetLabel)} is ready right now.</p>
             </div>
           </aside>
         </div>
 
         <div class="intent-summary">
-          ${renderIntentMetricCard("Seçili strateji", selectedStrategy ? selectedStrategy.name : "-", "Şu an uygulanacak ana fiyat mantığı", "switch")}
-          ${renderIntentMetricCard("Hedef kitle", preview.targetLabel, "Stratejinin uygulanacağı ürün grubu", "grid")}
-          ${renderIntentMetricCard("Aktif akış", `${activeAssignments.length}`, "Canlı çalışan strateji ataması", "growth")}
+          ${renderIntentMetricCard("Selected strategy", selectedStrategy ? selectedStrategy.name : "-", "Primary pricing logic that will be applied now", "switch")}
+          ${renderIntentMetricCard("Target scope", preview.targetLabel, "Product group where the strategy will run", "grid")}
+          ${renderIntentMetricCard("Active flows", `${activeAssignments.length}`, "Live strategy assignments", "growth")}
         </div>
       </section>
 
-      <section class="intent-layout" aria-label="Niyet temelli fiyatlandırma">
+      <section class="intent-layout" aria-label="Intent-based pricing">
         <div class="intent-main">
           <section class="panel intent-section">
             <div class="intent-step intent-step--spacious">
               <span class="intent-step__index">1</span>
               <div>
-                <h2 class="intent-step__title">Strateji Seç</h2>
-                <p class="intent-step__text">İş hedefinize en yakın fiyat davranışını seçin. Her kart farklı risk seviyesi ve ticari öncelik taşır.</p>
+                <h2 class="intent-step__title">Choose a strategy</h2>
+                <p class="intent-step__text">Choose the pricing behavior closest to your business goal. Each card carries a different risk profile and business priority.</p>
               </div>
             </div>
             <div class="intent-strategy-grid">
@@ -471,13 +471,13 @@
             <div class="intent-step intent-step--spacious">
               <span class="intent-step__index">2</span>
               <div>
-                <h2 class="intent-step__title">Hedef Kitleyi Belirle</h2>
-                <p class="intent-step__text">YZ’nin bu stratejiyi hangi ürün, kategori veya koleksiyon üzerinde çalıştıracağını seçin.</p>
+                <h2 class="intent-step__title">Define the target scope</h2>
+                <p class="intent-step__text">Choose which product, category, or collection the AI should apply this strategy to.</p>
               </div>
             </div>
             <label class="intent-select-field">
               <span class="intent-select-field__icon">${renderUiIcon("grid")}</span>
-              <select class="intent-select" data-target-scope aria-label="Hedef kitle seçimi">
+              <select class="intent-select" data-target-scope aria-label="Target scope selection">
                 ${scopeOptions.map((item) => renderScopeOption(item)).join("")}
               </select>
             </label>
@@ -488,12 +488,12 @@
           <section class="intent-ai-card">
             <div class="intent-ai-card__head">
               <span class="intent-ai-card__icon" aria-hidden="true">${renderUiIcon("spark")}</span>
-              <p class="intent-ai-card__title">YZ Öngörü Özeti</p>
+              <p class="intent-ai-card__title">AI Forecast Summary</p>
             </div>
             <p class="intent-ai-card__quote">"${escapeHtml(preview.aiQuote)}"</p>
             <div class="intent-ai-metrics">
               <div class="intent-ai-metric">
-                <span>İşlenecek Sinyaller</span>
+                <span>Signals processed</span>
                 <strong>${escapeHtml(preview.signals)}</strong>
               </div>
               <div class="intent-ai-metric">
@@ -501,7 +501,7 @@
                 <strong>${escapeHtml(preview.expectedImpact)}</strong>
               </div>
               <div class="intent-ai-metric">
-                <span>Hedef Kitle</span>
+                <span>Target scope</span>
                 <strong>${escapeHtml(preview.targetLabel)}</strong>
               </div>
             </div>
@@ -511,21 +511,21 @@
             <div class="intent-guard-card__head">
               <span class="intent-guard-card__icon">${renderUiIcon("shield")}</span>
               <div>
-                <p class="intent-guard-card__eyebrow">Koruma katmanı</p>
-                <h3 class="intent-guard-card__title">Güvenlik Duvarı</h3>
+                <p class="intent-guard-card__eyebrow">Protection layer</p>
+                <h3 class="intent-guard-card__title">Guardrails</h3>
               </div>
             </div>
-            <p class="intent-guard-card__text">Bu sınırlar aşıldığında sistem fiyat hareketini yavaşlatır veya tamamen durdurur.</p>
+            <p class="intent-guard-card__text">If these limits are breached, the system slows or stops price movement.</p>
             <div class="intent-guard-list">
               <div class="intent-guard-item">
-                <span>Min. Kâr Marjı</span>
+                <span>Min. Margin</span>
                 <strong>%15</strong>
               </div>
               <div class="intent-guard-item">
-                <span>Tavan Fiyat Kilidi</span>
-                <strong>Açık</strong>
+                <span>Price ceiling lock</span>
+                <strong>On</strong>
               </div>
-              <button class="primary-button" type="button" data-apply-strategy="1" ${preview.canApply ? "" : "disabled"}>Stratejiyi Başlat</button>
+              <button class="primary-button" type="button" data-apply-strategy="1" ${preview.canApply ? "" : "disabled"}>Start Strategy</button>
             </div>
           </section>
         </aside>
@@ -536,8 +536,8 @@
           <div class="intent-table-card__titleblock">
             <span class="intent-table-card__icon">${renderUiIcon("list")}</span>
             <div>
-            <h2 class="panel-title">Aktif Stratejiler</h2>
-            <p class="table-card__hint">Canlı çalışan stratejileri tek listede izleyebilir, duraklatıp yeniden başlatabilirsiniz.</p>
+            <h2 class="panel-title">Active Strategies</h2>
+            <p class="table-card__hint">Track live strategies in one list and pause or restart them as needed.</p>
             </div>
           </div>
         </div>
@@ -545,15 +545,15 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Hedef Kitle</th>
-                <th>Strateji</th>
-                <th>Durum</th>
-                <th>Performans</th>
-                <th>İşlem</th>
+                <th>Target scope</th>
+                <th>Strategy</th>
+                <th>Status</th>
+                <th>Performance</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              ${activeAssignments.length ? activeAssignments.map(renderDynamicAssignmentRow).join("") : `<tr><td colspan="5" class="empty-state">Henüz aktif strateji ataması bulunmuyor.</td></tr>`}
+              ${activeAssignments.length ? activeAssignments.map(renderDynamicAssignmentRow).join("") : `<tr><td colspan="5" class="empty-state">No active strategy assignments yet.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -579,7 +579,7 @@
   function renderAbTestingPage() {
     const selectedTest = getSelectedAbTest();
     const tests = getFilteredAbTests();
-    const activeCount = state.abTesting.tests.filter((item) => item.status === "Çalışıyor").length;
+    const activeCount = state.abTesting.tests.filter((item) => item.status === "Running").length;
     const totalContribution = state.abTesting.tests.reduce((sum, item) => sum + (Number(item.monthlyContribution) || 0), 0);
     const winnerCount = state.abTesting.tests.filter((item) => getAbCardTone(item) === "winner").length;
     const criticalCount = state.abTesting.tests.filter((item) => getAbCardTone(item) === "critical").length;
@@ -587,8 +587,8 @@
     if (!state.abTesting.tests.length) {
       return `
         <section class="panel">
-          <h1 class="panel-title">A/B Fiyatlandırma Testi</h1>
-          <p class="panel-text">Gösterilecek test bulunamadı.</p>
+          <h1 class="panel-title">A/B Pricing Tests</h1>
+          <p class="panel-text">No tests to display.</p>
         </section>
       `;
     }
@@ -597,53 +597,53 @@
       <section class="panel ab-library-hero">
         <div class="ab-library-head">
           <div class="ab-library-head__copy">
-            <p class="ab-library-eyebrow">Deney Orkestrasyonu</p>
-            <h1 class="ab-library-title">A/B Fiyatlandırma Deney Kütüphanesi</h1>
+            <p class="ab-library-eyebrow">Experiment orchestration</p>
+            <h1 class="ab-library-title">A/B Pricing Experiment Library</h1>
             <p class="ab-library-text">
-              Canlı deneyleri, güven eşiğini ve hangi varyantın üretime daha yakın olduğunu tek akışta okuyun. Ürün, strateji ve test türü aynı kartta sade biçimde görünür.
+              Read live experiments, confidence level, and which variant is closest to production in one flow. Product, strategy, and test type are visible in the same card.
             </p>
           </div>
           <div class="ab-library-meta">
             <article class="ab-library-spotlight">
               <span class="ab-library-spotlight__icon">${renderUiIcon("spark")}</span>
               <div>
-                <p class="ab-library-spotlight__label">Deney Etkisi</p>
+                <p class="ab-library-spotlight__label">Experiment impact</p>
                 <strong class="ab-library-spotlight__value">${formatSignedMoney(totalContribution)} <span>/ ay</span></strong>
-                <p class="ab-library-spotlight__text">${activeCount} canlı test, ${winnerCount} karar aşamasında deney.</p>
+                <p class="ab-library-spotlight__text">${activeCount} live tests, ${winnerCount} decision-ready experiments.</p>
               </div>
             </article>
             <button class="primary-button" type="button" data-open-ab-create="1" ${state.products.length ? "" : "disabled"}>
               <span class="ab-library-button__icon" aria-hidden="true">${renderUiIcon("experiment")}</span>
-              <span>Yeni Deney Başlat</span>
+              <span>Start New Experiment</span>
             </button>
           </div>
         </div>
 
         <div class="ab-library-summary">
-          ${renderAbLibraryMetricCard("Canlı test", String(activeCount), "Şu anda veri toplayan deney", "list")}
-          ${renderAbLibraryMetricCard("Karar hazır", String(winnerCount), "Kazananı uygulamaya yakın test", "growth")}
-          ${renderAbLibraryMetricCard("Kritik uyarı", String(criticalCount), "Denetim gerektiren akış", "priority")}
+          ${renderAbLibraryMetricCard("Live tests", String(activeCount), "Experiments currently collecting data", "list")}
+          ${renderAbLibraryMetricCard("Decision ready", String(winnerCount), "Tests close to applying a winner", "growth")}
+          ${renderAbLibraryMetricCard("Critical alerts", String(criticalCount), "Flows that require review", "priority")}
         </div>
       </section>
 
       <section class="panel ab-library-filters">
         <div class="ab-filter-row">
           <label class="ab-search-field">
-            <span>Ara</span>
+            <span>Search</span>
             <span class="ab-library-field">
               <span class="ab-library-field__icon">${renderUiIcon("search")}</span>
-              <input type="text" placeholder="Ürün, marka veya strateji ara..." data-ab-search value="${escapeAttribute(state.abTesting.searchQuery)}">
+              <input type="text" placeholder="Search product, brand, or strategy..." data-ab-search value="${escapeAttribute(state.abTesting.searchQuery)}">
             </span>
           </label>
           <label class="ab-status-field">
-            <span>Durum</span>
+            <span>Status</span>
             <span class="ab-library-field ab-library-field--select">
               <span class="ab-library-field__icon">${renderUiIcon("switch")}</span>
               <select data-ab-status-filter>
-                <option value="all" ${state.abTesting.statusFilter === "all" ? "selected" : ""}>Tüm Durumlar</option>
-                <option value="winner" ${state.abTesting.statusFilter === "winner" ? "selected" : ""}>Anlamlı Sonuç (Kazanan Var)</option>
-                <option value="running" ${state.abTesting.statusFilter === "running" ? "selected" : ""}>Veri Toplanıyor</option>
-                <option value="critical" ${state.abTesting.statusFilter === "critical" ? "selected" : ""}>Kritik Uyarı</option>
+                <option value="all" ${state.abTesting.statusFilter === "all" ? "selected" : ""}>All statuses</option>
+                <option value="winner" ${state.abTesting.statusFilter === "winner" ? "selected" : ""}>Meaningful result (winner found)</option>
+                <option value="running" ${state.abTesting.statusFilter === "running" ? "selected" : ""}>Collecting data</option>
+                <option value="critical" ${state.abTesting.statusFilter === "critical" ? "selected" : ""}>Critical alert</option>
               </select>
             </span>
           </label>
@@ -655,16 +655,16 @@
           ? tests.map((test) => renderAbExperimentCard(test)).join("")
           : `
             <section class="panel ab-library-empty">
-              <h3>Bu filtrede gösterilecek deney yok</h3>
-              <p>Arama metnini veya durum filtresini temizleyerek tüm deneyleri tekrar listeleyebilirsiniz.</p>
+              <h3>No experiments in this filter</h3>
+              <p>Clear the search text or status filter to show all experiments again.</p>
             </section>
           `
         }
       </section>
 
       <section class="panel ab-library-archive">
-        <h3>Geçmiş Deney Arşivi</h3>
-        <p>Daha önce tamamlanan deneyleri arşiv sekmesinden inceleyebilir, kazanan kurguları yeni testlere klonlayabilirsiniz.</p>
+        <h3>Experiment Archive</h3>
+        <p>Review previously completed experiments in the archive and clone winning setups into new tests.</p>
       </section>
     `;
   }
@@ -675,15 +675,15 @@
     if (!test) {
       return `
         <section class="panel">
-          <h1 class="panel-title">A/B Fiyatlandırma Testi</h1>
-          <p class="panel-text">Gösterilecek test bulunamadı.</p>
+          <h1 class="panel-title">A/B Pricing Tests</h1>
+          <p class="panel-text">No tests to display.</p>
         </section>
       `;
     }
 
     const detailText = test.name
-      ? `${test.name}. ${test.targetKpi ? `Bu test ${test.targetKpi.toLocaleLowerCase("tr-TR")} hedefiyle çalışır.` : "Bu test canlı performans verisiyle izlenir."}`
-      : "Ürün bazlı fiyat deneyinin canlı metrikleri ve karar önerisi bu ekranda gösterilir.";
+      ? `${test.name}. ${test.targetKpi ? `This test is optimized for ${test.targetKpi.toLocaleLowerCase("en-US")}.` : "This test is monitored with live performance data."}`
+      : "Live metrics and the current decision recommendation for this product-level pricing experiment are shown here.";
 
     const decision = getAbDecision(test);
     const rows = getAbComparisonRows(test);
@@ -697,7 +697,7 @@
           <p class="ab-detail-heading__text">${escapeHtml(detailText)}</p>
         </div>
         <div class="ab-hero__controls">
-          <button class="primary-button ab-back-button" type="button" data-ab-back="1" title="Listeye geri dön" aria-label="Listeye geri dön">Listeye Geri Dön</button>
+          <button class="primary-button ab-back-button" type="button" data-ab-back="1" title="Back to list" aria-label="Back to list">Back to List</button>
         </div>
       </section>
 
@@ -706,83 +706,83 @@
           <section class="panel">
             <div class="panel-head">
               <div>
-                <p class="ab-context-label">Canlı Test Özeti</p>
-                <p class="panel-text ab-context-text">${escapeHtml(test.name)} • Hedef: ${escapeHtml(test.targetLabel)} • KPI: ${escapeHtml(test.targetKpi)} • Trafik dağılımı: ${escapeHtml(test.trafficSplit)}</p>
+                <p class="ab-context-label">Live Test Summary</p>
+                <p class="panel-text ab-context-text">${escapeHtml(test.name)} • Target: ${escapeHtml(test.targetLabel)} • KPI: ${escapeHtml(test.targetKpi)} • Traffic split: ${escapeHtml(test.trafficSplit)}</p>
               </div>
               <div class="ab-state-row">
                 <span class="ab-state-chip ${getAbStatusClass(test.status)}">${escapeHtml(test.status)}</span>
-                <span class="ab-state-chip is-soft">YZ Güven Skoru: <strong>%${test.significance}</strong></span>
+                <span class="ab-state-chip is-soft">AI Confidence Score: <strong>%${test.significance}</strong></span>
               </div>
             </div>
 
-            <div class="ab-detail-meta-strip" aria-label="Test meta bilgileri">
+            <div class="ab-detail-meta-strip" aria-label="Test metadata">
               <span class="ab-detail-meta-pill">
-                <small>Mevcut Strateji</small>
+                <small>Current Strategy</small>
                 <strong>${escapeHtml(detailMeta.currentStrategy)}</strong>
               </span>
               <span class="ab-detail-meta-pill">
-                <small>Varyant A</small>
+                <small>Variant A</small>
                 <strong>${escapeHtml(detailMeta.variantAStrategy)}</strong>
               </span>
               <span class="ab-detail-meta-pill">
-                <small>Varyant B</small>
+                <small>Variant B</small>
                 <strong>${escapeHtml(detailMeta.variantBStrategy)}</strong>
               </span>
               <span class="ab-detail-meta-pill">
-                <small>Test Türü</small>
+                <small>Test Type</small>
                 <strong>${escapeHtml(detailMeta.testType)}</strong>
               </span>
             </div>
 
             <div class="ab-kpi-grid">
               <article class="ab-kpi-card">
-                <p>Dönüşüm Oranı</p>
+                <p>Conversion Rate</p>
                 <strong>${formatPercent(snapshot.conversionRate)}</strong>
               </article>
               <article class="ab-kpi-card">
-                <p>Ziyaretçi Başı Gelir</p>
+                <p>Revenue per Visitor</p>
                 <strong>${formatMoney(snapshot.bestRpv)}</strong>
               </article>
               <article class="ab-kpi-card">
-                <p>Marj Katkısı</p>
+                <p>Margin Contribution</p>
                 <strong>${formatMoney(snapshot.marginContribution)}</strong>
               </article>
               <article class="ab-kpi-card">
-                <p>Toplam Oturum</p>
-                <strong>${new Intl.NumberFormat("tr-TR").format(snapshot.totalSessions)}</strong>
+                <p>Total Sessions</p>
+                <strong>${new Intl.NumberFormat("en-US").format(snapshot.totalSessions)}</strong>
               </article>
             </div>
           </section>
 
           <section class="panel ab-decision ${decision.tone}">
-            <p class="ab-decision__eyebrow">Karar Çubuğu</p>
+            <p class="ab-decision__eyebrow">Decision Bar</p>
             <h3 class="ab-decision__title">${escapeHtml(decision.title)}</h3>
             <p class="ab-decision__text">${escapeHtml(decision.reason)}</p>
             <div class="ab-action-row">
-              <button class="primary-button" type="button" data-ab-action="toggle-run" data-ab-test="${escapeAttribute(test.id)}">${test.status === "Çalışıyor" ? "Testi Durdur" : "Testi Başlat"}</button>
-              <button class="outline-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Kazananı Yayına Al</button>
-              <button class="ghost-button" type="button" data-ab-action="clone-test" data-ab-test="${escapeAttribute(test.id)}">Yeni Test Klonla</button>
+              <button class="primary-button" type="button" data-ab-action="toggle-run" data-ab-test="${escapeAttribute(test.id)}">${test.status === "Running" ? "Stop Test" : "Start Test"}</button>
+              <button class="outline-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Apply Winner</button>
+              <button class="ghost-button" type="button" data-ab-action="clone-test" data-ab-test="${escapeAttribute(test.id)}">Clone Test</button>
             </div>
           </section>
 
           <section class="table-card ab-table">
             <div class="table-card__head">
               <div>
-                <h2 class="panel-title">Varyant Karşılaştırması</h2>
-                <p class="table-card__hint">Kontrol ve varyantlar için uplift, marj ve güven etkisi tek tabloda.</p>
+                <h2 class="panel-title">Variant Comparison</h2>
+                <p class="table-card__hint">Uplift, margin, and confidence impact for the control and variants in one table.</p>
               </div>
             </div>
             <div class="table-wrap">
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Varyant</th>
-                    <th>Fiyat</th>
-                    <th>Trafik</th>
-                    <th>Dönüşüm</th>
+                    <th>Variant</th>
+                    <th>Price</th>
+                    <th>Traffic</th>
+                    <th>Conversion</th>
                     <th>ZBG</th>
                     <th>Uplift</th>
-                    <th>Marj</th>
+                    <th>Margin</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -795,19 +795,19 @@
 
         <aside class="ab-side">
           <section class="panel ab-guardrails">
-            <p class="ab-guardrails__eyebrow">Canlı Koruma Katmanı</p>
-            <h3 class="ab-side__title">Denetim Mekanizması</h3>
-            <p class="ab-guardrails__text">Aşağıdaki sınırlar ihlal edilirse test akışı otomatik olarak yavaşlatılır veya durdurulur.</p>
+            <p class="ab-guardrails__eyebrow">Live Guardrail Layer</p>
+            <h3 class="ab-side__title">Control Mechanism</h3>
+            <p class="ab-guardrails__text">If the thresholds below are breached, the test flow is automatically slowed or stopped.</p>
             <div class="ab-side-list">
-              <div><span>Min. Marj</span><strong>%${test.guardrails.minMarginRate}</strong></div>
-              <div><span>Maks. Fiyat Değişimi</span><strong>%${test.guardrails.maxPriceChange}</strong></div>
+              <div><span>Min. Margin</span><strong>%${test.guardrails.minMarginRate}</strong></div>
+              <div><span>Max Price Change</span><strong>%${test.guardrails.maxPriceChange}</strong></div>
               <div><span>Min. Stok</span><strong>${test.guardrails.minStock}</strong></div>
-              <div><span>Otomatik Durdurma</span><strong>${test.guardrails.autoStop ? "Açık" : "Kapalı"}</strong></div>
+              <div><span>Auto Stop</span><strong>${test.guardrails.autoStop ? "On" : "Off"}</strong></div>
             </div>
           </section>
 
           <section class="panel ab-alerts">
-            <h3 class="ab-side__title">Uyarılar</h3>
+            <h3 class="ab-side__title">Alerts</h3>
             <div class="ab-alert-list">
               ${test.alerts.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
             </div>
@@ -832,7 +832,7 @@
 
   function renderProductRow(product) {
     return `
-      <tr class="product-row" tabindex="0" data-product-row="${escapeHtml(product.id)}" aria-label="${escapeHtml(product.name)} detaylarını aç">
+      <tr class="product-row" tabindex="0" data-product-row="${escapeHtml(product.id)}" aria-label="Open details for ${escapeHtml(product.name)}">
         <td>
           <div class="product-cell">
             <div>
@@ -840,16 +840,16 @@
               <div class="product-meta">
                 <span class="muted-chip">${escapeHtml(product.sku)}</span>
                 <span class="muted-chip">${escapeHtml(product.category)}</span>
-                <span class="muted-chip">${product.competitorCount} rakip</span>
+                <span class="muted-chip">${product.competitorCount} competitors</span>
               </div>
             </div>
-            <span class="product-open-hint">Detay</span>
+            <span class="product-open-hint">Details</span>
           </div>
         </td>
         <td>${formatMoney(product.currentPrice)}</td>
         <td>${renderCompetitorStatusCell(product.competitorStatus)}</td>
         <td><span class="trend-chip ${getTrendClass(product.trendDirection)}">${escapeHtml(product.trendDirection)}</span></td>
-        <td><p class="ai-note"><strong>YZ:</strong> ${renderAiSuggestionText(product.aiSuggestionText)}</p></td>
+        <td><p class="ai-note"><strong>AI:</strong> ${renderAiSuggestionText(product.aiSuggestionText)}</p></td>
         <td><span class="status-chip ${getStatusClass(product.status)}">${escapeHtml(product.status)}</span></td>
       </tr>
     `;
@@ -865,13 +865,13 @@
 
   function renderInlineCompetitorStatusText(statusText) {
     const safeText = escapeHtml(statusText || "");
-    return safeText.replace(/% ?\d+\s*(altında|üstünde|üzerinde)|aynı bantta|fiyat kırdı/gi, (match) => {
-      const normalized = match.toLocaleLowerCase("tr-TR");
+    return safeText.replace(/% ?\d+\s*(below|above)|in line with|cut price/gi, (match) => {
+      const normalized = match.toLocaleLowerCase("en-US");
       let tone = "is-default";
-      if (normalized.includes("altında")) tone = "is-below";
-      else if (normalized.includes("üstünde") || normalized.includes("üzerinde")) tone = "is-above";
-      else if (normalized.includes("aynı bantta")) tone = "is-neutral";
-      else if (normalized.includes("fiyat kırdı")) tone = "is-alert";
+      if (normalized.includes("below")) tone = "is-below";
+      else if (normalized.includes("above")) tone = "is-above";
+      else if (normalized.includes("in line with")) tone = "is-neutral";
+      else if (normalized.includes("cut price")) tone = "is-alert";
       return `<span class="competitor-status-tag ${tone}">${match}</span>`;
     });
   }
@@ -879,10 +879,10 @@
   function renderAiSuggestionText(text) {
     let formatted = escapeHtml(text || "");
     const tokens = [
-      { text: "dönüşüm kaybı", className: "is-loss" },
-      { text: "fiyat artışı", className: "is-increase" },
-      { text: "fiyat korunabilir", className: "is-keep" },
-      { text: "fiyatı korumak", className: "is-hold" }
+      { text: "conversion loss", className: "is-loss" },
+      { text: "price increase", className: "is-increase" },
+      { text: "can hold", className: "is-keep" },
+      { text: "holding price", className: "is-hold" }
     ];
 
     tokens.forEach((token) => {
@@ -920,12 +920,12 @@
           </div>
         </td>
         <td><span class="recommendation-impact ${item.impactKind === "risk" ? "is-risk" : "is-opportunity"}">${escapeHtml(item.impactLabel)}</span></td>
-        <td><span class="recommendation-type ${item.type === "İndirim" ? "is-discount" : item.type === "Artış" ? "is-increase" : "is-keep"}">${escapeHtml(item.type)}</span></td>
-        <td><span class="recommendation-priority ${item.priority === "Yüksek" ? "is-high" : "is-medium"}">${escapeHtml(item.priority)}</span></td>
+        <td><span class="recommendation-type ${item.type === "Discount" ? "is-discount" : item.type === "Increase" ? "is-increase" : "is-keep"}">${escapeHtml(item.type)}</span></td>
+        <td><span class="recommendation-priority ${item.priority === "High" ? "is-high" : "is-medium"}">${escapeHtml(item.priority)}</span></td>
         <td>
           <div class="recommendation-actions">
-            <button class="recommendation-action recommendation-action--discard" type="button" data-discard-recommendation="${escapeAttribute(item.id)}">Atla</button>
-            <button class="recommendation-action recommendation-action--apply" type="button" data-apply-recommendation="${escapeAttribute(item.id)}">Uygula</button>
+            <button class="recommendation-action recommendation-action--discard" type="button" data-discard-recommendation="${escapeAttribute(item.id)}">Skip</button>
+            <button class="recommendation-action recommendation-action--apply" type="button" data-apply-recommendation="${escapeAttribute(item.id)}">Apply</button>
           </div>
         </td>
       </tr>
@@ -977,8 +977,8 @@
           <div class="action-highlight-card__meta-main">
             <span class="action-highlight-card__impact">${escapeHtml(item.impactLabel)}</span>
             <div class="action-highlight-card__actions">
-              <button class="outline-button" type="button" data-discard-highlight="${escapeAttribute(item.id)}">Atla</button>
-              <button class="primary-button" type="button" data-apply-highlight="${escapeAttribute(item.id)}">Uygula</button>
+              <button class="outline-button" type="button" data-discard-highlight="${escapeAttribute(item.id)}">Skip</button>
+              <button class="primary-button" type="button" data-apply-highlight="${escapeAttribute(item.id)}">Apply</button>
             </div>
           </div>
           <strong>${formatMoney(item.currentPrice)}</strong>
@@ -997,7 +997,7 @@
           <span class="intent-strategy-card__icon intent-strategy-card__icon--${strategyTone}" aria-hidden="true">${strategyIcon}</span>
           <div>
             <p class="intent-strategy-card__title">${escapeHtml(strategy.name)}</p>
-            ${strategy.id === "balanced-auto" ? `<span class="intent-tag intent-tag--recommended">Önerilen</span>` : ""}
+            ${strategy.id === "balanced-auto" ? `<span class="intent-tag intent-tag--recommended">Recommended</span>` : ""}
             <p class="intent-strategy-card__summary">${escapeHtml(strategy.summary)}</p>
           </div>
         </div>
@@ -1018,8 +1018,8 @@
 
   function renderDynamicAssignmentRow(item) {
     const strategy = getStrategyById(item.strategyId);
-    const isActive = item.status === "Aktif";
-    const toggleLabel = isActive ? "Durdur" : "Başlat";
+    const isActive = item.status === "Active";
+    const toggleLabel = isActive ? "Pause" : "Start";
 
     return `
       <tr>
@@ -1030,7 +1030,7 @@
         <td>
           <div class="intent-action-row">
             <button class="ghost-button" type="button" data-toggle-assignment="${escapeAttribute(item.id)}">${toggleLabel}</button>
-            <button class="ghost-button is-danger" type="button" data-remove-assignment="${escapeAttribute(item.id)}">Kaldır</button>
+            <button class="ghost-button is-danger" type="button" data-remove-assignment="${escapeAttribute(item.id)}">Remove</button>
           </div>
         </td>
       </tr>
@@ -1064,26 +1064,26 @@
     const sampleProgress = sampleTarget > 0 ? Math.min(100, Math.round((sampleCollected / sampleTarget) * 100)) : 0;
     const uplift = winner && winner.id !== "control" ? winner.uplift : 0;
     const winnerId = decision.winnerId || "";
-    const isRunning = test.status === "Çalışıyor";
+    const isRunning = test.status === "Running";
     const cardLabel = tone === "winner"
-      ? "Kazanan Belirlendi"
+      ? "Winner Selected"
       : tone === "critical"
-        ? "Kritik Uyarı"
-        : "Veri Toplanıyor";
+        ? "Critical Alert"
+        : "Collecting Data";
     const actionLabel = tone === "critical"
-      ? "Stratejiyi Revize Et"
+      ? "Revise Strategy"
       : isRunning
-        ? "Testi Durdur"
-        : "Testi Başlat";
+        ? "Stop Test"
+        : "Start Test";
     const actionType = tone === "critical" ? "clone-test" : "toggle-run";
     const actionClass = tone === "critical" ? "secondary-button" : "outline-button";
-    const testTypeLabel = test.testDesignLabel || "Zaman Serisi (Sequential) Testi";
+    const testTypeLabel = test.testDesignLabel || "Sequential Time-Series Test";
     const strategySummary = (test.strategyVariantAName && test.strategyVariantBName)
-      ? `Varyant A: <strong>${escapeHtml(test.strategyVariantAName)}</strong> · Varyant B: <strong>${escapeHtml(test.strategyVariantBName)}</strong>`
-      : `Strateji: <strong>${escapeHtml(test.strategyName || test.name)}</strong>`;
+      ? `Variant A: <strong>${escapeHtml(test.strategyVariantAName)}</strong> · Variant B: <strong>${escapeHtml(test.strategyVariantBName)}</strong>`
+      : `Strategy: <strong>${escapeHtml(test.strategyName || test.name)}</strong>`;
 
     return `
-      <article class="ab-exp-card is-${tone}" data-ab-open-detail="${escapeAttribute(test.id)}" aria-label="${escapeHtml((test.productName || test.name) + " detay sayfasını aç")}">
+      <article class="ab-exp-card is-${tone}" data-ab-open-detail="${escapeAttribute(test.id)}" aria-label="Open detail page for ${escapeHtml(test.productName || test.name)}">
         <span class="ab-exp-badge">${cardLabel}</span>
         <div class="ab-exp-grid">
           <section class="ab-exp-product">
@@ -1093,11 +1093,11 @@
             <div>
               <p class="ab-exp-product__eyebrow">
                 <span class="ab-exp-product__eyebrow-icon">${renderUiIcon("spark")}</span>
-                Deney kartı
+                Experiment card
               </p>
               <h3>${escapeHtml(test.productName || test.name)}</h3>
               <p>${strategySummary}</p>
-              <p class="ab-exp-testtype">Test Türü: <strong>${escapeHtml(testTypeLabel)}</strong></p>
+              <p class="ab-exp-testtype">Test Type: <strong>${escapeHtml(testTypeLabel)}</strong></p>
               <div class="ab-exp-tags">
                 <span>${escapeHtml(test.category || test.targetLabel)}</span>
                 ${test.categoryDetail ? `<span>${escapeHtml(test.categoryDetail)}</span>` : ""}
@@ -1108,24 +1108,24 @@
           <section class="ab-exp-compare">
             <p class="ab-exp-section-label">
               <span class="ab-exp-section-label__icon">${renderUiIcon("switch")}</span>
-              Varyant görünümü
+              Variant view
             </p>
             ${tone === "running"
               ? `
-                <p class="ab-exp-status">İlerleme: <strong>${new Intl.NumberFormat("tr-TR").format(sampleCollected)} / ${new Intl.NumberFormat("tr-TR").format(sampleTarget)} örneklem</strong></p>
+                <p class="ab-exp-status">Progress: <strong>${new Intl.NumberFormat("en-US").format(sampleCollected)} / ${new Intl.NumberFormat("en-US").format(sampleTarget)} samples</strong></p>
                 <div class="ab-progress-track"><span style="width:${sampleProgress}%"></span></div>
-                <p class="ab-exp-note">YZ Güven Skoru: <strong>%${test.significance}</strong></p>
+                <p class="ab-exp-note">AI Confidence Score: <strong>%${test.significance}</strong></p>
               `
               : `
                 <div class="ab-exp-legend">
-                  <span>${hasExplicitControl ? "A (Kontrol)" : (winnerId === "variant-a" ? "A (Kazanan)" : "A (Varyant A)")}</span>
-                  <span>${hasExplicitControl ? (winnerId ? "B (Kazanan)" : "B (Varyant)") : (winnerId === "variant-b" ? "B (Kazanan)" : "B (Varyant B)")}</span>
+                  <span>${hasExplicitControl ? "A (Control)" : (winnerId === "variant-a" ? "A (Winner)" : "A (Variant A)")}</span>
+                  <span>${hasExplicitControl ? (winnerId ? "B (Winner)" : "B (Variant)") : (winnerId === "variant-b" ? "B (Winner)" : "B (Variant B)")}</span>
                 </div>
                 <div class="ab-duel-track">
                   <span class="ab-duel-track__a" style="width:${aWidth}%"></span>
                   <span class="ab-duel-track__b" style="width:${bWidth}%"></span>
                 </div>
-                <p class="ab-exp-note">YZ Güven Skoru: <strong>%${test.significance}</strong></p>
+                <p class="ab-exp-note">AI Confidence Score: <strong>%${test.significance}</strong></p>
               `
             }
           </section>
@@ -1133,22 +1133,22 @@
           <section class="ab-exp-kpis">
             <p class="ab-exp-section-label">
               <span class="ab-exp-section-label__icon">${renderUiIcon("growth")}</span>
-              Ticari sonuç
+              Business outcome
             </p>
             <div>
               <p>${tone === "running" ? "Tahmini Uplift" : "Uplift"}</p>
               <strong class="${uplift >= 0 ? "is-up" : "is-down"}">${formatSignedPercent(uplift)}</strong>
             </div>
             <div>
-              <p>${tone === "running" ? "Kalan Süre" : "Ek Gelir"}</p>
-              <strong>${tone === "running" ? `${test.remainingDays || 0} gün` : formatSignedMoney(test.monthlyContribution || 0)}</strong>
+              <p>${tone === "running" ? "Time Remaining" : "Incremental Revenue"}</p>
+              <strong>${tone === "running" ? `${test.remainingDays || 0} days` : formatSignedMoney(test.monthlyContribution || 0)}</strong>
             </div>
           </section>
 
           <section class="ab-exp-actions">
-            <button class="primary-button ab-exp-actions__detail" type="button" data-ab-open-detail="${escapeAttribute(test.id)}">Detayı Gör</button>
+            <button class="primary-button ab-exp-actions__detail" type="button" data-ab-open-detail="${escapeAttribute(test.id)}">View Details</button>
             ${tone === "winner"
-              ? `<button class="outline-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Kazananı Uygula</button>`
+              ? `<button class="outline-button" type="button" data-ab-action="apply-winner" data-ab-test="${escapeAttribute(test.id)}" ${decision.canApply ? "" : "disabled"}>Apply Winner</button>`
               : `<button class="${actionClass}" type="button" data-ab-action="${actionType}" data-ab-test="${escapeAttribute(test.id)}">${actionLabel}</button>`
             }
           </section>
@@ -1156,7 +1156,7 @@
         ${tone === "critical" && test.criticalReason
           ? `
             <div class="ab-exp-critical">
-              <p>İhlal Noktası</p>
+              <p>Breach Point</p>
               <strong>${escapeHtml(test.criticalReason)}</strong>
             </div>
           `
@@ -1172,8 +1172,8 @@
       <tr class="${isWinner ? "ab-row-winner" : ""}">
         <td>
           <span class="ab-variant-label">${escapeHtml(row.label)}</span>
-          ${row.id === "control" ? `<span class="muted-chip">Kontrol</span>` : ""}
-          ${isWinner ? `<span class="ab-winner-badge">Kazanan</span>` : ""}
+          ${row.id === "control" ? `<span class="muted-chip">Control</span>` : ""}
+          ${isWinner ? `<span class="ab-winner-badge">Winner</span>` : ""}
         </td>
         <td>${formatMoney(row.price)}</td>
         <td>${formatPercent(row.trafficShare)}</td>
@@ -1190,10 +1190,10 @@
     const hasVariantB = Array.isArray(test.variants) && test.variants.some((item) => item.id === "variant-b");
 
     return {
-      currentStrategy: test.controlStrategyName || "Mevcut Fiyat / Kontrol",
+      currentStrategy: test.controlStrategyName || "Current Price / Control",
       variantAStrategy: hasVariantA ? (test.strategyVariantAName || test.strategyName || "-") : "-",
       variantBStrategy: hasVariantB ? (test.strategyVariantBName || test.strategyName || "-") : "-",
-      testType: test.testDesignLabel || "Zaman Serisi (Sequential) Testi"
+      testType: test.testDesignLabel || "Sequential Time-Series Test"
     };
   }
 
@@ -1233,49 +1233,49 @@
         <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="intro-modal-title">
           <div class="modal-hero">
             <div class="modal-copy">
-              <p class="modal-eyebrow">Değer Katıyoruz</p>
-              <h2 id="intro-modal-title" class="modal-title">Doğru ürün, doğru fiyat ile doğru zamanda görünmediğinde potansiyel gelir sessizce kaybolur.</h2>
+              <p class="modal-eyebrow">Why It Matters</p>
+              <h2 id="intro-modal-title" class="modal-title">Potential revenue disappears quietly when the right product is not shown at the right price and at the right time.</h2>
               <p class="modal-text">
-                E-ticaret ekipleri ne zaman hangi fiyatta hangi ürünü satacağını net olarak bilemediğinde ya satış kaçırıyor ya da gereksiz marj kaybı yaşıyor.
-                YZ Akıllı Fiyatlandırma, rakip ürün bilgilerini ve Google Trends sinyallerini tek akışta toplayıp hangi ürünün aksiyon istediğini ilk bakışta görünür hale getirir.
+                E-commerce teams often miss sales or give away margin when they cannot clearly decide what to sell, at what price, and when.
+                AI Pricing Intelligence brings competitor product data and Google Trends signals into one flow so it is immediately clear which products need action.
               </p>
             </div>
 
-            <aside class="modal-highlight" aria-label="Hızlı özet">
-              <p class="modal-highlight__eyebrow">Hızlı Özet</p>
+            <aside class="modal-highlight" aria-label="Quick summary">
+              <p class="modal-highlight__eyebrow">Quick Summary</p>
               <p class="modal-highlight__value">${formatMoney(metrics.gainPotential)}</p>
-              <p class="modal-highlight__text">Bugün görünür hale gelen tahmini ek kâr potansiyeli.</p>
+              <p class="modal-highlight__text">Estimated incremental profit potential visible today.</p>
               <div class="modal-highlight__stack">
                 <div class="modal-highlight__row">
-                  <span>Aksiyon isteyen ürün</span>
+                  <span>Products needing action</span>
                   <strong>${metrics.actionableProducts}</strong>
                 </div>
                 <div class="modal-highlight__row">
-                  <span>Takip edilen rakip</span>
+                  <span>Tracked competitors</span>
                   <strong>${metrics.totalCompetitors}</strong>
                 </div>
               </div>
             </aside>
           </div>
 
-          <div class="modal-grid" aria-label="Öne çıkan sinyaller">
+          <div class="modal-grid" aria-label="Highlighted signals">
             <article class="modal-metric">
-              <p class="modal-metric__label">Takip edilen ürün</p>
-              <p class="modal-metric__value">${metrics.trackedCount} ürün aktif olarak izleniyor.</p>
+              <p class="modal-metric__label">Tracked products</p>
+              <p class="modal-metric__value">${metrics.trackedCount} products are actively monitored.</p>
             </article>
             <article class="modal-metric">
-              <p class="modal-metric__label">Fiyat baskısı</p>
-              <p class="modal-metric__value">${formatMoney(metrics.lostRevenue)} görünür gelir kaybı işareti var.</p>
+              <p class="modal-metric__label">Price pressure</p>
+              <p class="modal-metric__value">${formatMoney(metrics.lostRevenue)} of visible revenue risk is currently flagged.</p>
             </article>
             <article class="modal-metric">
-              <p class="modal-metric__label">Trend + YZ</p>
-              <p class="modal-metric__value">${escapeHtml(state.marketPulse.trendDirection)} sinyali ve YZ içgörüsü aynı ekranda.</p>
+              <p class="modal-metric__label">Trend + AI</p>
+              <p class="modal-metric__value">${escapeHtml(state.marketPulse.trendDirection)} signals and AI insight in the same screen.</p>
             </article>
           </div>
 
           <div class="modal-actions">
-            <button class="secondary-button" type="button" data-close-intro="1">Devam Et</button>
-            <button class="primary-button" type="button" data-intro-add-product="1">Ürün Ekle ile Başla</button>
+            <button class="secondary-button" type="button" data-close-intro="1">Continue</button>
+            <button class="primary-button" type="button" data-intro-add-product="1">Start by Adding a Product</button>
           </div>
         </section>
       </div>
@@ -1304,16 +1304,16 @@
         <section class="modal-card ab-create-modal" role="dialog" aria-modal="true" aria-labelledby="ab-create-title">
           <div class="ab-create-head">
             <div>
-              <p class="modal-eyebrow">A/B Deney Kurulumu</p>
-              <h2 id="ab-create-title" class="ab-create-title">Yeni Deney Başlat</h2>
-              <p class="ab-create-text">Mevcut ürünlerden birini seçin, stratejiyi karttan belirleyin ve testi canlıya alın.</p>
+              <p class="modal-eyebrow">A/B Experiment Setup</p>
+              <h2 id="ab-create-title" class="ab-create-title">Start New Experiment</h2>
+              <p class="ab-create-text">Choose an existing product, select strategies from the cards, and launch the test live.</p>
             </div>
-            <button class="icon-button" type="button" aria-label="Kapat" data-close-ab-create="1">×</button>
+            <button class="icon-button" type="button" aria-label="Close" data-close-ab-create="1">×</button>
           </div>
 
           <form id="ab-create-form" class="ab-create-form">
             <div class="field">
-              <label for="ab-create-product">Ürün Seç</label>
+              <label for="ab-create-product">Select Product</label>
               <select id="ab-create-product" name="productId" data-ab-create-product required>
                 ${state.products.map((product) => {
                   const selected = product.id === selectedProductId ? "selected" : "";
@@ -1323,31 +1323,31 @@
             </div>
 
             <div class="ab-create-strategy-wrap">
-              <p class="ab-create-strategy-label">Varyant A Stratejisi</p>
+              <p class="ab-create-strategy-label">Variant A Strategy</p>
               <div class="ab-create-strategy-grid">
                 ${AB_CREATE_STRATEGIES.map((strategy) => renderAbCreateStrategyCard(strategy, strategy.id === selectedStrategyAId, "a")).join("")}
               </div>
             </div>
 
             <div class="ab-create-strategy-wrap">
-              <p class="ab-create-strategy-label">Varyant B Stratejisi</p>
+              <p class="ab-create-strategy-label">Variant B Strategy</p>
               <div class="ab-create-strategy-grid">
                 ${AB_CREATE_STRATEGIES.map((strategy) => renderAbCreateStrategyCard(strategy, strategy.id === selectedStrategyBId, "b")).join("")}
               </div>
             </div>
 
             <div class="ab-create-testtype-wrap">
-              <p class="ab-create-strategy-label">Test Türü Seç</p>
+              <p class="ab-create-strategy-label">Select Test Type</p>
               <div class="ab-create-testtype-grid">
                 ${AB_CREATE_TEST_TYPES.map((typeItem) => renderAbCreateTestTypeCard(typeItem, typeItem.id === selectedTestTypeId)).join("")}
               </div>
             </div>
 
-            ${sameStrategySelected ? `<p class="helper-text">Varyant A ve Varyant B için farklı stratejiler seçin.</p>` : ""}
+            ${sameStrategySelected ? `<p class="helper-text">Choose different strategies for Variant A and Variant B.</p>` : ""}
 
             <div class="modal-actions">
-              <button class="secondary-button" type="button" data-close-ab-create="1">Vazgeç</button>
-              <button class="primary-button" type="submit" ${canStart ? "" : "disabled"}>Başlat</button>
+              <button class="secondary-button" type="button" data-close-ab-create="1">Cancel</button>
+              <button class="primary-button" type="submit" ${canStart ? "" : "disabled"}>Start</button>
             </div>
           </form>
         </section>
@@ -1379,31 +1379,31 @@
       <div class="drawer-panel">
         <div class="drawer-head">
           <div>
-            <h2 class="drawer-title">Ürün Ekle</h2>
-            <p class="drawer-text">Takip akışına yeni ürün ekleyin. İlk iterasyonda yalnızca ürün adı, SKU ve kategori bilgisi alınır.</p>
+            <h2 class="drawer-title">Add Product</h2>
+            <p class="drawer-text">Add a new product to the monitoring flow. In this first iteration, only product name, SKU, and category are collected.</p>
           </div>
-          <button class="icon-button" type="button" aria-label="Kapat" data-drawer-close="1">×</button>
+          <button class="icon-button" type="button" aria-label="Close" data-drawer-close="1">×</button>
         </div>
 
         <form id="add-product-form" class="form-grid">
           <div class="field">
-            <label for="product-name">Ürün Adı</label>
-            <input id="product-name" name="name" type="text" placeholder="Örn. Bluetooth Hoparlör Mini" autocomplete="off">
+            <label for="product-name">Product Name</label>
+            <input id="product-name" name="name" type="text" placeholder="e.g. Bluetooth Speaker Mini" autocomplete="off">
           </div>
           <div class="field">
             <label for="product-sku">SKU</label>
-            <input id="product-sku" name="sku" type="text" placeholder="Örn. SKU-7788" autocomplete="off">
+            <input id="product-sku" name="sku" type="text" placeholder="e.g. SKU-7788" autocomplete="off">
           </div>
           <div class="field">
-            <label for="product-category">Kategori</label>
-            <input id="product-category" name="category" type="text" placeholder="Örn. Ses Sistemleri" autocomplete="off">
+            <label for="product-category">Category</label>
+            <input id="product-category" name="category" type="text" placeholder="e.g. Audio Systems" autocomplete="off">
           </div>
 
-          <p class="helper-text">Kayıt sonrası ürün tabloya eklenir ve varsayılan olarak <strong>Kurulum Bekliyor</strong> durumunda izlemeye alınır.</p>
+          <p class="helper-text">After saving, the product is added to the table and monitored with a default <strong>Setup Pending</strong> status.</p>
 
           <div class="drawer-actions">
-            <button class="secondary-button" type="button" data-drawer-close="1">Vazgeç</button>
-            <button class="primary-button" type="submit">Kaydet ve Ekle</button>
+            <button class="secondary-button" type="button" data-drawer-close="1">Cancel</button>
+            <button class="primary-button" type="submit">Save and Add</button>
           </div>
         </form>
       </div>
@@ -1424,9 +1424,9 @@
         <div class="drawer-head">
           <div>
             <h2 class="drawer-title">${escapeHtml(product.name)}</h2>
-            <p class="drawer-text">Rakip fiyatları, trend özeti ve son güncelleme zamanı bu panelde bir araya gelir.</p>
+            <p class="drawer-text">Competitor prices, trend summary, and the latest update time are combined in this panel.</p>
           </div>
-          <button class="icon-button" type="button" aria-label="Kapat" data-drawer-close="1">×</button>
+          <button class="icon-button" type="button" aria-label="Close" data-drawer-close="1">×</button>
         </div>
 
         <section class="meta-grid">
@@ -1435,39 +1435,39 @@
             <p class="meta-card__value">${escapeHtml(product.sku)}</p>
           </article>
           <article class="meta-card">
-            <p class="meta-card__label">Kategori</p>
+            <p class="meta-card__label">Category</p>
             <p class="meta-card__value">${escapeHtml(product.category)}</p>
           </article>
           <article class="meta-card">
-            <p class="meta-card__label">Mevcut fiyat</p>
+            <p class="meta-card__label">Current Price</p>
             <p class="meta-card__value">${formatMoney(product.currentPrice)}</p>
           </article>
           <article class="meta-card">
-            <p class="meta-card__label">Durum</p>
+            <p class="meta-card__label">Status</p>
             <p class="meta-card__value"><span class="status-chip ${getStatusClass(product.status)}">${escapeHtml(product.status)}</span></p>
           </article>
         </section>
 
         <div class="section-stack">
           <section class="section-card">
-            <h3>Trend özeti</h3>
+            <h3>Trend Summary</h3>
             <p>${escapeHtml(product.trendSummary)}</p>
-            <p class="helper-text">Son güncelleme: ${escapeHtml(product.updatedAt)}</p>
+            <p class="helper-text">Last updated: ${escapeHtml(product.updatedAt)}</p>
           </section>
 
           <section class="section-card">
-            <h3>YZ öneri notu</h3>
+            <h3>AI Recommendation Note</h3>
             <p>${escapeHtml(product.aiSuggestionText)}</p>
           </section>
 
           <section class="section-card">
-            <h3>Rakip detayları</h3>
+            <h3>Competitor Details</h3>
             <table class="competitor-table">
               <thead>
                 <tr>
-                  <th>Ad / Domain</th>
+                  <th>Name / Domain</th>
                   <th>URL</th>
-                  <th>Fiyat</th>
+                  <th>Price</th>
                 </tr>
               </thead>
               <tbody>
@@ -1567,40 +1567,40 @@
     }
 
     if (event.target.closest("[data-apply-insight]")) {
-      showToast("YZ önerisi uygulandı.");
+      showToast("AI recommendation applied.");
       return;
     }
 
     if (event.target.closest("[data-discard-insight]")) {
-      showToast("YZ önerisi geçici olarak yok sayıldı.");
+      showToast("AI recommendation dismissed for now.");
       return;
     }
 
     const applyRecommendationTrigger = event.target.closest("[data-apply-recommendation]");
     if (applyRecommendationTrigger) {
       const product = getProductById(applyRecommendationTrigger.dataset.applyRecommendation);
-      showToast(product ? `${product.name} için YZ önerisi uygulandı.` : "YZ önerisi uygulandı.");
+      showToast(product ? `${product.name} AI recommendation applied.` : "AI recommendation applied.");
       return;
     }
 
     const discardRecommendationTrigger = event.target.closest("[data-discard-recommendation]");
     if (discardRecommendationTrigger) {
       const product = getProductById(discardRecommendationTrigger.dataset.discardRecommendation);
-      showToast(product ? `${product.name} için YZ önerisi geçici olarak yok sayıldı.` : "YZ önerisi geçici olarak yok sayıldı.");
+      showToast(product ? `${product.name} AI recommendation dismissed for now.` : "AI recommendation dismissed for now.");
       return;
     }
 
     const applyHighlightTrigger = event.target.closest("[data-apply-highlight]");
     if (applyHighlightTrigger) {
       const product = getProductById(applyHighlightTrigger.dataset.applyHighlight);
-      showToast(product ? `${product.name} için aksiyon uygulandı.` : "Aksiyon uygulandı.");
+      showToast(product ? `${product.name} action applied.` : "Action applied.");
       return;
     }
 
     const discardHighlightTrigger = event.target.closest("[data-discard-highlight]");
     if (discardHighlightTrigger) {
       const product = getProductById(discardHighlightTrigger.dataset.discardHighlight);
-      showToast(product ? `${product.name} için aksiyon atlandı.` : "Aksiyon atlandı.");
+      showToast(product ? `${product.name} action skipped.` : "Action skipped.");
       return;
     }
 
@@ -1673,7 +1673,7 @@
     const category = String(formData.get("category") || "").trim();
 
     if (!name || !sku || !category) {
-      showToast("Ürün eklemek için üç alanın da doldurulması gerekiyor.");
+      showToast("All three fields are required to add a product.");
       return;
     }
 
@@ -1683,15 +1683,15 @@
       {
         id: `c-${newProductId}-1`,
         productId: newProductId,
-        sourceName: "Rakip feed 1 / bekleniyor",
-        url: "Bağlantı kurulacak",
+        sourceName: "Competitor feed 1 / pending",
+        url: "Connection pending",
         price: null
       },
       {
         id: `c-${newProductId}-2`,
         productId: newProductId,
-        sourceName: "Rakip feed 2 / bekleniyor",
-        url: "Bağlantı kurulacak",
+        sourceName: "Competitor feed 2 / pending",
+        url: "Connection pending",
         price: null
       }
     ];
@@ -1702,21 +1702,21 @@
       sku,
       category,
       currentPrice: seedPrice,
-      competitorStatus: "Rakip verisi bağlanacak",
-      trendDirection: "İlk veri bekleniyor",
-      aiSuggestionText: "Kurulum tamamlandığında ilk öneri üretilecek.",
-      status: "Kurulum Bekliyor",
+      competitorStatus: "Competitor data pending",
+      trendDirection: "Waiting for first data",
+      aiSuggestionText: "The first recommendation will be generated after setup completes.",
+      status: "Setup Pending",
       competitorCount: placeholderCompetitors.length,
       estimatedLostRevenue: 0,
       estimatedProfitUplift: 0,
-      trendSummary: "Google Trends eşleşmesi ve rakip bağlantıları kurulum sonrasında akacaktır.",
-      updatedAt: "Az önce"
+      trendSummary: "Google Trends matching and competitor connections will start after setup.",
+      updatedAt: "Just now"
     });
 
     state.competitorDetails = [...placeholderCompetitors, ...state.competitorDetails];
     closeDrawer();
     render();
-    showToast("Ürün eklendi. İzleme kurulumu bekleniyor.");
+    showToast("Product added. Monitoring setup is pending.");
   }
 
   function handleKeydown(event) {
@@ -1821,7 +1821,7 @@
 
   function openAbCreateModal() {
     if (!state.products.length) {
-      showToast("Deney başlatmak için önce en az bir ürün ekleyin.");
+      showToast("Add at least one product before starting an experiment.");
       return;
     }
 
@@ -1857,12 +1857,12 @@
     const testType = AB_CREATE_TEST_TYPES.find((item) => item.id === state.abCreateModal.selectedTestTypeId) || null;
 
     if (!product || !strategyA || !strategyB || !testType) {
-      showToast("Deneyi başlatmak için ürün, strateji ve test türü seçimi zorunlu.");
+      showToast("Product, strategy, and test type are required to start the experiment.");
       return;
     }
 
     if (strategyA.id === strategyB.id) {
-      showToast("Varyant A ve Varyant B için farklı stratejiler seçin.");
+      showToast("Choose different strategies for Variant A and Variant B.");
       return;
     }
 
@@ -1883,7 +1883,7 @@
       testDesignTypeId: testType.id,
       testDesignLabel: testType.name,
       category: product.category,
-      categoryDetail: `Kategori: ${product.category}`,
+      categoryDetail: `Category: ${product.category}`,
       cardTone: "running",
       monthlyContribution: 0,
       sampleCollected: 0,
@@ -1891,7 +1891,7 @@
       remainingDays: 7,
       targetLabel: product.name,
       targetKpi,
-      status: "Çalışıyor",
+      status: "Running",
       startedAt,
       significance: 0,
       trafficSplit: "50/50",
@@ -1902,12 +1902,12 @@
         autoStop: true
       },
       alerts: [
-        `${testType.name} ile deney başlatıldı. İlk anlamlı örneklem oluşana kadar varyantlar izleniyor.`
+        `${testType.name} experiment started. Variants are being monitored until a meaningful sample is reached.`
       ],
       variants: [
         {
           id: "variant-a",
-          label: `Varyant A (${strategyA.name})`,
+          label: `Variant A (${strategyA.name})`,
           price: variantAPrice,
           sessions: 0,
           orders: 0,
@@ -1916,7 +1916,7 @@
         },
         {
           id: "variant-b",
-          label: `Varyant B (${strategyB.name})`,
+          label: `Variant B (${strategyB.name})`,
           price: variantBPrice,
           sessions: 0,
           orders: 0,
@@ -1930,7 +1930,7 @@
     state.abTesting.selectedTestId = newTest.id;
     closeAbCreateModal();
     renderWorkspace();
-    showToast("Yeni A/B deneyi başlatıldı.");
+    showToast("New A/B experiment started.");
   }
 
   function openAbTestDetail(testId) {
@@ -1963,8 +1963,8 @@
   function getMetrics() {
     const lostRevenue = state.products.reduce((sum, item) => sum + item.estimatedLostRevenue, 0);
     const gainPotential = state.products.reduce((sum, item) => sum + item.estimatedProfitUplift, 0);
-    const marginRiskCount = state.products.filter((item) => item.status === "Marj Riski").length;
-    const actionableProducts = state.products.filter((item) => item.status !== "Dengede").length;
+    const marginRiskCount = state.products.filter((item) => item.status === "Margin Risk").length;
+    const actionableProducts = state.products.filter((item) => item.status !== "Stable").length;
     const totalCompetitors = state.products.reduce((sum, item) => sum + item.competitorCount, 0);
 
     return {
@@ -1986,7 +1986,7 @@
   }
 
   function getSeedPrice(category) {
-    const normalized = category.toLocaleLowerCase("tr-TR");
+    const normalized = category.toLocaleLowerCase("en-US");
 
     if (normalized.includes("saat")) return 3499;
     if (normalized.includes("kulak") || normalized.includes("ses")) return 1299;
@@ -2017,18 +2017,18 @@
   }
 
   function getAbCreateTargetKpi(strategyId) {
-    if (strategyId === "psych-threshold") return "Dönüşüm oranı";
-    if (strategyId === "margin-vs-volume") return "Ziyaretçi başı gelir";
-    if (strategyId === "competitive-response") return "Rekabet kazanım oranı";
-    return "Ziyaretçi başı gelir";
+    if (strategyId === "psych-threshold") return "Conversion rate";
+    if (strategyId === "margin-vs-volume") return "Revenue per visitor";
+    if (strategyId === "competitive-response") return "Competitive win rate";
+    return "Revenue per visitor";
   }
 
   function getRecommendationRows() {
     return state.products
-      .filter((product) => product.status !== "Kurulum Bekliyor")
+      .filter((product) => product.status !== "Setup Pending")
       .map((product) => {
-        const isPriceRisk = product.status === "Fiyat Riski";
-        const isMarginRisk = product.status === "Marj Riski";
+        const isPriceRisk = product.status === "Price Risk";
+        const isMarginRisk = product.status === "Margin Risk";
         const suggestedPrice = isPriceRisk
           ? Math.max(1, product.currentPrice - getRecommendedDiscount(product.currentPrice))
           : isMarginRisk
@@ -2042,12 +2042,12 @@
           category: product.category,
           currentPrice: product.currentPrice,
           suggestedPrice,
-          type: isPriceRisk ? "İndirim" : isMarginRisk ? "Artış" : "Koruma",
-          priority: product.status === "Dengede" ? "Orta" : "Yüksek",
+          type: isPriceRisk ? "Discount" : isMarginRisk ? "Increase" : "Hold",
+          priority: product.status === "Stable" ? "Medium" : "High",
           reason: product.aiSuggestionText,
           impactKind: isMarginRisk ? "opportunity" : "risk",
           impactLabel: isMarginRisk
-            ? `${formatMoney(product.estimatedProfitUplift)} fırsat`
+            ? `${formatMoney(product.estimatedProfitUplift)} upside`
             : `${formatMoney(product.estimatedLostRevenue)} risk`
         };
       });
@@ -2069,7 +2069,7 @@
 
   function getDashboardActionHighlights() {
     return state.products
-      .filter((item) => item.status !== "Dengede")
+      .filter((item) => item.status !== "Stable")
       .sort((a, b) => (Number(b.estimatedLostRevenue) || 0) - (Number(a.estimatedLostRevenue) || 0))
       .slice(0, 3)
       .map((item) => ({
@@ -2082,32 +2082,32 @@
     const lostRevenue = Number(item.estimatedLostRevenue) || 0;
     const profitUplift = Number(item.estimatedProfitUplift) || 0;
 
-    if (item.status === "Marj Riski" && profitUplift === 24500) {
-      return "24 500 fırsatı yakala";
+    if (item.status === "Margin Risk" && profitUplift === 24500) {
+      return "Capture TRY 24,500 upside";
     }
 
-    if (item.status !== "Marj Riski" && lostRevenue === 48000) {
-      return "48 000 riski önle";
+    if (item.status !== "Margin Risk" && lostRevenue === 48000) {
+      return "Prevent TRY 48,000 downside";
     }
 
-    if (item.status !== "Marj Riski" && lostRevenue === 27000) {
-      return "27 000 riski önle";
+    if (item.status !== "Margin Risk" && lostRevenue === 27000) {
+      return "Prevent TRY 27,000 downside";
     }
 
-    return item.status === "Marj Riski"
-      ? `${formatMoney(item.estimatedProfitUplift)} fırsat`
+    return item.status === "Margin Risk"
+      ? `${formatMoney(item.estimatedProfitUplift)} upside`
       : `${formatMoney(item.estimatedLostRevenue)} risk`;
   }
 
   function getRecommendationVisualTone(item) {
-    if (item.type === "İndirim") return "discount";
-    if (item.type === "Artış") return "growth";
+    if (item.type === "Discount") return "discount";
+    if (item.type === "Increase") return "growth";
     return "keep";
   }
 
   function getRecommendationIconName(item) {
-    if (item.type === "İndirim") return "discount";
-    if (item.type === "Artış") return "growth";
+    if (item.type === "Discount") return "discount";
+    if (item.type === "Increase") return "growth";
     return "shield";
   }
 
@@ -2189,7 +2189,7 @@
     if (test.criticalReason) return "critical";
 
     const decision = getAbDecision(test);
-    if (decision.canApply || (test.status === "Tamamlandı" && test.appliedWinnerId)) return "winner";
+    if (decision.canApply || (test.status === "Completed" && test.appliedWinnerId)) return "winner";
     return "running";
   }
 
@@ -2240,22 +2240,22 @@
       .filter((item) => item.marginRate * 100 >= test.guardrails.minMarginRate)
       .sort((a, b) => b.rpv - a.rpv);
 
-    if (test.status === "Durduruldu") {
+    if (test.status === "Stopped") {
       return {
         tone: "is-neutral",
-        title: "Test durduruldu, karar bekliyor",
-        reason: "Test tekrar başlatılmadan otomatik öneri verilmez. Mevcut sonuçları değerlendirebilirsiniz.",
+        title: "Test stopped, decision pending",
+        reason: "No automatic recommendation is given before the test restarts. You can review the current results.",
         winnerId: null,
         canApply: false
       };
     }
 
-    if (test.status === "Tamamlandı" && test.appliedWinnerId) {
+    if (test.status === "Completed" && test.appliedWinnerId) {
       const applied = rows.find((item) => item.id === test.appliedWinnerId);
       return {
         tone: "is-positive",
-        title: `${applied ? applied.label : "Kazanan varyant"} yayına alındı`,
-        reason: `Test sonucu uygulandı. YZ güven skoru %${test.significance} olarak kaydedildi.`,
+        title: `${applied ? applied.label : "Winning variant"} deployed`,
+        reason: `Test result applied. AI confidence score recorded at %${test.significance}.`,
         winnerId: test.appliedWinnerId,
         canApply: false
       };
@@ -2264,8 +2264,8 @@
     if (test.significance < 90) {
       return {
         tone: "is-warning",
-        title: "Testi sürdür",
-        reason: `YZ güven skoru %${test.significance}. Karar için önerilen eşik %90.`,
+        title: "Continue test",
+        reason: `AI confidence score is %${test.significance}. Recommended decision threshold is 90%.`,
         winnerId: null,
         canApply: false
       };
@@ -2275,8 +2275,8 @@
       if (eligibleRows.length < 2) {
         return {
           tone: "is-neutral",
-          title: "Varyantları izlemeye devam et",
-          reason: "Marj eşiğini geçen iki varyant oluşmadan kazanan önerisi verilemez.",
+          title: "Keep monitoring variants",
+          reason: "A winner cannot be recommended until two variants clear the margin threshold.",
           winnerId: null,
           canApply: false
         };
@@ -2289,8 +2289,8 @@
       if (upliftAgainstRunner <= 0) {
         return {
           tone: "is-neutral",
-          title: "Varyantlar benzer performansta",
-          reason: "A ve B varyantları arasında anlamlı bir fark oluşmadı. Testi sürdürerek örneklem toplanabilir.",
+          title: "Variants are performing similarly",
+          reason: "No meaningful difference has emerged between variants A and B. Keep the test running to gather more samples.",
           winnerId: null,
           canApply: false
         };
@@ -2298,8 +2298,8 @@
 
       return {
         tone: "is-positive",
-        title: `${best.label} varyantını yayına al`,
-        reason: `${best.label}, ${runnerUp.label} varyantına göre ${formatPercent(upliftAgainstRunner)} daha yüksek ziyaretçi başı gelir üretti. YZ güven skoru: %${test.significance}.`,
+        title: `Deploy ${best.label}`,
+        reason: `${best.label} produced ${formatPercent(upliftAgainstRunner)} higher revenue per visitor than ${runnerUp.label}. AI confidence score: %${test.significance}.`,
         winnerId: best.id,
         canApply: true
       };
@@ -2313,8 +2313,8 @@
     if (!winner || !control || winner.uplift <= 0) {
       return {
         tone: "is-neutral",
-        title: "Kontrol varyantını koru",
-        reason: "Varyantlar kontrol fiyatını anlamlı şekilde geçemedi. Testi yeni senaryoyla tekrar kurabilirsiniz.",
+        title: "Keep the control variant",
+        reason: "Variants did not meaningfully beat the control price. You can relaunch the test with a new scenario.",
         winnerId: control ? control.id : null,
         canApply: false
       };
@@ -2322,8 +2322,8 @@
 
     return {
       tone: "is-positive",
-      title: `${winner.label} varyantını yayına al`,
-      reason: `${winner.label}, kontrol varyantına göre ${formatPercent(winner.uplift)} daha yüksek ziyaretçi başı gelir üretti. YZ güven skoru: %${test.significance}.`,
+      title: `Deploy ${winner.label}`,
+      reason: `${winner.label} produced ${formatPercent(winner.uplift)} higher revenue per visitor than the control. AI confidence score: %${test.significance}.`,
       winnerId: winner.id,
       canApply: true
     };
@@ -2333,17 +2333,17 @@
     const test = getAbTestById(testId) || getSelectedAbTest();
     if (!test) return;
 
-    if (test.status === "Çalışıyor") {
-      test.status = "Durduruldu";
-      test.alerts = ["Test manuel olarak durduruldu. Karar öncesi son metrikleri doğrulayın.", ...test.alerts].slice(0, 3);
-      showToast("A/B testi durduruldu.");
+    if (test.status === "Running") {
+      test.status = "Stopped";
+      test.alerts = ["The test was stopped manually. Verify the latest metrics before deciding.", ...test.alerts].slice(0, 3);
+      showToast("A/B test stopped.");
     } else {
-      test.status = "Çalışıyor";
+      test.status = "Running";
       if (test.significance < 90) {
         test.significance = Math.min(99, test.significance + 3);
       }
-      test.alerts = ["Test yeniden başlatıldı. Yeni örneklem akışı izleniyor.", ...test.alerts].slice(0, 3);
-      showToast("A/B testi başlatıldı.");
+      test.alerts = ["The test was restarted. A new sample flow is now being monitored.", ...test.alerts].slice(0, 3);
+      showToast("A/B test started.");
     }
 
     renderWorkspace();
@@ -2355,14 +2355,14 @@
 
     const decision = getAbDecision(test);
     if (!decision.canApply || !decision.winnerId) {
-      showToast("Yayına alınabilir bir kazanan yok.");
+      showToast("No deployable winner yet.");
       return;
     }
 
-    test.status = "Tamamlandı";
+    test.status = "Completed";
     test.appliedWinnerId = decision.winnerId;
-    test.alerts = ["Kazanan varyant üretime alındı. Performans izleme moduna geçildi.", ...test.alerts].slice(0, 3);
-    showToast("Kazanan varyant yayına alındı.");
+    test.alerts = ["The winning variant was deployed. Switched to performance monitoring mode.", ...test.alerts].slice(0, 3);
+    showToast("Winning variant deployed.");
     renderWorkspace();
   }
 
@@ -2372,11 +2372,11 @@
 
     const cloned = clone(test);
     cloned.id = `ab-${Date.now()}`;
-    cloned.name = `${test.name} (Klon)`;
-    cloned.status = "Durduruldu";
+    cloned.name = `${test.name} (Clone)`;
+    cloned.status = "Stopped";
     cloned.significance = 0;
     cloned.appliedWinnerId = null;
-    cloned.alerts = ["Klon test hazır. Parametreleri kontrol edip başlatın."];
+    cloned.alerts = ["Cloned test is ready. Review the parameters and start it."];
     cloned.cardTone = "running";
     cloned.monthlyContribution = 0;
     cloned.sampleCollected = 0;
@@ -2391,7 +2391,7 @@
     state.abTesting.tests.unshift(cloned);
     state.abTesting.selectedTestId = cloned.id;
     renderWorkspace();
-    showToast("Yeni A/B test klonu oluşturuldu.");
+    showToast("New A/B test clone created.");
   }
 
   function ensureDynamicPricingSelection() {
@@ -2419,10 +2419,10 @@
 
   function getDynamicPricingScopes() {
     return [
-      { type: "segment", id: "all-products", label: "Tüm Ürünler" },
-      { type: "segment", id: "electronics", label: "Elektronik Kategorisi" },
-      { type: "segment", id: "apple", label: "Apple Markalı Ürünler" },
-      { type: "segment", id: "slow-sellers", label: "Filtrelenmiş Koleksiyon: \"Yavaş Satanlar\"" }
+      { type: "segment", id: "all-products", label: "All Products" },
+      { type: "segment", id: "electronics", label: "Electronics Category" },
+      { type: "segment", id: "apple", label: "Apple Branded Products" },
+      { type: "segment", id: "slow-sellers", label: "Filtered Collection: \"Slow Sellers\"" }
     ];
   }
 
@@ -2457,7 +2457,7 @@
         return state.products;
       }
       if (targetId === "electronics") {
-        const allowedCategories = new Set(["Ses Sistemleri", "Giyilebilir Teknoloji", "Oyuncu Aksesuarı", "Bilgisayar Aksesuarı"]);
+        const allowedCategories = new Set(["Audio Systems", "Wearable Tech", "Gaming Accessories", "Computer Accessories"]);
         return state.products.filter((item) => allowedCategories.has(item.category));
       }
       if (targetId === "apple") {
@@ -2467,16 +2467,16 @@
         return premiumFallback ? [premiumFallback] : [];
       }
       if (targetId === "slow-sellers") {
-        return state.products.filter((item) => item.trendDirection === "Düşüşte" || item.status === "Fiyat Riski");
+        return state.products.filter((item) => item.trendDirection === "Falling" || item.status === "Price Risk");
       }
       if (targetId === "price-risk") {
-        return state.products.filter((item) => item.status === "Fiyat Riski");
+        return state.products.filter((item) => item.status === "Price Risk");
       }
       if (targetId === "margin-risk") {
-        return state.products.filter((item) => item.status === "Marj Riski");
+        return state.products.filter((item) => item.status === "Margin Risk");
       }
       if (targetId === "trend-up") {
-        return state.products.filter((item) => item.trendDirection === "Yükselişte");
+        return state.products.filter((item) => item.trendDirection === "Rising");
       }
     }
 
@@ -2492,12 +2492,12 @@
 
     if (!strategy || !target) {
       return {
-        targetLabel: "Hedef seçilmedi",
+        targetLabel: "No target selected",
         affectedProducts: 0,
         movement: "-",
         businessGoal: "-",
-        aiQuote: "Önce bir strateji ve hedef seçin, sonra YZ öneriyi netleştirsin.",
-        signals: "Rakip Fiyatı, Talep Trendi, Satış Hızı",
+        aiQuote: "Select a strategy and target first, then let AI refine the recommendation.",
+        signals: "Competitor Price, Demand Trend, Sales Velocity",
         expectedImpact: "--",
         canApply: false
       };
@@ -2511,7 +2511,7 @@
       movement: strategy.movement,
       businessGoal: strategy.businessGoal,
       aiQuote: strategy.aiSummary,
-      signals: "Rakip Fiyatı, Talep Trendi, Satış Hızı",
+      signals: "Competitor Price, Demand Trend, Sales Velocity",
       expectedImpact,
       canApply: products.length > 0
     };
@@ -2526,7 +2526,7 @@
     const preview = getDynamicPricingPreview();
 
     if (!strategy || !target || !products.length) {
-      showToast("Uygulamak için geçerli bir strateji ve hedef seçilmelidir.");
+      showToast("A valid strategy and target are required before applying.");
       return;
     }
 
@@ -2541,17 +2541,17 @@
       targetId: target.id,
       targetLabel: target.label,
       affectedProducts: products.length,
-      status: "Aktif",
-      lastUpdate: "Az önce",
+      status: "Active",
+      lastUpdate: "Just now",
       performance: preview.expectedImpact
     };
 
     if (existingAssignment) {
       Object.assign(existingAssignment, assignmentPayload);
-      showToast("Strateji ataması güncellendi.");
+      showToast("Strategy assignment updated.");
     } else {
       state.dynamicPricing.assignments.unshift(assignmentPayload);
-      showToast("Strateji başlatıldı.");
+      showToast("Strategy started.");
     }
 
     renderWorkspace();
@@ -2561,11 +2561,11 @@
     const assignment = state.dynamicPricing.assignments.find((item) => item.id === assignmentId);
     if (!assignment) return;
 
-    assignment.status = assignment.status === "Aktif" ? "Duraklatıldı" : "Aktif";
-    assignment.lastUpdate = "Az önce";
-    assignment.performance = assignment.status === "Aktif" ? "Yeniden devrede" : "--";
+    assignment.status = assignment.status === "Active" ? "Paused" : "Active";
+    assignment.lastUpdate = "Just now";
+    assignment.performance = assignment.status === "Active" ? "Back online" : "--";
     renderWorkspace();
-    showToast(assignment.status === "Aktif" ? "Strateji yeniden başlatıldı." : "Strateji durduruldu.");
+    showToast(assignment.status === "Active" ? "Strategy restarted." : "Strategy paused.");
   }
 
   function removeDynamicPricingAssignment(assignmentId) {
@@ -2574,7 +2574,7 @@
 
     if (state.dynamicPricing.assignments.length !== previousLength) {
       renderWorkspace();
-      showToast("Strateji ataması kaldırıldı.");
+      showToast("Strategy assignment removed.");
     }
   }
 
@@ -2583,10 +2583,10 @@
   }
 
   function getExpectedImpactLabel(strategyId) {
-    if (strategyId === "stay-competitive") return "Dönüşüm Oranı +%12";
-    if (strategyId === "maximize-margin") return "Kâr Marjı +%2,4";
-    if (strategyId === "clear-stock") return "Stok Bekleme Süresi -%24";
-    return "Ciro +%4,2";
+    if (strategyId === "stay-competitive") return "Conversion Rate +12%";
+    if (strategyId === "maximize-margin") return "Margin Rate +2.4%";
+    if (strategyId === "clear-stock") return "Inventory Holding Time -24%";
+    return "Revenue +4.2%";
   }
 
   function getStrategyTone(strategyId) {
@@ -2604,14 +2604,14 @@
   }
 
   function getAbStatusClass(status) {
-    if (status === "Çalışıyor") return "is-running";
-    if (status === "Tamamlandı") return "is-completed";
+    if (status === "Running") return "is-running";
+    if (status === "Completed") return "is-completed";
     return "is-paused";
   }
 
   function getRiskClass(riskLevel) {
-    if (riskLevel === "Yüksek") return "high";
-    if (riskLevel === "Orta") return "medium";
+    if (riskLevel === "High") return "high";
+    if (riskLevel === "Medium") return "medium";
     return "low";
   }
 
@@ -2622,21 +2622,21 @@
   }
 
   function getTrendClass(direction) {
-    if (direction === "Yükselişte") return "is-up";
-    if (direction === "Düşüşte") return "is-down";
-    if (direction === "Dengede") return "is-flat";
+    if (direction === "Rising") return "is-up";
+    if (direction === "Falling") return "is-down";
+    if (direction === "Stable") return "is-flat";
     return "is-pending";
   }
 
   function getStatusClass(status) {
-    if (status === "Fiyat Riski") return "is-risk";
-    if (status === "Marj Riski") return "is-margin";
-    if (status === "Dengede") return "is-balanced";
+    if (status === "Price Risk") return "is-risk";
+    if (status === "Margin Risk") return "is-margin";
+    if (status === "Stable") return "is-balanced";
     return "is-pending";
   }
 
   function formatMoney(value) {
-    return new Intl.NumberFormat("tr-TR", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "TRY",
       maximumFractionDigits: 0
@@ -2644,13 +2644,13 @@
   }
 
   function formatPercent(value) {
-    return `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(value * 100)}%`;
+    return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value * 100)}%`;
   }
 
   function formatSignedPercent(value) {
     const numeric = Number(value) || 0;
     const sign = numeric > 0 ? "+" : numeric < 0 ? "-" : "";
-    const formatted = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(Math.abs(numeric) * 100);
+    const formatted = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(Math.abs(numeric) * 100);
     return `${sign}%${formatted}`;
   }
 
@@ -2663,13 +2663,13 @@
   function getInitials(text) {
     const parts = String(text || "").trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return "AB";
-    if (parts.length === 1) return parts[0].slice(0, 2).toLocaleUpperCase("tr-TR");
-    return `${parts[0][0]}${parts[1][0]}`.toLocaleUpperCase("tr-TR");
+    if (parts.length === 1) return parts[0].slice(0, 2).toLocaleUpperCase("en-US");
+    return `${parts[0][0]}${parts[1][0]}`.toLocaleUpperCase("en-US");
   }
 
   function normalizeSearch(value) {
     return String(value || "")
-      .toLocaleLowerCase("tr-TR")
+      .toLocaleLowerCase("en-US")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .trim();
@@ -2687,7 +2687,7 @@
   }
 
   function syncPageTitle() {
-    document.title = ROUTE_TITLES[state.route] || "YZ Akıllı Fiyatlandırma";
+    document.title = ROUTE_TITLES[state.route] || "AI Pricing Intelligence";
   }
 
   function syncIntroModalAvailability() {
