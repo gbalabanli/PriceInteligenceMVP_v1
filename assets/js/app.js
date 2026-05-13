@@ -404,7 +404,7 @@
                 <th>Product</th>
                 <th>Current Price</th>
                 <th>AI Suggested Price</th>
-                <th>Impact (TRY)</th>
+                <th>Impact (USD)</th>
                 <th>Recommendation Type</th>
                 <th>Priority</th>
                 <th>Action</th>
@@ -2083,15 +2083,15 @@
     const profitUplift = Number(item.estimatedProfitUplift) || 0;
 
     if (item.status === "Margin Risk" && profitUplift === 24500) {
-      return "Capture TRY 24,500 upside";
+      return "Capture $24,500 upside";
     }
 
     if (item.status !== "Margin Risk" && lostRevenue === 48000) {
-      return "Prevent TRY 48,000 downside";
+      return "Prevent $48,000 downside";
     }
 
     if (item.status !== "Margin Risk" && lostRevenue === 27000) {
-      return "Prevent TRY 27,000 downside";
+      return "Prevent $27,000 downside";
     }
 
     return item.status === "Margin Risk"
@@ -2638,7 +2638,7 @@
   function formatMoney(value) {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "TRY",
+      currency: "USD",
       maximumFractionDigits: 0
     }).format(value);
   }

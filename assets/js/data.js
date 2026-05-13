@@ -8,7 +8,7 @@
       currentPrice: 1249,
       competitorStatus: "6% above competitor average",
       trendDirection: "Rising",
-      aiSuggestionText: "A TRY 49 discount can reduce conversion loss.",
+      aiSuggestionText: "A $49 discount can reduce conversion loss.",
       status: "Price Risk",
       competitorCount: 3,
       estimatedLostRevenue: 48000,
@@ -24,7 +24,7 @@
       currentPrice: 3399,
       competitorStatus: "5% below the competitor lower band",
       trendDirection: "Stable",
-      aiSuggestionText: "A TRY 99 price increase could protect margin.",
+      aiSuggestionText: "A $99 price increase could protect margin.",
       status: "Margin Risk",
       competitorCount: 4,
       estimatedLostRevenue: 12000,
@@ -366,7 +366,7 @@
         alerts: [
           "The test was automatically stopped because the minimum margin threshold was breached."
         ],
-        criticalReason: "Variant B dropped from TRY 24,500 to TRY 21,200 and breached the margin threshold.",
+        criticalReason: "Variant B dropped from $24,500 to $21,200 and breached the margin threshold.",
         variants: [
           {
             id: "control",
